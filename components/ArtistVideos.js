@@ -10,12 +10,23 @@ export default function ArtistVideos({ videos }) {
   return (
     <>
       <div className="video-grid">
-        {videos.map((v, i) => (
+        {videos.map((v, i) => v.source === "instagram" ? (
+          <a className="video-card" key={i} href={v.ref || v.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "inherit" }}>
+            {v.thumb ? (
+              <img src={v.thumb} alt={v.title || "Artist video"} loading="lazy" />
+            ) : (
+              <div style={{ height: 210, background: "linear-gradient(135deg,#7c3aed,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 40 }}>▶</div>
+            )}
+            <div className="play-btn"><span>↗</span></div>
+            {v.title && <div className="vtitle">{v.title}</div>}
+            <div className="seo-hint" style={{ padding: "0 14px 12px" }}>Watch on Instagram</div>
+          </a>
+        ) : (
           <div className="video-card" key={i} onClick={() => setOpen(i)}>
             {v.thumb ? (
               <img src={v.thumb} alt={v.title || "Artist video"} loading="lazy" />
             ) : (
-              <div style={{ height: 210, background: "linear-gradient(135deg,#7b1fa2,#e91e63)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 40 }}>▶</div>
+              <div style={{ height: 210, background: "linear-gradient(135deg,#7c3aed,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 40 }}>▶</div>
             )}
             <div className="play-btn"><span>▶</span></div>
             {v.title && <div className="vtitle">{v.title}</div>}

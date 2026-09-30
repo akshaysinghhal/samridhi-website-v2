@@ -50,6 +50,19 @@ alter table artists add column if not exists status text not null default 'publi
   check (status in ('draft','published','scheduled'));
 alter table artists add column if not exists is_placeholder boolean not null default false;
 create unique index if not exists artists_slug_uidx on artists (slug) where slug is not null;
+-- Full unique constraint (not partial): the ON CONFLICT (slug) seed below requires a
+-- non-partial arbiter, and partial indexes cannot be inferred (Postgres error 42P10).
+-- NULLs never conflict with each other, so existing rows are safe.
+drop index if exists artists_slug_uidx;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.artists'::regclass and conname = 'artists_slug_key'
+  ) then
+    alter table artists add constraint artists_slug_key unique (slug);
+  end if;
+end $$;
 
 -- weddings: publish status + placeholders
 alter table weddings add column if not exists status text not null default 'published'

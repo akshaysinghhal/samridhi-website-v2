@@ -1,10 +1,15 @@
 import "./globals.css";
+import { Inter, Sora } from "next/font/google";
 import CookieBanner from "../components/CookieBanner";
 import Analytics from "../components/Analytics";
 import { getSettings, setting } from "../lib/db";
 import { organizationJsonLd, jsonLdScript, siteUrl } from "../lib/seo";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://samridhi-films.vercel.app";
+
+// Professional type pairing: Inter for body text, Sora for display headings.
+const inter = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
+const sora = Sora({ subsets: ["latin"], variable: "--font-head", display: "swap" });
 
 export async function generateMetadata() {
   let indexing = false;
@@ -36,7 +41,7 @@ export default async function RootLayout({ children }) {
   const org = organizationJsonLd(s);
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${sora.variable}`}>
       <head>
         <script
           type="application/ld+json"

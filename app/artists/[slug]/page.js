@@ -32,8 +32,8 @@ export default async function ArtistDetailPage({ params }) {
       <section className="section" style={{ paddingBottom: 40 }}>
         <div className="container">
           <p style={{ fontSize: 14, color: "var(--muted)", marginBottom: 22 }}>
-            <Link href="/" style={{ color: "var(--pink)", fontWeight: 700 }}>Home</Link> →{" "}
-            <Link href="/artists" style={{ color: "var(--pink)", fontWeight: 700 }}>Artists</Link> → {a.name}
+            <Link href="/" style={{ color: "var(--brand)", fontWeight: 700 }}>Home</Link> →{" "}
+            <Link href="/artists" style={{ color: "var(--brand)", fontWeight: 700 }}>Artists</Link> → {a.name}
           </p>
           <div className="about-grid">
             <div>
@@ -50,7 +50,7 @@ export default async function ArtistDetailPage({ params }) {
               <span className="eyebrow">{a.category || "Artist"}</span>
               <h1 className="h2">{a.name}</h1>
               {a.bio && <p className="lead">{a.bio}</p>}
-              <p style={{ fontWeight: 700, color: "var(--pink-dark)", marginTop: 18 }}>
+              <p style={{ fontWeight: 700, color: "var(--brand-dark)", marginTop: 18 }}>
                 {a.display_status || "Available for booking through Samridhi Films & Television."}
               </p>
               {(a.languages?.length > 0 || a.genres?.length > 0) && (

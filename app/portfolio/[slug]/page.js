@@ -29,7 +29,7 @@ export default async function PortfolioDetailPage({ params }) {
     <>
       <SiteHeader />
 
-      <section className="hero" style={{ background: "linear-gradient(120deg,#7b1fa2,#e91e63)" }}>
+      <section className="hero" style={{ background: "linear-gradient(120deg,#7c3aed,#6d28d9)" }}>
         {e.cover_image && <img className="hero-bg" src={e.cover_image} alt={e.title} />}
         <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
           <span className="eyebrow" style={{ color: "#ffe082" }}>{e.category || "Event"}</span>
@@ -46,8 +46,8 @@ export default async function PortfolioDetailPage({ params }) {
       <section className="section">
         <div className="container">
           <p style={{ fontSize: 14, color: "var(--muted)", marginBottom: 22 }}>
-            <Link href="/" style={{ color: "var(--pink)", fontWeight: 700 }}>Home</Link> →{" "}
-            <Link href="/portfolio" style={{ color: "var(--pink)", fontWeight: 700 }}>Portfolio</Link> → {e.title}
+            <Link href="/" style={{ color: "var(--brand)", fontWeight: 700 }}>Home</Link> →{" "}
+            <Link href="/portfolio" style={{ color: "var(--brand)", fontWeight: 700 }}>Portfolio</Link> → {e.title}
           </p>
           {e.description && <p className="lead" style={{ maxWidth: 800, marginBottom: 40 }}>{e.description}</p>}
 
@@ -83,7 +83,7 @@ export default async function PortfolioDetailPage({ params }) {
         </section>
       )}
 
-      <section className="section" style={{ background: "linear-gradient(120deg,#ff6f00,#e91e63)", color: "#fff", textAlign: "center" }}>
+      <section className="section" style={{ background: "linear-gradient(120deg,#d97706,#6d28d9)", color: "#fff", textAlign: "center" }}>
         <div className="container">
           <h2 className="h2" style={{ color: "#fff" }}>Want an Event Like This?</h2>
           <p className="lead" style={{ color: "#ffe9f0", margin: "0 auto 30px" }}>Tell us your idea — we&apos;ll make it happen.</p>

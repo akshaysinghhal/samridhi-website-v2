@@ -31,7 +31,7 @@ export default function WeddingGrid({ weddings }) {
               )}
               {wd.description && <p>{wd.description}</p>}
               {(wd.gallery || []).length > 0 && (
-                <span className="read" style={{ color: "var(--pink)", fontWeight: 700, fontSize: 14, display: "inline-block", marginTop: 12 }}>
+                <span className="read" style={{ color: "var(--brand)", fontWeight: 700, fontSize: 14, display: "inline-block", marginTop: 12 }}>
                   View {(wd.gallery || []).length + (wd.cover_image ? 1 : 0)} photos →
                 </span>
               )}

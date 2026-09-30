@@ -16,7 +16,7 @@ export default async function ClientsPage() {
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#ff6f00,#7b1fa2)" }}>
+      <section className="hero" style={{ background: "linear-gradient(120deg,#d97706,#7c3aed)" }}>
         <img className="hero-bg" src="/images/fb-performer-big-audience.jpg" alt="Corporate event audience" />
         <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
           <span className="eyebrow" style={{ color: "#ffe082" }}>Clients</span>

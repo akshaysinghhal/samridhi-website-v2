@@ -23,7 +23,7 @@ export default async function ContactPage() {
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#e91e63,#ff6f00)" }}>
+      <section className="hero" style={{ background: "linear-gradient(120deg,#6d28d9,#d97706)" }}>
         <img className="hero-bg" src="/images/ig-guests-celebrating.jpg" alt="Guests celebrating" />
         <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
           <span className="eyebrow" style={{ color: "#ffe082" }}>Contact</span>
@@ -48,17 +48,17 @@ export default async function ContactPage() {
                 <p>{addrC}</p>
                 <p><a href={mapsC} target="_blank" rel="noreferrer">View on Google Maps →</a></p>
               </div>
-              <div className="contact-card" style={{ borderTopColor: "#00acc1" }}>
-                <h4 style={{ color: "#00acc1" }}>Mumbai Office</h4>
+              <div className="contact-card" style={{ borderTopColor: "#0e7490" }}>
+                <h4 style={{ color: "#0e7490" }}>Mumbai Office</h4>
                 <p>{addrM}</p>
                 <p><a href={mapsM} target="_blank" rel="noreferrer">View on Google Maps →</a></p>
               </div>
-              <div className="contact-card" style={{ borderTopColor: "#ff6f00" }}>
-                <h4 style={{ color: "#ff6f00" }}>Call</h4>
+              <div className="contact-card" style={{ borderTopColor: "#d97706" }}>
+                <h4 style={{ color: "#d97706" }}>Call</h4>
                 <p><a href={"tel:" + phone1.replace(/\s/g,)}>{phone1}</a><br /><a href={"tel:" + phone2.replace(/\s/g,)}>{phone2}</a></p>
               </div>
-              <div className="contact-card" style={{ borderTopColor: "#7b1fa2" }}>
-                <h4 style={{ color: "#7b1fa2" }}>Online</h4>
+              <div className="contact-card" style={{ borderTopColor: "#7c3aed" }}>
+                <h4 style={{ color: "#7c3aed" }}>Online</h4>
                 <p><a href={"mailto:" + email}>{email}</a></p>
                 <p>
                   <a href={setting(s, "instagram", "#")} target="_blank" rel="noreferrer">Instagram</a> •{" "}

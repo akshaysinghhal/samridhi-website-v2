@@ -6,9 +6,11 @@ import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, slugif
 // Config-driven admin CRUD: list table + add/edit form.
 // fields: [{key,label,type,required,placeholder,options,rows,hint}]
 // types: text|textarea|number|date|select|check|image|images|list|faq
+// previewFor: (row) => public URL to preview the row (or null to hide)
+// externalRefresh: change this value (e.g. a counter) to trigger a silent list refresh.
 export default function AdminCrud({
   title, sub, endpoint, listKey, columns, fields,
-  defaults = {}, validate, slugFrom, note, addLabel, beforeSave,
+  defaults = {}, validate, slugFrom, note, addLabel, beforeSave, previewFor, externalRefresh,
 }) {
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(true);
@@ -18,13 +20,20 @@ export default function AdminCrud({
   const [okMsg, setOkMsg] = useState("");
   const [uploading, setUploading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [selected, setSelected] = useState(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState("");
+  const [bulkStatus, setBulkStatus] = useState("published");
 
-  const load = async () => {
-    setBusy(true);
+  // silent=true refreshes data without flashing the "Loading…" state.
+  const load = async (silent) => {
+    if (!silent) setBusy(true);
     try { setRows((await api(endpoint))[listKey] || []); } catch { /* ignore */ }
-    setBusy(false);
+    if (!silent) setBusy(false);
   };
   useEffect(() => { load(); }, [endpoint, listKey]);
+  useEffect(() => { if (externalRefresh) load(true); }, [externalRefresh]);
+
+  const hasStatus = rows.some((r) => typeof r.status === "string");
 
   const set = (key, v) => {
     setForm((f) => {
@@ -53,20 +62,86 @@ export default function AdminCrud({
     }
     try {
       const body = beforeSave ? beforeSave({ ...form }) : form;
-      if (editingId) await api(`${endpoint}/${editingId}`, { method: "PUT", body });
-      else await api(endpoint, { method: "POST", body });
+      let saved;
+      if (editingId) {
+        const res = await api(`${endpoint}/${editingId}`, { method: "PUT", body });
+        saved = res.item || res.row || res.post || res.clipping || { ...body, id: editingId };
+        // Update the row in place — no list reload flash.
+        setRows((rs) => rs.map((r) => (r.id === editingId ? { ...r, ...saved } : r)));
+      } else {
+        const res = await api(endpoint, { method: "POST", body });
+        saved = res.item || res.row || res.post || res.clipping || { ...body, id: res.id };
+        setRows((rs) => [saved, ...rs]);
+      }
       await revalidateSite();
       setOkMsg("Saved — live on the website now.");
       setShowForm(false); setEditingId(null); setForm({ ...defaults });
-      load();
     } catch (e) { setMsg("Failed: " + e.message); }
   };
 
   const remove = async (row) => {
     const label = row.title || row.name || row.slug || row.id;
     if (!confirm(`Delete "${label}"? This cannot be undone.`)) return;
-    try { await api(`${endpoint}/${row.id}`, { method: "DELETE" }); await revalidateSite(); load(); }
-    catch (e) { setMsg("Failed: " + e.message); }
+    try {
+      await api(`${endpoint}/${row.id}`, { method: "DELETE" });
+      await revalidateSite();
+      // Remove the row in place — no list reload flash.
+      setRows((rs) => rs.filter((r) => r.id !== row.id));
+      setSelected((s) => { const n = new Set(s); n.delete(row.id); return n; });
+    } catch (e) { setMsg("Failed: " + e.message); }
+  };
+
+  // --- bulk selection -------------------------------------------------------
+  const allIds = rows.map((r) => r.id);
+  const allChecked = allIds.length > 0 && allIds.every((id) => selected.has(id));
+  const toggleAll = () => {
+    setSelected(allChecked ? new Set() : new Set(allIds));
+  };
+  const toggleOne = (id) => {
+    setSelected((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  };
+
+  const bulkSetStatus = async () => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    setBulkBusy(`Updating 0/${ids.length}…`); setMsg("");
+    let done = 0, failed = 0;
+    for (const id of ids) {
+      try {
+        await api(`${endpoint}/${id}`, { method: "PUT", body: { status: bulkStatus } });
+        done++;
+      } catch { failed++; }
+      setBulkBusy(`Updating ${done + failed}/${ids.length}…`);
+    }
+    // Patch statuses in place — no list reload flash.
+    setRows((rs) => rs.map((r) => (selected.has(r.id) ? { ...r, status: bulkStatus } : r)));
+    setSelected(new Set());
+    setBulkBusy("");
+    await revalidateSite();
+    setOkMsg(failed ? `Updated ${done}, failed ${failed}.` : `Updated ${done} item${done > 1 ? "s" : ""} to ${bulkStatus}.`);
+  };
+
+  const bulkDelete = async () => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    if (!confirm(`Delete ${ids.length} selected item${ids.length > 1 ? "s" : ""}? This cannot be undone.`)) return;
+    setBulkBusy(`Deleting 0/${ids.length}…`); setMsg("");
+    let done = 0, failed = 0;
+    for (const id of ids) {
+      try { await api(`${endpoint}/${id}`, { method: "DELETE" }); done++; }
+      catch { failed++; }
+      setBulkBusy(`Deleting ${done + failed}/${ids.length}…`);
+    }
+    const gone = new Set(ids);
+    setRows((rs) => rs.filter((r) => !gone.has(r.id)));
+    setSelected(new Set());
+    setBulkBusy("");
+    await revalidateSite();
+    setOkMsg(failed ? `Deleted ${done}, failed ${failed}.` : `Deleted ${done} item${done > 1 ? "s" : ""}.`);
   };
 
   const onFile = async (e, key, multi) => {
@@ -132,7 +207,7 @@ export default function AdminCrud({
         const arr = Array.isArray(v) ? v : [];
         return <div className="field" key={f.key}><label>{f.label}</label>
           {arr.map((qa, i) => (
-            <div key={i} style={{ border: "1.5px solid #ecd9e4", borderRadius: 10, padding: 12, marginBottom: 10 }}>
+            <div key={i} style={{ border: "1.5px solid #e6dcf3", borderRadius: 10, padding: 12, marginBottom: 10 }}>
               <input value={qa.q || ""} onChange={(e) => { const n = [...arr]; n[i] = { ...n[i], q: e.target.value }; set(f.key, n); }} placeholder="Question" style={{ width: "100%", marginBottom: 8 }} />
               <textarea rows={2} value={qa.a || ""} onChange={(e) => { const n = [...arr]; n[i] = { ...n[i], a: e.target.value }; set(f.key, n); }} placeholder="Answer" style={{ width: "100%" }} />
               <button type="button" className="btn-sm btn-del" style={{ marginTop: 8 }} onClick={() => set(f.key, arr.filter((_, j) => j !== i))}>Remove</button>
@@ -154,6 +229,10 @@ export default function AdminCrud({
     if (typeof v === "boolean") return v ? "Yes" : "No";
     if (Array.isArray(v)) return v.length;
     return v ?? "—";
+  };
+
+  const previewUrl = (row) => {
+    try { return previewFor ? previewFor(row) : null; } catch { return null; }
   };
 
   return (
@@ -181,19 +260,44 @@ export default function AdminCrud({
         </div>
       )}
 
+      {selected.size > 0 && (
+        <div className="bulk-bar">
+          <strong>{selected.size} selected</strong>
+          {hasStatus && (
+            <>
+              <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)} aria-label="Bulk status">
+                {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
+              </select>
+              <button className="btn-sm btn-edit" disabled={!!bulkBusy} onClick={bulkSetStatus}>Apply status</button>
+            </>
+          )}
+          <button className="btn-sm btn-del" disabled={!!bulkBusy} onClick={bulkDelete}>Delete selected</button>
+          <button className="btn-sm" disabled={!!bulkBusy} onClick={() => setSelected(new Set())} style={{ background: "#eee", color: "#555" }}>Clear</button>
+          {bulkBusy && <span className="seo-hint" style={{ margin: 0 }}>{bulkBusy}</span>}
+        </div>
+      )}
+
       {busy ? <p>Loading…</p> : rows.length === 0 ? <p style={{ color: "#7a6a7c" }}>Nothing here yet.</p> : (
         <table className="admin-table">
-          <thead><tr>{columns.map((c) => <th key={c.key}>{c.label}</th>)}<th></th></tr></thead>
+          <thead><tr>
+            <th style={{ width: 40 }}><input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label="Select all" style={{ width: 17, height: 17, accentColor: "var(--brand)" }} /></th>
+            {columns.map((c) => <th key={c.key}>{c.label}</th>)}<th></th>
+          </tr></thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                {columns.map((c) => <td key={c.key}>{cell(row, c)}</td>)}
-                <td><div className="row-actions">
-                  <button className="btn-sm btn-edit" onClick={() => startEdit(row)}>Edit</button>
-                  <button className="btn-sm btn-del" onClick={() => remove(row)}>Delete</button>
-                </div></td>
-              </tr>
-            ))}
+            {rows.map((row) => {
+              const url = previewUrl(row);
+              return (
+                <tr key={row.id} className={selected.has(row.id) ? "row-selected" : ""}>
+                  <td><input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleOne(row.id)} aria-label={`Select ${row.title || row.name || row.slug || row.id}`} style={{ width: 17, height: 17, accentColor: "var(--brand)" }} /></td>
+                  {columns.map((c) => <td key={c.key}>{cell(row, c)}</td>)}
+                  <td><div className="row-actions">
+                    {url && <a className="btn-sm btn-view" href={url} target="_blank" rel="noreferrer">Preview</a>}
+                    <button className="btn-sm btn-edit" onClick={() => startEdit(row)}>Edit</button>
+                    <button className="btn-sm btn-del" onClick={() => remove(row)}>Delete</button>
+                  </div></td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

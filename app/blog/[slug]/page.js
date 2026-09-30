@@ -3,6 +3,7 @@ import SiteHeader from "../../../components/SiteHeader";
 import SiteFooter from "../../../components/SiteFooter";
 import { supabasePublic } from "../../../lib/supabaseServer";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 
 export const revalidate = 60;
 
@@ -16,10 +17,19 @@ export async function generateStaticParams() {
   }
 }
 
+// When the sb_preview cookie is present (set by the authenticated
+// /api/admin/preview endpoint), drafts are visible too so unpublished posts
+// can be previewed by admins.
+function previewing() {
+  try { return cookies().get("sb_preview")?.value === "1"; } catch { return false; }
+}
+
 async function getPost(slug) {
   try {
     const sb = supabasePublic();
-    const { data, error } = await sb.from("posts").select("*").eq("slug", slug).eq("status", "published").single();
+    let q = sb.from("posts").select("*").eq("slug", slug);
+    if (!previewing()) q = q.eq("status", "published");
+    const { data, error } = await q.single();
     if (error) return null;
     return data;
   } catch {
@@ -55,9 +65,15 @@ export default async function BlogPost({ params }) {
   const post = await getPost(params.slug);
   if (!post) notFound();
   const yt = youTubeId(post.video_url);
+  const isPreview = previewing() && post.status !== "published";
 
   return (
     <>
+      {isPreview && (
+        <div style={{ background: "#fff3e0", color: "#8a4b00", textAlign: "center", padding: "10px 16px", fontSize: 14, fontWeight: 700, borderBottom: "2px solid #f59e0b" }}>
+          Preview mode — this post is a <b>{post.status}</b> draft and is not visible to the public.
+        </div>
+      )}
       <SiteHeader />
       <div className="article-hero">
         {post.cover_image && <img src={post.cover_image} alt={post.title} />}

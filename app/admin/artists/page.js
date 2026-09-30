@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, slugify, PhBadge, StatusBadge, STATUS_OPTIONS } from "../_lib/ui";
+import { revalidateSite, uploadOne, slugify, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell } from "../_lib/ui";
 
 const EMPTY = {
   name: "", slug: "", category: "", bio: "", image_url: "", videos: [],
@@ -44,23 +44,31 @@ export default function ArtistsAdmin() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const bulk = useBulk({ rows, patchRows: setRows, endpoint: "/api/admin/artists" });
+
   const save = async () => {
     setMsg(""); setOkMsg("");
     if (!form.name.trim()) { setMsg("Name is required."); return; }
     try {
       const body = { ...form, slug: form.slug || null };
-      if (editingId) await api(`/api/admin/artists/${editingId}`, { method: "PUT", body });
-      else await api("/api/admin/artists", { method: "POST", body });
+      if (editingId) {
+        await api(`/api/admin/artists/${editingId}`, { method: "PUT", body });
+        setRows((rs) => rs.map((r) => (r.id === editingId ? { ...r, ...body } : r)));
+      } else {
+        const res = await api("/api/admin/artists", { method: "POST", body });
+        setRows((rs) => [{ ...(res.artist || {}), ...body, id: (res.artist || {}).id || res.id }, ...rs]);
+      }
       await revalidateSite();
       setOkMsg("Saved — live on the website now.");
-      setShowForm(false); setEditingId(null); setForm({ ...EMPTY }); load();
+      setShowForm(false); setEditingId(null); setForm({ ...EMPTY });
     } catch (e) { setMsg("Failed: " + e.message); }
   };
 
   const remove = async (r) => {
     if (!confirm(`Remove "${r.name}"?`)) return;
     await api(`/api/admin/artists/${r.id}`, { method: "DELETE" });
-    await revalidateSite(); load();
+    await revalidateSite();
+    setRows((rs) => rs.filter((x) => x.id !== r.id));
   };
 
   const setVideo = (i, k, v) => {
@@ -142,12 +150,14 @@ export default function ArtistsAdmin() {
         </div>
       )}
 
+      {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
       {busy ? <p>Loading…</p> : (
         <table className="admin-table">
-          <thead><tr><th>Artist</th><th>Category</th><th>Status</th><th>Flag</th><th></th></tr></thead>
+          <thead><tr><th style={{ width: 40 }}><CheckCell checked={bulk.allChecked} onChange={bulk.toggleAll} label="Select all artists" /></th><th>Artist</th><th>Category</th><th>Status</th><th>Flag</th><th></th></tr></thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id}>
+              <tr key={r.id} className={bulk.selected.has(r.id) ? "row-selected" : ""}>
+                <td><CheckCell checked={bulk.selected.has(r.id)} onChange={() => bulk.toggleOne(r.id)} label={`Select ${r.name}`} /></td>
                 <td><span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
                   {r.image_url && <img src={r.image_url} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: "50%" }} />}
                   <b>{r.name}</b>{r.featured && <span className="badge pub">★</span>}
@@ -156,6 +166,7 @@ export default function ArtistsAdmin() {
                 <td><StatusBadge status={r.status} /></td>
                 <td>{r.is_placeholder ? <PhBadge /> : "—"}</td>
                 <td><div className="row-actions">
+                  {r.slug && <a className="btn-sm btn-view" href={`/artists/${r.slug}`} target="_blank" rel="noreferrer">Preview</a>}
                   <button className="btn-sm btn-edit" onClick={() => startEdit(r)}>Edit</button>
                   <button className="btn-sm btn-del" onClick={() => remove(r)}>Delete</button>
                 </div></td>

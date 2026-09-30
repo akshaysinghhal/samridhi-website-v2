@@ -8,6 +8,7 @@ import "./admin.css";
 
 export default function AdminLayout({ children }) {
   const [ready, setReady] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   const path = usePathname();
   const isLogin = path === "/admin/login";
@@ -35,6 +36,19 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="admin-shell">
+      <div className="admin-mobilebar">
+        <img src="/images/logo.png" alt="Samridhi" />
+        <span className="mtitle">Admin</span>
+        <button onClick={() => setMenuOpen((o) => !o)} aria-label="Toggle menu">{menuOpen ? "✕" : "☰"}</button>
+      </div>
+      {menuOpen && (
+        <nav className="admin-mobilenav">
+          {ADMIN_NAV.map(([icon, label, href]) => (
+            <Link key={href} href={href} className={path === href ? "active" : ""} onClick={() => setMenuOpen(false)}>{icon} {label}</Link>
+          ))}
+          <a href="#" className="logout" onClick={(e) => { e.preventDefault(); setMenuOpen(false); logout(); }}>🚪 Sign Out</a>
+        </nav>
+      )}
       <aside className="admin-side">
         <img src="/images/logo.png" alt="Samridhi" />
         {ADMIN_NAV.map(([icon, label, href]) => (

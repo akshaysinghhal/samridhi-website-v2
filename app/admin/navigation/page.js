@@ -8,6 +8,7 @@ export default function NavigationAdmin() {
       sub="Header and footer menu links. The 'Request a Quote' button in the header is fixed; everything else is editable here."
       endpoint="/api/admin/nav-items"
       listKey="items"
+        previewFor={() => `/`}
       addLabel="Add Link"
       columns={[
         { key: "label", label: "Label" },

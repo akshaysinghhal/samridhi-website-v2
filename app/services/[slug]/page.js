@@ -42,7 +42,7 @@ export default async function ServiceDetailPage({ params }) {
     <>
       <SiteHeader />
 
-      <section className="hero" style={{ background: "linear-gradient(120deg,#c2185b,#ff6f00)" }}>
+      <section className="hero" style={{ background: "linear-gradient(120deg,#4c1d95,#d97706)" }}>
         {sv.hero_image && <img className="hero-bg" src={sv.hero_image} alt={sv.title} />}
         <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
           <span className="eyebrow" style={{ color: "#ffe082" }}>Services</span>
@@ -131,7 +131,7 @@ export default async function ServiceDetailPage({ params }) {
         </section>
       )}
 
-      <section className="section" style={{ background: "linear-gradient(120deg,#ff6f00,#e91e63)", color: "#fff", textAlign: "center" }}>
+      <section className="section" style={{ background: "linear-gradient(120deg,#d97706,#6d28d9)", color: "#fff", textAlign: "center" }}>
         <div className="container">
           <h2 className="h2" style={{ color: "#fff" }}>Planning {sv.title}?</h2>
           <p className="lead" style={{ color: "#ffe9f0", margin: "0 auto 30px" }}>Tell us your date and city — we&apos;ll take it from there.</p>

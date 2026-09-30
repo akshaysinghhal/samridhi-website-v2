@@ -32,7 +32,7 @@ export default async function ArtistsPage() {
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#4a1d5e,#c2185b)" }}>
+      <section className="hero" style={{ background: "linear-gradient(120deg,#4a1d5e,#4c1d95)" }}>
         <img className="hero-bg" src="/images/diwali-live-musical.jpg" alt="Live musical night" />
         <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
           <span className="eyebrow" style={{ color: "#ffe082" }}>{c(map, "artists", "hero", "eyebrow")}</span>
@@ -68,7 +68,7 @@ export default async function ArtistsPage() {
         </div>
       </section>
 
-      <section className="section" style={{ background: "linear-gradient(120deg,#7b1fa2,#e91e63)", color: "#fff", textAlign: "center" }}>
+      <section className="section" style={{ background: "linear-gradient(120deg,#7c3aed,#6d28d9)", color: "#fff", textAlign: "center" }}>
         <div className="container">
           <h2 className="h2" style={{ color: "#fff" }}>{c(map, "artists", "cta", "title")}</h2>
           <p className="lead" style={{ color: "#f3e3f7", margin: "0 auto 30px" }}>{c(map, "artists", "cta", "subtitle")}</p>

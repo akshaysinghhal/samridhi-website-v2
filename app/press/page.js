@@ -22,7 +22,7 @@ export default async function PressPage() {
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#5e35b1,#0097a7)" }}>
+      <section className="hero" style={{ background: "linear-gradient(120deg,#7c3aed,#0097a7)" }}>
         <img className="hero-bg" src="/images/press-rajasthan-diwas.jpg" alt="Press coverage" />
         <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
           <span className="eyebrow" style={{ color: "#ffe082" }}>Press</span>

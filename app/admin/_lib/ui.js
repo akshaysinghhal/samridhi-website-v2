@@ -1,6 +1,19 @@
 "use client";
 
-// Shared client helpers for admin pages.
+import { useState } from "react";
+import { api } from "../../../lib/adminApi";
+
+// Authenticated draft preview: the endpoint verifies the admin session
+// server-side, sets a short-lived preview cookie, and returns the public URL.
+// The cookie is stored from the fetch response, so the new tab carries it.
+export async function openPreview(slug, setMsg) {
+  try {
+    const { url } = await api(`/api/admin/preview?slug=${encodeURIComponent(slug)}`);
+    window.open(url, "_blank", "noopener");
+  } catch (e) {
+    if (setMsg) setMsg("Preview failed: " + e.message);
+  }
+}
 
 export function slugify(s) {
   return String(s || "")
@@ -10,16 +23,13 @@ export function slugify(s) {
     .slice(0, 80);
 }
 
-// Best-effort on-demand revalidation after a save. The server also revalidates
-// in the API route itself; this is a second trigger. Requires
-// NEXT_PUBLIC_REVALIDATE_SECRET to match the server's REVALIDATE_SECRET.
+// Best-effort on-demand revalidation after a save. Goes through the
+// authenticated /api/admin/revalidate endpoint, so the browser never sees
+// the REVALIDATE_SECRET. The server API routes also revalidate on write;
+// this is a second trigger from the UI.
 export async function revalidateSite(paths = ["/"]) {
   try {
-    await fetch("/api/revalidate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ secret: process.env.NEXT_PUBLIC_REVALIDATE_SECRET || "dev", paths }),
-    });
+    await api("/api/admin/revalidate", { method: "POST", body: { paths } });
   } catch { /* ignore */ }
 }
 
@@ -48,3 +58,97 @@ export async function uploadOne(file, setUploading, setMsg) {
 }
 
 export const STATUS_OPTIONS = ["draft", "published", "scheduled"];
+
+// --- bulk selection + bulk actions ------------------------------------------
+// Shared multi-select for custom admin list pages.
+// rows: current row array; patchRows: (updater) => void (usually setRows);
+// endpoint: e.g. "/api/admin/posts". Override updateOne/deleteOne when the
+// API doesn't follow the RESTful `${endpoint}/${id}` convention.
+export function useBulk({ rows, patchRows, endpoint, statusField = "status", updateOne, deleteOne }) {
+  const [selected, setSelected] = useState(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState("");
+  const [bulkStatus, setBulkStatus] = useState("published");
+
+  const doUpdate = updateOne || ((id, body) => api(`${endpoint}/${id}`, { method: "PUT", body }));
+  const doDelete = deleteOne || ((id) => api(`${endpoint}/${id}`, { method: "DELETE" }));
+
+  const ids = rows.map((r) => r.id);
+  const allChecked = ids.length > 0 && ids.every((id) => selected.has(id));
+  const hasStatus = rows.some((r) => typeof r[statusField] === "string");
+
+  const toggleAll = () => setSelected(allChecked ? new Set() : new Set(ids));
+  const toggleOne = (id) =>
+    setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const clear = () => setSelected(new Set());
+
+  const bulkSetStatus = async () => {
+    const list = [...selected];
+    if (!list.length) return;
+    setBulkBusy(`Updating 0/${list.length}…`);
+    let done = 0, failed = 0;
+    for (const id of list) {
+      try { await doUpdate(id, { [statusField]: bulkStatus }); done++; }
+      catch { failed++; }
+      setBulkBusy(`Updating ${done + failed}/${list.length}…`);
+    }
+    patchRows((rs) => rs.map((r) => (selected.has(r.id) ? { ...r, [statusField]: bulkStatus } : r)));
+    clear(); setBulkBusy("");
+    return { done, failed };
+  };
+
+  const bulkDelete = async () => {
+    const list = [...selected];
+    if (!list.length) return { done: 0, failed: 0 };
+    if (!confirm(`Delete ${list.length} selected item${list.length > 1 ? "s" : ""}? This cannot be undone.`)) return null;
+    setBulkBusy(`Deleting 0/${list.length}…`);
+    let done = 0, failed = 0;
+    for (const id of list) {
+      try { await doDelete(id); done++; }
+      catch { failed++; }
+      setBulkBusy(`Deleting ${done + failed}/${list.length}…`);
+    }
+    const gone = new Set(list);
+    patchRows((rs) => rs.filter((r) => !gone.has(r.id)));
+    clear(); setBulkBusy("");
+    return { done, failed };
+  };
+
+  return {
+    selected, allChecked, hasStatus, bulkBusy, bulkStatus, setBulkStatus,
+    toggleAll, toggleOne, clear, bulkSetStatus, bulkDelete,
+  };
+}
+
+// Sticky bulk-action bar. Render above the table when bulk.selected.size > 0.
+export function BulkBar({ bulk, onDone }) {
+  const [note, setNote] = useState("");
+  const finish = async (fn, verb) => {
+    setNote("");
+    const res = await fn();
+    if (!res) return;
+    if (onDone) onDone();
+    setNote(res.failed ? `${verb}: ${res.done} ok, ${res.failed} failed.` : `${verb}: ${res.done} done.`);
+  };
+  return (
+    <div className="bulk-bar">
+      <strong>{bulk.selected.size} selected</strong>
+      {bulk.hasStatus && (
+        <>
+          <select value={bulk.bulkStatus} onChange={(e) => bulk.setBulkStatus(e.target.value)} aria-label="Bulk status">
+            {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
+          </select>
+          <button className="btn-sm btn-edit" disabled={!!bulk.bulkBusy} onClick={() => finish(bulk.bulkSetStatus, "Status updated")}>Apply status</button>
+        </>
+      )}
+      <button className="btn-sm btn-del" disabled={!!bulk.bulkBusy} onClick={() => finish(bulk.bulkDelete, "Deleted")}>Delete selected</button>
+      <button className="btn-sm" disabled={!!bulk.bulkBusy} onClick={bulk.clear} style={{ background: "#eee", color: "#555" }}>Clear</button>
+      {bulk.bulkBusy && <span className="seo-hint" style={{ margin: 0 }}>{bulk.bulkBusy}</span>}
+      {note && <span className="seo-hint" style={{ margin: 0 }}>{note}</span>}
+    </div>
+  );
+}
+
+// Checkbox cell + header shared by custom list tables.
+export function CheckCell({ checked, onChange, label }) {
+  return <input type="checkbox" checked={checked} onChange={onChange} aria-label={label || "Select row"} style={{ width: 17, height: 17, accentColor: "var(--brand)" }} />;
+}

@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { api, uploadFile } from "../../../../lib/adminApi";
+import { openPreview } from "../../_lib/ui";
 
 const empty = {
   title: "", slug: "", excerpt: "", content: "",
@@ -149,7 +150,17 @@ export default function PostEditor() {
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <button className="btn btn-dark" disabled={busy} onClick={() => save("draft")}>{busy ? "Saving…" : "Save as Draft"}</button>
           <button className="btn btn-primary" disabled={busy} onClick={() => save("published")}>{busy ? "Saving…" : "🚀 Publish"}</button>
+          {!isNew && f.slug && (
+            <button
+              className="btn btn-outline-dark"
+              style={{ border: "2px solid var(--brand)", color: "var(--brand-dark)", background: "#fff" }}
+              onClick={() => openPreview(f.slug, setMsg)}
+            >
+              👁 Preview
+            </button>
+          )}
         </div>
+        {isNew && <div className="seo-hint" style={{ marginTop: 10 }}>Save the post first — preview becomes available after the first save.</div>}
       </div>
     </>
   );

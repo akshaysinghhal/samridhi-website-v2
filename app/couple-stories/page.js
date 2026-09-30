@@ -34,7 +34,7 @@ export default async function CoupleStoriesPage() {
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#c2185b,#ff6f00)" }}>
+      <section className="hero" style={{ background: "linear-gradient(120deg,#4c1d95,#d97706)" }}>
         <img className="hero-bg" src="/images/ig-couple-portrait.jpg" alt="Wedding couple" />
         <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
           <span className="eyebrow" style={{ color: "#ffe082" }}>Couple Stories</span>

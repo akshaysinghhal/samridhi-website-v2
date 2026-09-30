@@ -12,10 +12,10 @@ import {
 export const revalidate = 60;
 
 const GRADS = [
-  "linear-gradient(135deg,#7b1fa2,#e91e63)",
-  "linear-gradient(135deg,#e91e63,#ff6f00)",
-  "linear-gradient(135deg,#00acc1,#5e35b1)",
-  "linear-gradient(135deg,#ff6f00,#ffc107)",
+  "linear-gradient(135deg,#7c3aed,#6d28d9)",
+  "linear-gradient(135deg,#6d28d9,#d97706)",
+  "linear-gradient(135deg,#0e7490,#7c3aed)",
+  "linear-gradient(135deg,#d97706,#ffc107)",
 ];
 
 const FALLBACK_STATS = [
@@ -188,7 +188,7 @@ export default async function Home() {
       <section className="section steps-band">
         <div className="container">
           <div className="center">
-            <span className="eyebrow" style={{ color: "#ff6f00" }}>{c(map, "home", "steps", "eyebrow")}</span>
+            <span className="eyebrow" style={{ color: "#d97706" }}>{c(map, "home", "steps", "eyebrow")}</span>
             <h2 className="h2">{c(map, "home", "steps", "title")}</h2>
             <p className="lead">{c(map, "home", "steps", "subtitle")}</p>
           </div>
@@ -305,16 +305,16 @@ export default async function Home() {
       <section className="section" id="contact" style={{ background: "linear-gradient(135deg,#fff5f8,#fff9f3)" }}>
         <div className="container">
           <div className="center">
-            <span className="eyebrow" style={{ color: "#ff6f00" }}>Get in Touch</span>
+            <span className="eyebrow" style={{ color: "#d97706" }}>Get in Touch</span>
             <h2 className="h2">{c(map, "home", "cta", "title")}</h2>
             <p className="lead">{c(map, "home", "cta", "subtitle")}</p>
           </div>
           <div className="contact-grid">
             <div className="contact-cards">
               <div className="contact-card"><h4>Call Us</h4><p><a href={"tel:" + String(setting(s, "phone1", "+91 96022 28846")).replace(/\s/g,)}>{setting(s, "phone1", "+91 96022 28846")}</a> • <a href={"tel:" + String(setting(s, "phone2", "+91 77372 89938")).replace(/\s/g,)}>{setting(s, "phone2", "+91 77372 89938")}</a></p></div>
-              <div className="contact-card" style={{ borderTopColor: "#00acc1" }}><h4 style={{ color: "#00acc1" }}>Email</h4><p><a href={"mailto:" + setting(s, "email", "samridhifilms@yahoo.co.in")}>{setting(s, "email", "samridhifilms@yahoo.co.in")}</a></p></div>
-              <div className="contact-card" style={{ borderTopColor: "#ff6f00" }}><h4 style={{ color: "#ff6f00" }}>Visit</h4><p>{setting(s, "address_chittorgarh", "")}</p></div>
-              <div className="contact-card" style={{ borderTopColor: "#7b1fa2" }}><h4 style={{ color: "#7b1fa2" }}>Follow</h4><p><a href={setting(s, "instagram", "#")} target="_blank" rel="noreferrer">Instagram</a> • <a href={setting(s, "facebook", "#")} target="_blank" rel="noreferrer">Facebook</a> • <a href={setting(s, "youtube", "#")} target="_blank" rel="noreferrer">YouTube</a></p></div>
+              <div className="contact-card" style={{ borderTopColor: "#0e7490" }}><h4 style={{ color: "#0e7490" }}>Email</h4><p><a href={"mailto:" + setting(s, "email", "samridhifilms@yahoo.co.in")}>{setting(s, "email", "samridhifilms@yahoo.co.in")}</a></p></div>
+              <div className="contact-card" style={{ borderTopColor: "#d97706" }}><h4 style={{ color: "#d97706" }}>Visit</h4><p>{setting(s, "address_chittorgarh", "")}</p></div>
+              <div className="contact-card" style={{ borderTopColor: "#7c3aed" }}><h4 style={{ color: "#7c3aed" }}>Follow</h4><p><a href={setting(s, "instagram", "#")} target="_blank" rel="noreferrer">Instagram</a> • <a href={setting(s, "facebook", "#")} target="_blank" rel="noreferrer">Facebook</a> • <a href={setting(s, "youtube", "#")} target="_blank" rel="noreferrer">YouTube</a></p></div>
             </div>
             <LeadForm type="quote" compact />
           </div>

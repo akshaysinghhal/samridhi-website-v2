@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { api, uploadFile } from "../../../lib/adminApi";
 import { ytThumb } from "../../../lib/video";
-import { revalidateSite, PhBadge, StatusBadge, STATUS_OPTIONS } from "../_lib/ui";
+import { revalidateSite, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell } from "../_lib/ui";
 
 const CATEGORIES = ["Events", "Weddings", "Corporate", "Celebrity Shows", "Cultural", "Press", "Highlight Videos", "Other"];
 
@@ -26,6 +26,19 @@ export default function GalleryAdmin() {
   const photos = items.filter((i) => i.kind === "photo");
   const videos = items.filter((i) => i.kind === "video");
 
+  const bulk = useBulk({
+    rows: items,
+    patchRows: setItems,
+    endpoint: "/api/admin/gallery-items",
+    updateOne: (id, body) => api("/api/admin/gallery-items", { method: "PUT", body: { id, ...body } }),
+    deleteOne: (id) => api(`/api/admin/gallery-items?id=${id}`, { method: "DELETE" }),
+  });
+
+  const refresh = async (silent) => {
+    try { setItems((await api("/api/admin/gallery-items")).items); } catch { /* ignore */ }
+    if (!silent) setBusy(false);
+  };
+
   const update = (id, patch) => setItems((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)));
 
   const addPhotos = async (e) => {
@@ -36,7 +49,7 @@ export default function GalleryAdmin() {
         await api("/api/admin/gallery-items", { method: "POST", body: { kind: "photo", title: file.name.replace(/\.[^.]+$/, ""), image_url: m.url, category: "Events", status: "published" } });
       } catch (err) { setMsg("Upload failed: " + err.message); }
     }
-    setUploading(false); e.target.value = ""; await revalidateSite(); load();
+    setUploading(false); e.target.value = ""; await revalidateSite(); refresh();
   };
 
   const addYouTube = async () => {
@@ -47,7 +60,7 @@ export default function GalleryAdmin() {
         method: "POST",
         body: { kind: "video", title: ytTitle || "Event video", video_url: ytUrl.trim(), image_url: ytThumb(ytUrl.trim()), category: "Events", status: "published" },
       });
-      setYtTitle(""); setYtUrl(""); await revalidateSite(); load();
+      setYtTitle(""); setYtUrl(""); await revalidateSite(); refresh();
     } catch (err) { setMsg("Failed: " + err.message); }
   };
 
@@ -59,7 +72,7 @@ export default function GalleryAdmin() {
         await api("/api/admin/gallery-items", { method: "POST", body: { kind: "video", title: file.name.replace(/\.[^.]+$/, ""), video_url: m.url, image_url: "", category: "Events", status: "published" } });
       } catch (err) { setMsg("Upload failed: " + err.message); }
     }
-    setUploading(false); e.target.value = ""; await revalidateSite(); load();
+    setUploading(false); e.target.value = ""; await revalidateSite(); refresh();
   };
 
   const saveItem = async (item) => {
@@ -68,18 +81,23 @@ export default function GalleryAdmin() {
         method: "PUT",
         body: { id: item.id, title: item.title, caption: item.caption || "", category: item.category || "Events", status: item.status || "published", is_placeholder: !!item.is_placeholder, sort: item.sort || 0 },
       });
-      setEditing(null); await revalidateSite(); load();
+      // The card already holds the edited values — just close the editor, no reload flash.
+      setEditing(null); await revalidateSite();
     } catch (e) { setMsg("Failed: " + e.message); }
   };
 
   const remove = async (id) => {
     if (!confirm("Delete this item from the gallery?")) return;
     await api(`/api/admin/gallery-items?id=${id}`, { method: "DELETE" });
-    await revalidateSite(); load();
+    await revalidateSite();
+    setItems((xs) => xs.filter((x) => x.id !== id));
   };
 
   const card = (item) => (
-    <div className="media-item" key={item.id}>
+    <div className="media-item" key={item.id} style={bulk.selected.has(item.id) ? { outline: "3px solid var(--brand)" } : undefined}>
+      <div style={{ position: "absolute", top: 8, right: 8, zIndex: 2, background: "rgba(255,255,255,0.92)", borderRadius: 8, padding: 4 }}>
+        <CheckCell checked={bulk.selected.has(item.id)} onChange={() => bulk.toggleOne(item.id)} label={`Select ${item.title}`} />
+      </div>
       {item.kind === "photo"
         ? <img src={item.image_url} alt={item.title} loading="lazy" />
         : (item.image_url ? <img src={item.image_url} alt={item.title} loading="lazy" /> : <video src={item.video_url} preload="metadata" muted />)}
@@ -111,11 +129,12 @@ export default function GalleryAdmin() {
             </label>
             <div style={{ display: "flex", gap: 8 }}>
               <button className="btn-sm btn-new" onClick={() => saveItem(item)}>Save</button>
-              <button className="btn-sm btn-edit" onClick={() => { setEditing(null); load(); }}>Cancel</button>
+              <button className="btn-sm btn-edit" onClick={() => { setEditing(null); refresh(); }}>Cancel</button>
             </div>
           </div>
         ) : (
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+            <a className="btn-sm btn-view" href="/gallery" target="_blank" rel="noreferrer">Preview</a>
             <button className="btn-sm btn-edit" onClick={() => setEditing(item.id)}>Details</button>
             <button className="btn-sm btn-del" onClick={() => remove(item.id)}>Delete</button>
           </div>
@@ -129,6 +148,8 @@ export default function GalleryAdmin() {
       <h1>Gallery</h1>
       <p className="admin-sub">Photos and videos shown in the homepage Gallery tabs. Use <b>Details</b> to set category, caption, status and placeholder flags.</p>
       {msg && <div className="login-err" style={{ marginBottom: 16 }}>{msg}</div>}
+
+      {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
 
       <div className="tabs" style={{ justifyContent: "flex-start", margin: "0 0 20px" }}>
         <button className={`tab-btn ${tab === "photos" ? "active" : ""}`} onClick={() => setTab("photos")}>📷 Photos ({photos.length})</button>

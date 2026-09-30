@@ -39,7 +39,7 @@ export default async function LandingPage({ params }) {
     <>
       <SiteHeader />
 
-      <section className="hero" style={{ background: "linear-gradient(120deg,#7b1fa2,#e91e63)" }}>
+      <section className="hero" style={{ background: "linear-gradient(120deg,#7c3aed,#6d28d9)" }}>
         {page.hero_image && <img className="hero-bg" src={page.hero_image} alt={page.h1} />}
         <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
           <span className="eyebrow" style={{ color: "#ffe082" }}>Samridhi Films &amp; Television</span>
@@ -83,7 +83,7 @@ export default async function LandingPage({ params }) {
         </section>
       )}
 
-      <section className="section" style={{ background: "linear-gradient(120deg,#ff6f00,#e91e63)", color: "#fff", textAlign: "center" }}>
+      <section className="section" style={{ background: "linear-gradient(120deg,#d97706,#6d28d9)", color: "#fff", textAlign: "center" }}>
         <div className="container">
           <h2 className="h2" style={{ color: "#fff" }}>Ready to Plan?</h2>
           <p className="lead" style={{ color: "#ffe9f0", margin: "0 auto 30px" }}>One team, every celebration.</p>

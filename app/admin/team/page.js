@@ -8,6 +8,7 @@ export default function TeamAdmin() {
       sub="Leadership and team members shown on the About / Team section."
       endpoint="/api/admin/team-members"
       listKey="members"
+        previewFor={() => `/about`}
       addLabel="Add Member"
       columns={[
         { key: "name", label: "Name", render: (r) => (<span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>{r.photo_url && <img src={r.photo_url} alt="" style={{ width: 40, height: 40, objectFit: "cover", borderRadius: "50%" }} />}<b>{r.name}</b></span>) },

@@ -53,7 +53,6 @@ Stack: **Next.js 14 (App Router, JavaScript)** · **Supabase** (Postgres + Auth)
 | `CLOUDINARY_API_KEY` | same as v1 project |
 | `CLOUDINARY_API_SECRET` | same as v1 project |
 | `REVALIDATE_SECRET` | new random string |
-| `NEXT_PUBLIC_REVALIDATE_SECRET` | same value as above |
 | `TURNSTILE_SECRET_KEY` / `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | optional — bot protection |
 | `RESEND_API_KEY` / `LEAD_NOTIFY_EMAIL` | optional — lead email alerts |
 

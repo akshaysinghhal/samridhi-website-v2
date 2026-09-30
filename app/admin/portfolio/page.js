@@ -10,6 +10,7 @@ export default function PortfolioAdmin() {
       sub="Event portfolio entries. Verify details against the event poster before publishing."
       endpoint="/api/admin/events"
       listKey="events"
+        previewFor={(r) => r.slug ? `/portfolio/${r.slug}` : null}
       slugFrom="title"
       addLabel="Add Event"
       columns={[

@@ -25,6 +25,6 @@ Last updated: September 30, 2026. Owner: Akshay to confirm with the client.
 
 ## ⚙️ Environment / handover notes
 
-- `NEXT_PUBLIC_REVALIDATE_SECRET` must be set in Vercel (and match the server's `REVALIDATE_SECRET`) for the admin's client-side revalidate call to take effect. Server-side revalidation already runs inside the admin API routes, so saves go live even without it.
+- Admin preview & revalidation now use authenticated `/api/admin/*` endpoints — no `NEXT_PUBLIC_*` secret copy is needed in Vercel. (If the variable exists from an older deploy, it can be removed.)
 - Run `supabase/migration-003.sql` once in the Supabase SQL Editor (after `schema.sql` and `migration-002.sql`) before using the new modules.
 - Scripts: `scripts/import-press-from-pdf.js` (needs poppler + Cloudinary/Supabase env) and `scripts/import-instagram-media.js` (drop files in `~/workspace/seed-media/`).

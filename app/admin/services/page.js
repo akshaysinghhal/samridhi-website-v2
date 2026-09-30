@@ -8,6 +8,7 @@ export default function ServicesAdmin() {
       sub="Service pages shown under /services. Items appear as the 'what we deliver' checklist; FAQs get FAQ schema markup."
       endpoint="/api/admin/services"
       listKey="services"
+        previewFor={(r) => r.slug ? `/services/${r.slug}` : null}
       slugFrom="title"
       addLabel="Add Service"
       columns={[

@@ -29,7 +29,7 @@ export default async function AboutPage() {
     <>
       <SiteHeader />
 
-      <section className="hero" style={{ background: "linear-gradient(120deg,#7b1fa2,#c2185b)" }}>
+      <section className="hero" style={{ background: "linear-gradient(120deg,#7c3aed,#4c1d95)" }}>
         <img className="hero-bg" src="/images/diwali-stage-group.jpg" alt="Samridhi Films team on stage" />
         <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
           <span className="eyebrow" style={{ color: "#ffe082" }}>About Us</span>
@@ -72,11 +72,11 @@ export default async function AboutPage() {
         <div className="container">
           <div className="about-grid">
             <div>
-              <span className="eyebrow" style={{ color: "#00acc1" }}>Vision</span>
+              <span className="eyebrow" style={{ color: "#0e7490" }}>Vision</span>
               <p className="lead">To give fame and a stage to talented artists — and to create memorable, flawless events through expert planning and execution.</p>
             </div>
             <div>
-              <span className="eyebrow" style={{ color: "#ff6f00" }}>Mission</span>
+              <span className="eyebrow" style={{ color: "#d97706" }}>Mission</span>
               <p className="lead">We actively promote the <strong>Swachh Bharat</strong> mission in every show with the help of our celebrity guests — and provide a platform for social campaigns like Yoga and Self-Reliance.</p>
             </div>
           </div>
@@ -105,7 +105,7 @@ export default async function AboutPage() {
                   <h3>{m.name}</h3>
                   <p>{m.bio}</p>
                   {m.instagram && (
-                    <p><a href={m.instagram} target="_blank" rel="noreferrer" style={{ color: "var(--pink)", fontWeight: 700 }}>Instagram →</a></p>
+                    <p><a href={m.instagram} target="_blank" rel="noreferrer" style={{ color: "var(--brand)", fontWeight: 700 }}>Instagram →</a></p>
                   )}
                 </div>
               </div>
@@ -117,13 +117,13 @@ export default async function AboutPage() {
       <section className="section steps-band">
         <div className="container">
           <div className="center">
-            <span className="eyebrow" style={{ color: "#00acc1" }}>Our Approach</span>
+            <span className="eyebrow" style={{ color: "#0e7490" }}>Our Approach</span>
             <h2 className="h2">How Every Event Comes Together</h2>
           </div>
           <div className="process" style={{ marginTop: 36 }}>
             {PROCESS.map((p, i) => (
               <div className="step" key={p} style={{ background: "#fff", border: "1.5px solid #f0d7e2" }}>
-                <b style={{ color: "var(--pink)" }}>0{i + 1}</b>
+                <b style={{ color: "var(--brand)" }}>0{i + 1}</b>
                 <span style={{ color: "var(--ink)" }}>{p}</span>
               </div>
             ))}
@@ -139,7 +139,7 @@ export default async function AboutPage() {
           </div>
           <div className="services-grid">
             {WHY.map((w, i) => (
-              <div className="service-tile solid" key={w} style={{ background: "linear-gradient(135deg,#7b1fa2,#e91e63)" }}>
+              <div className="service-tile solid" key={w} style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)" }}>
                 <div className="bento-body" style={{ padding: 0 }}>
                   <h3 style={{ fontSize: 18 }}>{w}</h3>
                 </div>

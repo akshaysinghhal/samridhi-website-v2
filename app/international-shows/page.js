@@ -17,7 +17,7 @@ export default async function InternationalShowsPage() {
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#5e35b1,#00acc1)" }}>
+      <section className="hero" style={{ background: "linear-gradient(120deg,#7c3aed,#0e7490)" }}>
         <img className="hero-bg" src="/images/poster-china-diwali-2015.jpg" alt="International show" />
         <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
           <span className="eyebrow" style={{ color: "#ffe082" }}>International Shows</span>

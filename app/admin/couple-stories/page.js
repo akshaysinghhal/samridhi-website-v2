@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS } from "../_lib/ui";
+import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell } from "../_lib/ui";
 
 const SOURCES = [
   { value: "youtube", label: "YouTube" },
@@ -33,6 +33,8 @@ export default function CoupleStoriesAdmin() {
   };
   useEffect(() => { load(); }, []);
 
+  const bulk = useBulk({ rows, patchRows: setRows, endpoint: "/api/admin/couple-stories" });
+
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const startAdd = () => { setForm({ ...EMPTY }); setEditingId(null); setMsg(""); setOkMsg(""); setShowForm(true); };
   const startEdit = (r) => {
@@ -54,18 +56,25 @@ export default function CoupleStoriesAdmin() {
     }
     try {
       const body = { ...form, event_id: form.event_id || null };
-      if (editingId) await api(`/api/admin/couple-stories/${editingId}`, { method: "PUT", body });
-      else await api("/api/admin/couple-stories", { method: "POST", body });
+      if (editingId) {
+        await api(`/api/admin/couple-stories/${editingId}`, { method: "PUT", body });
+        setRows((rs) => rs.map((r) => (r.id === editingId ? { ...r, ...body } : r)));
+      } else {
+        const res = await api("/api/admin/couple-stories", { method: "POST", body });
+        const saved = res.story || res.row || res.item;
+        setRows((rs) => [{ ...body, id: saved?.id || res.id }, ...rs]);
+      }
       await revalidateSite();
       setOkMsg("Saved — live on the website now.");
-      setShowForm(false); setEditingId(null); setForm({ ...EMPTY }); load();
+      setShowForm(false); setEditingId(null); setForm({ ...EMPTY });
     } catch (e) { setMsg("Failed: " + e.message); }
   };
 
   const remove = async (r) => {
     if (!confirm(`Delete "${r.title}"?`)) return;
     await api(`/api/admin/couple-stories/${r.id}`, { method: "DELETE" });
-    await revalidateSite(); load();
+    await revalidateSite();
+    setRows((rs) => rs.filter((x) => x.id !== r.id));
   };
 
   return (
@@ -123,18 +132,21 @@ export default function CoupleStoriesAdmin() {
         </div>
       )}
 
+      {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
       {busy ? <p>Loading…</p> : (
         <table className="admin-table">
-          <thead><tr><th>Story</th><th>Source</th><th>Consent</th><th>Status</th><th>Flag</th><th></th></tr></thead>
+          <thead><tr><th style={{ width: 40 }}><CheckCell checked={bulk.allChecked} onChange={bulk.toggleAll} label="Select all stories" /></th><th>Story</th><th>Source</th><th>Consent</th><th>Status</th><th>Flag</th><th></th></tr></thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id}>
+              <tr key={r.id} className={bulk.selected.has(r.id) ? "row-selected" : ""}>
+                <td><CheckCell checked={bulk.selected.has(r.id)} onChange={() => bulk.toggleOne(r.id)} label={`Select ${r.title}`} /></td>
                 <td><b>{r.title}</b>{r.couple_names && <div className="seo-hint">{r.couple_names}</div>}</td>
                 <td>{r.video_source}</td>
                 <td>{r.consent_granted ? "✅" : "❌"}</td>
                 <td><StatusBadge status={r.status} /></td>
                 <td>{r.is_placeholder ? <PhBadge /> : "—"}</td>
                 <td><div className="row-actions">
+                  <a className="btn-sm btn-view" href="/couple-stories" target="_blank" rel="noreferrer">Preview</a>
                   <button className="btn-sm btn-edit" onClick={() => startEdit(r)}>Edit</button>
                   <button className="btn-sm btn-del" onClick={() => remove(r)}>Delete</button>
                 </div></td>

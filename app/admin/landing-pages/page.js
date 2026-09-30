@@ -8,6 +8,7 @@ export default function LandingPagesAdmin() {
       sub="City + service landing pages for search (e.g. /wedding-planners-udaipur). Fill the SEO fields carefully."
       endpoint="/api/admin/landing-pages"
       listKey="pages"
+        previewFor={(r) => r.slug ? `/${r.slug}` : null}
       slugFrom="title"
       addLabel="Add Landing Page"
       columns={[

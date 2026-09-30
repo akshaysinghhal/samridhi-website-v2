@@ -3,10 +3,10 @@ import { useState } from "react";
 import Link from "next/link";
 
 const GRADS = [
-  "linear-gradient(135deg,#7b1fa2,#e91e63)",
-  "linear-gradient(135deg,#e91e63,#ff6f00)",
-  "linear-gradient(135deg,#00acc1,#5e35b1)",
-  "linear-gradient(135deg,#ff6f00,#ffc107)",
+  "linear-gradient(135deg,#7c3aed,#6d28d9)",
+  "linear-gradient(135deg,#6d28d9,#d97706)",
+  "linear-gradient(135deg,#0e7490,#7c3aed)",
+  "linear-gradient(135deg,#d97706,#ffc107)",
 ];
 
 // Client-side category tabs for the artists grid.
@@ -47,7 +47,7 @@ export default function ArtistTabs({ artists, categories }) {
             )}
             <div className="ainfo">
               <h4 style={{ color: "var(--ink)" }}>{a.name}</h4>
-              {a.category && <span className="acat" style={{ color: "var(--pink)" }}>{a.category}</span>}
+              {a.category && <span className="acat" style={{ color: "var(--brand)" }}>{a.category}</span>}
               {a.is_placeholder && <span className="placeholder-badge">Placeholder</span>}
             </div>
           </Link>

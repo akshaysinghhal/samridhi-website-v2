@@ -2,27 +2,32 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/adminApi";
+import { revalidateSite, useBulk, BulkBar, CheckCell } from "../_lib/ui";
 
 export default function WeddingsList() {
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(true);
 
-  const load = async () => {
-    setBusy(true);
+  const load = async (silent) => {
+    if (!silent) setBusy(true);
     try { setRows((await api("/api/admin/weddings")).weddings); } catch { /* ignore */ }
-    setBusy(false);
+    if (!silent) setBusy(false);
   };
   useEffect(() => { load(); }, []);
 
+  const bulk = useBulk({ rows, patchRows: setRows, endpoint: "/api/admin/weddings" });
+
   const togglePin = async (w) => {
     await api(`/api/admin/weddings/${w.id}`, { method: "PUT", body: { ...w, pinned: !w.pinned } });
-    load();
+    setRows((rs) => rs.map((x) => (x.id === w.id ? { ...x, pinned: !x.pinned } : x)));
+    await revalidateSite();
   };
 
   const remove = async (id, title) => {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
     await api(`/api/admin/weddings/${id}`, { method: "DELETE" });
-    load();
+    setRows((rs) => rs.filter((x) => x.id !== id));
+    await revalidateSite();
   };
 
   return (
@@ -34,6 +39,7 @@ export default function WeddingsList() {
         </div>
         <Link className="btn-sm btn-new" href="/admin/weddings/new">+ New Wedding</Link>
       </div>
+      {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
       {busy ? <p>Loading…</p> : rows.length === 0 ? (
         <div className="editor" style={{ textAlign: "center" }}>
           <p style={{ color: "#7a6a7c" }}>No weddings yet. Add your first celebration!</p>
@@ -41,10 +47,11 @@ export default function WeddingsList() {
         </div>
       ) : (
         <table className="admin-table">
-          <thead><tr><th>Wedding</th><th>Location</th><th>Pinned</th><th></th></tr></thead>
+          <thead><tr><th style={{ width: 40 }}><CheckCell checked={bulk.allChecked} onChange={bulk.toggleAll} label="Select all weddings" /></th><th>Wedding</th><th>Location</th><th>Pinned</th><th></th></tr></thead>
           <tbody>
             {rows.map((w) => (
-              <tr key={w.id}>
+              <tr key={w.id} className={bulk.selected.has(w.id) ? "row-selected" : ""}>
+                <td><CheckCell checked={bulk.selected.has(w.id)} onChange={() => bulk.toggleOne(w.id)} label={`Select ${w.title}`} /></td>
                 <td>
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     {w.cover_image && <img src={w.cover_image} alt="" style={{ width: 64, height: 48, objectFit: "cover", borderRadius: 8 }} />}
@@ -58,6 +65,7 @@ export default function WeddingsList() {
                   </button>
                 </td>
                 <td><div className="row-actions">
+                  <a className="btn-sm btn-view" href="/weddings" target="_blank" rel="noreferrer">Preview</a>
                   <Link className="btn-sm btn-edit" href={`/admin/weddings/${w.id}`}>Edit</Link>
                   <button className="btn-sm btn-del" onClick={() => remove(w.id, w.title)}>Delete</button>
                 </div></td>

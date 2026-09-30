@@ -8,6 +8,7 @@ export default function ClientsAdmin() {
       sub="Key clients shown on the logo wall. Only clients with 'permission to display' appear on the website."
       endpoint="/api/admin/clients"
       listKey="clients"
+        previewFor={() => `/clients`}
       addLabel="Add Client"
       columns={[
         { key: "name", label: "Client", render: (r) => (<span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>{r.logo_url && <img src={r.logo_url} alt="" style={{ height: 30, width: "auto" }} />}<b>{r.name}</b></span>) },

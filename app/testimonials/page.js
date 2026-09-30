@@ -15,7 +15,7 @@ export default async function TestimonialsPage() {
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#0097a7,#e91e63)" }}>
+      <section className="hero" style={{ background: "linear-gradient(120deg,#0097a7,#6d28d9)" }}>
         <img className="hero-bg" src="/images/ig-sparkler-celebration.jpg" alt="Celebration" />
         <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
           <span className="eyebrow" style={{ color: "#ffe082" }}>Testimonials</span>

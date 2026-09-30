@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api, uploadFile } from "../../../lib/adminApi";
+import { revalidateSite, useBulk, BulkBar, CheckCell } from "../_lib/ui";
 
 export default function MediaLibrary() {
   const [media, setMedia] = useState([]);
@@ -8,12 +9,19 @@ export default function MediaLibrary() {
   const [uploading, setUploading] = useState(false);
   const [copied, setCopied] = useState("");
 
-  const load = async () => {
-    setBusy(true);
+  const load = async (silent) => {
+    if (!silent) setBusy(true);
     try { setMedia((await api("/api/admin/media")).media); } catch { /* ignore */ }
-    setBusy(false);
+    if (!silent) setBusy(false);
   };
   useEffect(() => { load(); }, []);
+
+  const bulk = useBulk({
+    rows: media,
+    patchRows: setMedia,
+    endpoint: "/api/admin/media",
+    deleteOne: (id) => api(`/api/admin/media?id=${id}`, { method: "DELETE" }),
+  });
 
   const onFiles = async (e) => {
     setUploading(true);
@@ -21,7 +29,8 @@ export default function MediaLibrary() {
       try { await uploadFile(file); } catch { /* ignore */ }
     }
     setUploading(false);
-    load();
+    e.target.value = "";
+    await revalidateSite(); load(true);
   };
 
   const copy = async (url) => {
@@ -33,7 +42,8 @@ export default function MediaLibrary() {
   const remove = async (id) => {
     if (!confirm("Delete this file from Cloudinary and the library?")) return;
     await api(`/api/admin/media?id=${id}`, { method: "DELETE" });
-    load();
+    await revalidateSite();
+    setMedia((xs) => xs.filter((x) => x.id !== id));
   };
 
   return (
@@ -45,12 +55,16 @@ export default function MediaLibrary() {
           <input type="file" accept="image/*,video/*" multiple hidden onChange={onFiles} />
         </label>
       </div>
+      {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
       {busy ? <p>Loading…</p> : media.length === 0 ? (
         <div className="editor" style={{ textAlign: "center" }}><p style={{ color: "#7a6a7c" }}>Nothing here yet — upload your first photo or video.</p></div>
       ) : (
         <div className="media-grid">
           {media.map((m) => (
-            <div className="media-item" key={m.id}>
+            <div className="media-item" key={m.id} style={bulk.selected.has(m.id) ? { outline: "3px solid var(--brand)" } : undefined}>
+              <div style={{ position: "absolute", top: 8, right: 8, zIndex: 2, background: "rgba(255,255,255,0.92)", borderRadius: 8, padding: 4 }}>
+                <CheckCell checked={bulk.selected.has(m.id)} onChange={() => bulk.toggleOne(m.id)} label="Select media" />
+              </div>
               {m.kind === "video" ? <video src={m.url} /> : <img src={m.url} alt={m.alt || ""} loading="lazy" />}
               <div className="meta">
                 <button className="btn-sm btn-edit" onClick={() => copy(m.url)}>{copied === m.url ? "Copied ✓" : "Copy URL"}</button>

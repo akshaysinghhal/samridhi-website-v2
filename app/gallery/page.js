@@ -3,6 +3,7 @@ import SiteFooter from "../../components/SiteFooter";
 import GalleryExplorer from "../../components/GalleryExplorer";
 import ArtistVideos from "../../components/ArtistVideos";
 import { getGalleryItems } from "../../lib/db";
+import { youTubeId } from "../../lib/video";
 
 export const revalidate = 60;
 
@@ -19,15 +20,25 @@ const CATEGORIES = [
 export default async function GalleryPage() {
   const items = await getGalleryItems();
   const photos = items.filter((g) => g.kind === "photo" || !g.kind);
+  // Detect the player source from the URL: YouTube links need the YouTube
+  // embed player — a <video> tag cannot play a youtube.com watch URL.
+  // Instagram reels cannot be embedded in a player at all — they open on Instagram.
+  const detectSource = (url) => {
+    const u = String(url || "");
+    if (youTubeId(u)) return "youtube";
+    if (/vimeo\.com/.test(u)) return "vimeo";
+    if (/instagram\.com/.test(u)) return "instagram";
+    return "mp4_url";
+  };
   const videos = items
     .filter((g) => g.kind === "video" && g.video_url)
-    .map((g) => ({ source: "cloudinary", ref: g.video_url, thumb: g.image_url || "", title: g.title || "" }));
+    .map((g) => ({ source: detectSource(g.video_url), ref: g.video_url, thumb: g.image_url || "", title: g.title || "" }));
   const cats = CATEGORIES.filter((c) => photos.some((g) => g.category === c));
 
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#e91e63,#7b1fa2)" }}>
+      <section className="hero" style={{ background: "linear-gradient(120deg,#6d28d9,#7c3aed)" }}>
         <img className="hero-bg" src="/images/ig-guests-celebrating.jpg" alt="Celebration" />
         <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
           <span className="eyebrow" style={{ color: "#ffe082" }}>Gallery</span>

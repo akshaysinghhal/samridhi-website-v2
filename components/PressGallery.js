@@ -11,6 +11,10 @@ export default function PressGallery({ items, publications, years }) {
   const filtered = items.filter(
     (p) => (pub === "all" || p.publication === pub) && (year === "all" || String(p.year) === year)
   );
+  const isFiltered = pub !== "all" || year !== "all";
+
+  const altFor = (p) =>
+    [p.headline, p.publication, p.year].filter(Boolean).join(" — ") || "Press clipping";
 
   useEffect(() => {
     if (open < 0) return;
@@ -35,15 +39,25 @@ export default function PressGallery({ items, publications, years }) {
           <option value="all">All Years</option>
           {years.map((y) => <option key={y} value={y}>{y}</option>)}
         </select>
+        {isFiltered && (
+          <button className="press-clear" onClick={() => { setPub("all"); setYear("all"); }}>
+            Clear filters ×
+          </button>
+        )}
+        <span className="press-count" aria-live="polite">
+          Showing {filtered.length} of {items.length} clipping{items.length === 1 ? "" : "s"}
+        </span>
       </div>
 
       <div className="masonry">
         {filtered.map((p, i) => (
-          <figure key={p.id} onClick={() => setOpen(i)} style={{ cursor: "zoom-in" }}>
-            <img src={p.image_url} alt={p.headline || p.publication || "Press clipping"} loading="lazy" />
+          <figure key={p.id} onClick={() => setOpen(i)} style={{ cursor: "zoom-in" }} tabIndex={0}
+            onKeyDown={(e) => { if (e.key === "Enter") setOpen(i); }}>
+            {p.publication && <span className="press-pub-badge">{p.publication}</span>}
+            <img src={p.image_url} alt={altFor(p)} loading="lazy" />
             <figcaption>
               {p.is_placeholder && <span className="placeholder-badge">Placeholder</span>}{" "}
-              {[p.publication, p.headline].filter(Boolean).join(" — ")}{" "}
+              {[p.headline].filter(Boolean).join(" — ")}{" "}
               <span style={{ opacity: 0.6 }}>
                 ({p.type === "page_collage" ? "Page collage" : "Clipping"}{p.year ? `, ${p.year}` : ""})
               </span>
@@ -74,7 +88,7 @@ export default function PressGallery({ items, publications, years }) {
           <div className="lb-content" onClick={(e) => e.stopPropagation()}>
             <img
               src={filtered[open].image_url}
-              alt={filtered[open].headline || ""}
+              alt={altFor(filtered[open])}
               className={zoomed ? "lb-zoomed" : ""}
               onClick={() => setZoomed((z) => !z)}
               style={{ cursor: zoomed ? "zoom-out" : "zoom-in" }}

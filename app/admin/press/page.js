@@ -9,6 +9,7 @@ const PUBS = ["Dainik Bhaskar", "Rajasthan Patrika", "Patrika", "Pratahkal", "Ot
 export default function PressAdmin() {
   const [bulkMsg, setBulkMsg] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const bulkUpload = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -27,7 +28,7 @@ export default function PressAdmin() {
     }
     setUploading(false);
     e.target.value = "";
-    if (n) { setBulkMsg(`Uploaded ${n} clipping${n > 1 ? "s" : ""}. Refreshing list…`); await revalidateSite(); setTimeout(() => window.location.reload(), 800); }
+    if (n) { setBulkMsg(`Uploaded ${n} clipping${n > 1 ? "s" : ""} — list updated below.`); await revalidateSite(); setRefreshTick((t) => t + 1); }
   };
 
   return (
@@ -44,6 +45,8 @@ export default function PressAdmin() {
         sub="Newspaper and media coverage. Page collages are full scanned pages; single clippings are individual cuttings."
         endpoint="/api/admin/press-clippings"
         listKey="clippings"
+          previewFor={() => `/press`}
+        externalRefresh={refreshTick}
         addLabel="Add Clipping"
         columns={[
           { key: "image_url", label: "Image", render: (r) => (r.image_url ? <img src={r.image_url} alt="" style={{ width: 64, height: 48, objectFit: "cover", borderRadius: 8 }} /> : "—") },

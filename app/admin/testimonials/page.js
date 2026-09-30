@@ -8,6 +8,7 @@ export default function TestimonialsAdmin() {
       sub="Client testimonials. Items only appear publicly when permission is granted and status is Published."
       endpoint="/api/admin/testimonials"
       listKey="testimonials"
+        previewFor={() => `/testimonials`}
       addLabel="Add Testimonial"
       columns={[
         { key: "author_name", label: "Author" },

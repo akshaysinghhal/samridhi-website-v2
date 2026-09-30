@@ -8,6 +8,7 @@ export default function InternationalAdmin() {
       sub="Shows and events abroad — these power the interactive world map."
       endpoint="/api/admin/international-shows"
       listKey="shows"
+        previewFor={() => `/international-shows`}
       addLabel="Add Show"
       columns={[
         { key: "title", label: "Show" },
