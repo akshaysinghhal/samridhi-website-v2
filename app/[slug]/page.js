@@ -39,10 +39,11 @@ export default async function LandingPage({ params }) {
     <>
       <SiteHeader />
 
-      <section className="hero" style={{ background: "linear-gradient(120deg,#7c3aed,#6d28d9)" }}>
+      <section className="page-hero">
+        <div className="hero-veil" aria-hidden="true" />
         {page.hero_image && <img className="hero-bg" src={page.hero_image} alt={page.h1} />}
-        <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
-          <span className="eyebrow" style={{ color: "#ffe082" }}>Samridhi Films &amp; Television</span>
+        <div className="container hero-inner">
+          <span className="eyebrow">Samridhi Films &amp; Television</span>
           <h1>{page.h1}</h1>
           {page.intro && <p className="sub">{page.intro}</p>}
           <div className="hero-ctas">
@@ -83,12 +84,15 @@ export default async function LandingPage({ params }) {
         </section>
       )}
 
-      <section className="section" style={{ background: "linear-gradient(120deg,#d97706,#6d28d9)", color: "#fff", textAlign: "center" }}>
+      <section className="section contact-band">
         <div className="container">
-          <h2 className="h2" style={{ color: "#fff" }}>Ready to Plan?</h2>
-          <p className="lead" style={{ color: "#ffe9f0", margin: "0 auto 30px" }}>One team, every celebration.</p>
-          <div className="hero-ctas" style={{ justifyContent: "center" }}>
-            <Link className="btn btn-white" href="/contact">Get a Free Quote</Link>
+          <div className="center">
+            <span className="eyebrow">Your Turn</span>
+            <h2 className="h2">Ready to Plan?</h2>
+            <p className="lead" style={{ margin: "0 auto 30px" }}>One team, every celebration.</p>
+            <div className="hero-ctas" style={{ justifyContent: "center" }}>
+              <Link className="btn btn-white" href="/contact">Get a Free Quote</Link>
+            </div>
           </div>
         </div>
       </section>

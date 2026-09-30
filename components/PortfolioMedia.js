@@ -15,7 +15,7 @@ export default function PortfolioMedia({ gallery, videoSource, videoRef }) {
     <>
       {(videoSource && videoRef) && (
         <div className="video-card" style={{ marginBottom: 26 }} onClick={() => setVideoOpen(true)}>
-          <div style={{ height: 320, background: "linear-gradient(135deg,#7c3aed,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 56 }}>▶</div>
+          <div style={{ height: 320, background: "linear-gradient(135deg,#3B241C,#2A1B16)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 56 }}>▶</div>
           <div className="play-btn"><span>▶</span></div>
           <div className="vtitle">Event Film</div>
         </div>

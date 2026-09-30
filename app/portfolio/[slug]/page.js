@@ -29,17 +29,17 @@ export default async function PortfolioDetailPage({ params }) {
     <>
       <SiteHeader />
 
-      <section className="hero" style={{ background: "linear-gradient(120deg,#7c3aed,#6d28d9)" }}>
+      <section className="page-hero">
         {e.cover_image && <img className="hero-bg" src={e.cover_image} alt={e.title} />}
-        <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
-          <span className="eyebrow" style={{ color: "#ffe082" }}>{e.category || "Event"}</span>
+        <div className="hero-veil" aria-hidden="true" />
+        <div className="container hero-inner">
+          <span className="eyebrow">{e.category || "Event"}</span>
           <h1>{e.title}</h1>
           {(e.location || e.event_date) && (
             <p className="sub">
               {[e.location, e.event_date ? new Date(e.event_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : ""].filter(Boolean).join(" • ")}
             </p>
           )}
-          {e.is_placeholder && <span className="placeholder-badge">Placeholder</span>}
         </div>
       </section>
 
@@ -83,12 +83,15 @@ export default async function PortfolioDetailPage({ params }) {
         </section>
       )}
 
-      <section className="section" style={{ background: "linear-gradient(120deg,#d97706,#6d28d9)", color: "#fff", textAlign: "center" }}>
+      <section className="section contact-band">
         <div className="container">
-          <h2 className="h2" style={{ color: "#fff" }}>Want an Event Like This?</h2>
-          <p className="lead" style={{ color: "#ffe9f0", margin: "0 auto 30px" }}>Tell us your idea — we&apos;ll make it happen.</p>
-          <div className="hero-ctas" style={{ justifyContent: "center" }}>
-            <Link className="btn btn-white" href="/contact">Get a Free Quote</Link>
+          <div className="center">
+            <span className="eyebrow">Your Turn</span>
+            <h2 className="h2">Want an Event Like This?</h2>
+            <p className="lead" style={{ margin: "0 auto 30px" }}>Tell us your idea — we&apos;ll make it happen.</p>
+            <div className="hero-ctas" style={{ justifyContent: "center" }}>
+              <Link className="btn btn-primary" href="/contact">Get a Free Quote <span className="arr">→</span></Link>
+            </div>
           </div>
         </div>
       </section>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
+import Reveal from "../../components/Reveal";
 import { getClients } from "../../lib/db";
 
 export const revalidate = 60;
@@ -16,12 +17,13 @@ export default async function ClientsPage() {
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#d97706,#7c3aed)" }}>
+      <section className="page-hero">
         <img className="hero-bg" src="/images/fb-performer-big-audience.jpg" alt="Corporate event audience" />
-        <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
-          <span className="eyebrow" style={{ color: "#ffe082" }}>Clients</span>
-          <h1>Trusted by Leading Organisations</h1>
-          <p className="sub">Government departments, corporates and brands across India.</p>
+        <div className="hero-veil" aria-hidden="true" />
+        <div className="container hero-inner">
+          <Reveal><span className="eyebrow">Clients</span></Reveal>
+          <Reveal delay={1}><h1>Trusted by Leading Organisations</h1></Reveal>
+          <Reveal delay={2}><p className="sub">Government departments, corporates and brands across India.</p></Reveal>
         </div>
       </section>
 
@@ -30,22 +32,24 @@ export default async function ClientsPage() {
           {clients.length === 0 ? (
             <p className="lead center">Our client list is being updated — check back soon.</p>
           ) : (
-            <div className="clients-wall">
-              {clients.map((cl) => (
-                <span key={cl.id} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                  {cl.logo_url ? (
-                    <img src={cl.logo_url} alt={cl.name} style={{ maxHeight: 44, maxWidth: 150, objectFit: "contain" }} loading="lazy" />
+            <Reveal>
+              <div className="logo-wall">
+                {clients.map((cl) => (
+                  cl.logo_url ? (
+                    <img key={cl.id} className="limg" src={cl.logo_url} alt={cl.name} loading="lazy" />
                   ) : (
-                    <span className="client-wordmark">{cl.name}</span>
-                  )}
-                  {cl.is_placeholder && <span className="placeholder-badge">Placeholder</span>}
-                </span>
-              ))}
-            </div>
+                    <span key={cl.id} className="lword">{cl.name}</span>
+                  )
+                ))}
+              </div>
+            </Reveal>
           )}
-          <div className="center" style={{ marginTop: 44 }}>
-            <Link className="btn btn-primary" href="/contact">Work With Us</Link>
-          </div>
+          <Reveal>
+            <div className="center" style={{ marginTop: 52 }}>
+              <p className="lead" style={{ margin: "0 auto 26px" }}>Join the organisations that trust us with their most important evenings.</p>
+              <Link className="btn btn-primary" href="/contact">Work With Us <span className="arr">→</span></Link>
+            </div>
+          </Reveal>
         </div>
       </section>
       <SiteFooter />

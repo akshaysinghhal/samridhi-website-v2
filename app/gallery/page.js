@@ -2,6 +2,7 @@ import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import GalleryExplorer from "../../components/GalleryExplorer";
 import ArtistVideos from "../../components/ArtistVideos";
+import Reveal from "../../components/Reveal";
 import { getGalleryItems } from "../../lib/db";
 import { youTubeId } from "../../lib/video";
 
@@ -38,12 +39,13 @@ export default async function GalleryPage() {
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#6d28d9,#7c3aed)" }}>
+      <section className="page-hero">
         <img className="hero-bg" src="/images/ig-guests-celebrating.jpg" alt="Celebration" />
-        <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
-          <span className="eyebrow" style={{ color: "#ffe082" }}>Gallery</span>
-          <h1>Moments &amp; Memories</h1>
-          <p className="sub">Photos from our stages, weddings and celebrations — select any photo to view it up close.</p>
+        <div className="hero-veil" aria-hidden="true" />
+        <div className="container hero-inner">
+          <Reveal><span className="eyebrow">Gallery</span></Reveal>
+          <Reveal delay={1}><h1>Moments &amp; Memories</h1></Reveal>
+          <Reveal delay={2}><p className="sub">Photos from our stages, weddings and celebrations — select any photo to view it up close.</p></Reveal>
         </div>
       </section>
 
@@ -54,11 +56,15 @@ export default async function GalleryPage() {
       </section>
 
       {videos.length > 0 && (
-        <section className="section" style={{ paddingTop: 0 }}>
+        <section className="section" style={{ paddingTop: 0, background: "var(--ivory)" }}>
           <div className="container">
-            <span className="eyebrow">Celebrity Feedback</span>
-            <h2 style={{ marginTop: 8 }}>In Their Words — On Video</h2>
-            <p className="lead">Artists and celebrities share their experience of working with Samridhi.</p>
+            <Reveal>
+              <div className="center">
+                <span className="eyebrow"><span className="sec-num">01</span> Celebrity Feedback</span>
+                <h2 className="h2">In Their Words — On Video</h2>
+                <p className="lead">Artists and celebrities share their experience of working with Samridhi.</p>
+              </div>
+            </Reveal>
             <ArtistVideos videos={videos} />
           </div>
         </section>

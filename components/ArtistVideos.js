@@ -15,7 +15,7 @@ export default function ArtistVideos({ videos }) {
             {v.thumb ? (
               <img src={v.thumb} alt={v.title || "Artist video"} loading="lazy" />
             ) : (
-              <div style={{ height: 210, background: "linear-gradient(135deg,#7c3aed,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 40 }}>▶</div>
+              <div style={{ height: 210, background: "linear-gradient(135deg,#3B241C,#2A1B16)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 40 }}>▶</div>
             )}
             <div className="play-btn"><span>↗</span></div>
             {v.title && <div className="vtitle">{v.title}</div>}
@@ -26,7 +26,7 @@ export default function ArtistVideos({ videos }) {
             {v.thumb ? (
               <img src={v.thumb} alt={v.title || "Artist video"} loading="lazy" />
             ) : (
-              <div style={{ height: 210, background: "linear-gradient(135deg,#7c3aed,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 40 }}>▶</div>
+              <div style={{ height: 210, background: "linear-gradient(135deg,#3B241C,#2A1B16)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 40 }}>▶</div>
             )}
             <div className="play-btn"><span>▶</span></div>
             {v.title && <div className="vtitle">{v.title}</div>}

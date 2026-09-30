@@ -41,9 +41,9 @@ export default function GalleryExplorer({ items, categories }) {
             style={{ cursor: "zoom-in" }}
           >
             <img src={g.image_url} alt={g.title || "Gallery photo"} loading="lazy" />
-            {(g.title || g.is_placeholder) && (
+            {(g.title) && (
               <figcaption>
-                {g.is_placeholder && <span className="placeholder-badge">Placeholder</span>}{" "}
+                
                 {g.title}
               </figcaption>
             )}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import PortfolioFilter from "../../components/PortfolioFilter";
+import Reveal from "../../components/Reveal";
 import { getEvents } from "../../lib/db";
 
 export const revalidate = 60;
@@ -23,21 +24,24 @@ export default async function PortfolioPage() {
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#0097a7,#7c3aed)" }}>
+      <section className="page-hero">
         <img className="hero-bg" src="/images/fb-performer-big-audience.jpg" alt="Large event audience" />
-        <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
-          <span className="eyebrow" style={{ color: "#ffe082" }}>Portfolio</span>
-          <h1>Events That Speak for Themselves</h1>
-          <p className="sub">Government programs, corporate nights, weddings and star-studded shows — planned, produced and hosted end-to-end.</p>
+        <div className="hero-veil" aria-hidden="true" />
+        <div className="container hero-inner">
+          <Reveal><span className="eyebrow">Portfolio</span></Reveal>
+          <Reveal delay={1}><h1>Events That Speak for Themselves</h1></Reveal>
+          <Reveal delay={2}><p className="sub">Government programs, corporate nights, weddings and star-studded shows — planned, produced and hosted end-to-end.</p></Reveal>
         </div>
       </section>
 
-      <section className="section">
+      <section className="section" style={{ background: "var(--ivory)" }}>
         <div className="container">
           <PortfolioFilter events={events} categories={cats} />
-          <div className="center" style={{ marginTop: 40 }}>
-            <Link className="btn btn-primary" href="/contact">Plan Your Event With Us</Link>
-          </div>
+          <Reveal>
+            <div className="center" style={{ marginTop: 48 }}>
+              <Link className="btn btn-primary" href="/contact">Plan Your Event With Us <span className="arr">→</span></Link>
+            </div>
+          </Reveal>
         </div>
       </section>
       <SiteFooter />

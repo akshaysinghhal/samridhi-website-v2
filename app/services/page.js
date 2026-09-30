@@ -1,6 +1,7 @@
 import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
+import Reveal from "../../components/Reveal";
 import { getServices } from "../../lib/db";
 
 export const revalidate = 60;
@@ -10,44 +11,46 @@ export const metadata = {
   description: "Government events, corporate events, weddings, celebrity & artist management, live shows, stage production, brand promotions and exhibitions — all under one roof.",
 };
 
-const GRADS = [
-  "linear-gradient(135deg,#7c3aed,#6d28d9)",
-  "linear-gradient(135deg,#6d28d9,#d97706)",
-  "linear-gradient(135deg,#0e7490,#7c3aed)",
-  "linear-gradient(135deg,#d97706,#ffc107)",
-];
-
 export default async function ServicesPage() {
   const services = await getServices();
 
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#0097a7,#7c3aed)" }}>
+      <section className="page-hero">
         <img className="hero-bg" src="/images/ig-event-stage.jpg" alt="Event stage production" />
-        <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
-          <span className="eyebrow" style={{ color: "#ffe082" }}>Services</span>
-          <h1>Everything Your Event Needs</h1>
-          <p className="sub">Eight specialised verticals, one accountable team — from the first concept note to the final applause.</p>
+        <div className="hero-veil" aria-hidden="true" />
+        <div className="container hero-inner">
+          <Reveal><span className="eyebrow">Services</span></Reveal>
+          <Reveal delay={1}><h1>Everything Your Event Needs</h1></Reveal>
+          <Reveal delay={2}><p className="sub">Eight specialised verticals, one accountable team — from the first concept note to the final applause.</p></Reveal>
         </div>
       </section>
 
-      <section className="section">
+      <section className="section" style={{ background: "var(--ivory)" }}>
         <div className="container">
-          <div className="services-grid">
-            {services.map((sv, i) => (
-              <Link key={sv.slug} href={`/services/${sv.slug}`} className="service-tile"
-                style={{ background: GRADS[i % GRADS.length], textDecoration: "none", minHeight: 220 }}>
-                <div className="icon">{sv.icon || "✨"}</div>
-                <h3>{sv.title}</h3>
-                <p>{sv.summary}</p>
-                <p style={{ marginTop: 12, fontWeight: 800 }}>Explore →</p>
+          {services.map((sv, i) => (
+            <Reveal key={sv.slug}>
+              <Link
+                href={`/services/${sv.slug}`}
+                style={{ textDecoration: "none", display: "grid", gridTemplateColumns: "90px 1fr auto", gap: 30, alignItems: "center", padding: "38px 10px", borderBottom: "1px solid var(--border-gold)" }}
+                className="svc-row"
+                aria-label={sv.title}
+              >
+                <span style={{ fontFamily: "var(--font-display)", fontSize: 30, color: "var(--gold)" }}>{String(i + 1).padStart(2, "0")}</span>
+                <span>
+                  <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 30, color: "var(--brown)", marginBottom: 6 }}>{sv.title}</span>
+                  <span style={{ display: "block", color: "var(--text-muted)", fontSize: 15.5, maxWidth: 640 }}>{sv.summary}</span>
+                </span>
+                <span className="pf-link">Explore <span className="arr">→</span></span>
               </Link>
-            ))}
-          </div>
-          <div className="center" style={{ marginTop: 40 }}>
-            <Link className="btn btn-primary" href="/contact">Discuss Your Requirement</Link>
-          </div>
+            </Reveal>
+          ))}
+          <Reveal>
+            <div className="center" style={{ marginTop: 48 }}>
+              <Link className="btn btn-primary" href="/contact">Discuss Your Requirement <span className="arr">→</span></Link>
+            </div>
+          </Reveal>
         </div>
       </section>
       <SiteFooter />

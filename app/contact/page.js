@@ -1,6 +1,7 @@
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import LeadForm from "../../components/LeadForm";
+import Reveal from "../../components/Reveal";
 import { getSettings, setting } from "../../lib/db";
 
 export const revalidate = 60;
@@ -19,54 +20,71 @@ export default async function ContactPage() {
   const addrM = setting(s, "address_mumbai", "Mumbai, Maharashtra");
   const mapsC = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(addrC);
   const mapsM = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(addrM + ", India");
+  const wa = setting(s, "whatsapp", "919602228846");
 
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#6d28d9,#d97706)" }}>
+      <section className="page-hero">
         <img className="hero-bg" src="/images/ig-guests-celebrating.jpg" alt="Guests celebrating" />
-        <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
-          <span className="eyebrow" style={{ color: "#ffe082" }}>Contact</span>
-          <h1>Let&apos;s Create Something Amazing</h1>
-          <p className="sub">Planning an event? Let our team understand your requirement and create the right event solution.</p>
-          <div className="hero-ctas">
-            <a className="btn btn-white" href={"tel:" + phone1.replace(/\s/g,)}>Call Our Team</a>
-            <a className="btn btn-outline" href={`https://wa.me/${setting(s, "whatsapp", "919602228846")}`} target="_blank" rel="noreferrer">WhatsApp Us</a>
-          </div>
+        <div className="hero-veil" aria-hidden="true" />
+        <div className="container hero-inner">
+          <Reveal><span className="eyebrow">Contact</span></Reveal>
+          <Reveal delay={1}><h1>Let&apos;s Create Something Amazing</h1></Reveal>
+          <Reveal delay={2}><p className="sub">Planning an event? Let our team understand your requirement and create the right event solution.</p></Reveal>
+          <Reveal delay={3}>
+            <div className="hero-ctas" style={{ marginTop: 30 }}>
+              <a className="btn btn-primary" href={"tel:" + phone1.replace(/\s/g,)}>Call Our Team</a>
+              <a className="btn btn-outline" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">WhatsApp Us</a>
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      <section className="section">
+      <section className="section contact-band">
         <div className="container">
+          <Reveal>
+            <span className="eyebrow"><span className="sec-num">01</span> Enquire</span>
+            <h2 className="h2">Let&apos;s Plan Your Celebration</h2>
+            <p className="lead">A senior planner will call you back within one working day.</p>
+          </Reveal>
           <div className="contact-grid">
-            <div>
+            <Reveal>
+              <div className="contact-lines">
+                <div className="contact-line">
+                  <h4>Chittorgarh Office</h4>
+                  <p>{addrC}</p>
+                  <p style={{ marginTop: 8 }}><a href={mapsC} target="_blank" rel="noreferrer" style={{ fontSize: 14 }}>View on Google Maps →</a></p>
+                </div>
+                <div className="contact-line">
+                  <h4>Mumbai Office</h4>
+                  <p>{addrM}</p>
+                  <p style={{ marginTop: 8 }}><a href={mapsM} target="_blank" rel="noreferrer" style={{ fontSize: 14 }}>View on Google Maps →</a></p>
+                </div>
+                <div className="contact-line">
+                  <h4>Call</h4>
+                  <p>
+                    <a href={"tel:" + phone1.replace(/\s/g,)}>{phone1}</a>
+                    {"  ·  "}
+                    <a href={"tel:" + phone2.replace(/\s/g,)}>{phone2}</a>
+                  </p>
+                </div>
+                <div className="contact-line">
+                  <h4>Email &amp; Social</h4>
+                  <p><a href={"mailto:" + email}>{email}</a></p>
+                  <p style={{ marginTop: 8 }}>
+                    <a href={setting(s, "instagram", "#")} target="_blank" rel="noreferrer" style={{ fontSize: 14 }}>Instagram</a>
+                    {"  ·  "}
+                    <a href={setting(s, "facebook", "#")} target="_blank" rel="noreferrer" style={{ fontSize: 14 }}>Facebook</a>
+                    {"  ·  "}
+                    <a href={setting(s, "youtube", "#")} target="_blank" rel="noreferrer" style={{ fontSize: 14 }}>YouTube</a>
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+            <Reveal delay={1}>
               <LeadForm type="contact" />
-            </div>
-            <div className="contact-cards">
-              <div className="contact-card">
-                <h4>Chittorgarh Office</h4>
-                <p>{addrC}</p>
-                <p><a href={mapsC} target="_blank" rel="noreferrer">View on Google Maps →</a></p>
-              </div>
-              <div className="contact-card" style={{ borderTopColor: "#0e7490" }}>
-                <h4 style={{ color: "#0e7490" }}>Mumbai Office</h4>
-                <p>{addrM}</p>
-                <p><a href={mapsM} target="_blank" rel="noreferrer">View on Google Maps →</a></p>
-              </div>
-              <div className="contact-card" style={{ borderTopColor: "#d97706" }}>
-                <h4 style={{ color: "#d97706" }}>Call</h4>
-                <p><a href={"tel:" + phone1.replace(/\s/g,)}>{phone1}</a><br /><a href={"tel:" + phone2.replace(/\s/g,)}>{phone2}</a></p>
-              </div>
-              <div className="contact-card" style={{ borderTopColor: "#7c3aed" }}>
-                <h4 style={{ color: "#7c3aed" }}>Online</h4>
-                <p><a href={"mailto:" + email}>{email}</a></p>
-                <p>
-                  <a href={setting(s, "instagram", "#")} target="_blank" rel="noreferrer">Instagram</a> •{" "}
-                  <a href={setting(s, "facebook", "#")} target="_blank" rel="noreferrer">Facebook</a> •{" "}
-                  <a href={setting(s, "youtube", "#")} target="_blank" rel="noreferrer">YouTube</a>
-                </p>
-              </div>
-            </div>
+            </Reveal>
           </div>
         </div>
       </section>

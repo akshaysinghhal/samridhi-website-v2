@@ -1,45 +1,120 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 // Props: { nav: [{label, href}], phone, whatsapp }
-// Falls back to sensible defaults when props are missing.
+// Luxury navbar: ivory bar, gold hairline, uppercase links,
+// terracotta CTA, full-height mobile drawer. Shrinks softly on scroll.
 export default function Header({ nav, phone, whatsapp }) {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
   const links = Array.isArray(nav) && nav.length
     ? nav
     : [
         { label: "Home", href: "/" },
-        { label: "About", href: "/#about" },
+        { label: "About", href: "/about" },
+        { label: "Services", href: "/services" },
         { label: "Weddings", href: "/weddings" },
         { label: "Artists", href: "/artists" },
-        { label: "Gallery", href: "/#gallery" },
-        { label: "Blog", href: "/blog" },
-        { label: "Contact", href: "/#contact" },
+        { label: "Gallery", href: "/gallery" },
+        { label: "Contact", href: "/contact" },
       ];
   const tel = phone || "+91 96022 28846";
   const telHref = "tel:" + String(tel).replace(/\s/g, "");
+  const wa = whatsapp || "919602228846";
+
+  const closeRef = useRef(null);
+  const burgerRef = useRef(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    if (open) {
+      closeRef.current?.focus();
+    } else {
+      burgerRef.current?.focus();
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [open ]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open ]);
+
+  const isActive = (href) =>
+    href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <header className="site-header">
-      <div className="container nav">
-        <Link href="/" className="brand brand-iso" aria-label="Samridhi Films & Television">
-          <img src="/images/logo.png" alt="Samridhi Films & Television logo" />
-          <img className="iso-badge" src="/images/iso-badge.png" alt="ISO 9001:2015 certified" />
-        </Link>
-        <nav className={`nav-links ${open ? "open" : ""}`} aria-label="Main navigation">
-          {links.map((l) => (
-            <Link key={l.href + l.label} href={l.href} onClick={() => setOpen(false)}>
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="nav-cta">
-          <a className="btn btn-outline-dark quote-btn" href="/contact">Get a Quote</a>
-          <a className="btn btn-primary" href={telHref}>Call Now</a>
-          <button className="burger" onClick={() => setOpen(!open)} aria-label="Menu" aria-expanded={open}>☰</button>
+    <>
+      <header className={`site-header ${scrolled ? "scrolled" : ""}`}>
+        <div className="container nav">
+          <Link href="/" className="brand brand-iso" aria-label="Samridhi Films & Television — home">
+            <img src="/images/logo.png" alt="Samridhi Films & Television logo" />
+            <img className="iso-badge" src="/images/iso-badge.png" alt="ISO 9001:2015 certified" />
+          </Link>
+          <nav className="nav-links" aria-label="Main navigation">
+            {links.map((l) => (
+              <Link key={l.href + l.label} href={l.href} className={isActive(l.href) ? "active" : ""}>
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="nav-cta">
+            <a className="nav-call" href={telHref} aria-label={`Call us at ${tel}`}>
+              <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z" />
+              </svg>
+              {tel}
+            </a>
+            <Link className="btn btn-primary" href="/contact">Plan Your Event</Link>
+            <button className="burger" ref={burgerRef} onClick={() => setOpen(true)} aria-label="Open menu" aria-expanded={open}>
+              <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" aria-hidden="true">
+                <path d="M3 7h18M3 12h18M3 17h12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className={`nav-drawer ${open ? "open" : ""}`} aria-hidden={!open}>
+        <div className="drawer-veil" onClick={() => setOpen(false)} />
+        <div className="drawer-panel" role="dialog" aria-label="Menu">
+          <div className="drawer-head">
+            <img src="/images/logo.png" alt="Samridhi Films & Television" />
+            <button className="drawer-close" ref={closeRef} onClick={() => setOpen(false)} aria-label="Close menu">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M5 5l14 14M19 5L5 19" />
+              </svg>
+            </button>
+          </div>
+          <nav className="drawer-links" aria-label="Mobile navigation">
+            {links.map((l) => (
+              <Link key={l.href + l.label} href={l.href} onClick={() => setOpen(false)}>
+                {l.label}<span className="darr">→</span>
+              </Link>
+            ))}
+          </nav>
+          <div className="drawer-cta">
+            <Link className="btn btn-primary" href="/contact" onClick={() => setOpen(false)}>Plan Your Event</Link>
+            <a className="btn btn-outline-terra" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">WhatsApp Us</a>
+          </div>
+          <div className="drawer-contact">
+            <p>Prefer to talk? <a href={telHref}>{tel}</a></p>
+            <p style={{ marginTop: 6 }}>Chittorgarh • Mumbai • Since 1999</p>
+          </div>
         </div>
       </div>
-    </header>
+    </>
   );
 }

@@ -1,14 +1,15 @@
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import CoupleCard from "../../components/CoupleCard";
+import Reveal from "../../components/Reveal";
 import { getCoupleStories } from "../../lib/db";
 import { siteUrl, jsonLdScript } from "../../lib/seo";
 
 export const revalidate = 60;
 
 export const metadata = {
-  title: "Couple Stories",
-  description: "Real couples, real words — watch what they say about their celebrations planned by Samridhi Films & Television.",
+  title: "Client Stories",
+  description: "Real clients, real words — stories from celebrations planned by Samridhi Films & Television.",
 };
 
 function videoSchema(s) {
@@ -17,7 +18,7 @@ function videoSchema(s) {
     "@context": "https://schema.org",
     "@type": "VideoObject",
     name: s.title,
-    description: s.label || "Couple story by Samridhi Films & Television",
+    description: s.label || "Client story by Samridhi Films & Television",
     thumbnailUrl: s.thumbnail_url || undefined,
     uploadDate: s.created_at ? new Date(s.created_at).toISOString() : undefined,
     contentUrl: s.video_source === "youtube" && s.video_ref
@@ -29,28 +30,32 @@ function videoSchema(s) {
 }
 
 export default async function CoupleStoriesPage() {
-  const stories = await getCoupleStories();
+  const raw = await getCoupleStories();
+  const stories = raw.filter((s) => !s.is_placeholder);
 
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#4c1d95,#d97706)" }}>
+      <section className="page-hero">
         <img className="hero-bg" src="/images/ig-couple-portrait.jpg" alt="Wedding couple" />
-        <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
-          <span className="eyebrow" style={{ color: "#ffe082" }}>Couple Stories</span>
-          <h1>Hear It Straight From Our Couples</h1>
-          <p className="sub">Real celebrations, in their own words. Stories are added only with the couple&apos;s written consent.</p>
+        <div className="hero-veil" aria-hidden="true" />
+        <div className="container hero-inner">
+          <Reveal><span className="eyebrow">Client Stories</span></Reveal>
+          <Reveal delay={1}><h1>Stories From Our Celebrations</h1></Reveal>
+          <Reveal delay={2}><p className="sub">Real celebrations, in their own words. Stories are added only with the client&apos;s consent.</p></Reveal>
         </div>
       </section>
 
-      <section className="section couple-section">
+      <section className="section story-band">
         <div className="container">
           {stories.length === 0 ? (
-            <p className="lead center">New couple stories are being filmed — check back soon.</p>
+            <p className="lead center">New client stories are being filmed — check back soon.</p>
           ) : (
             <div className="couple-grid">
-              {stories.map((s) => (
-                <CoupleCard key={s.id} story={s} />
+              {stories.map((s, i) => (
+                <Reveal key={s.id} delay={i % 3}>
+                  <CoupleCard story={s} />
+                </Reveal>
               ))}
             </div>
           )}

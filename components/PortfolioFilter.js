@@ -28,7 +28,6 @@ export default function PortfolioFilter({ events, categories }) {
           <Link key={e.id} href={`/portfolio/${e.slug}`} className="wedding-card" style={{ textDecoration: "none", color: "inherit" }}>
             {e.cover_image && <img src={e.cover_image} alt={e.title} loading="lazy" />}
             <div className="body">
-              {e.is_placeholder && <span className="placeholder-badge">Placeholder</span>}
               <span className="acat" style={{ color: "var(--teal)" }}>{e.category}</span>
               <h3>{e.title}</h3>
               {(e.location || e.event_date) && (

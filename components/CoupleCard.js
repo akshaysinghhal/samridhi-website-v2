@@ -14,10 +14,7 @@ export default function CoupleCard({ story }) {
       {story.thumbnail_url ? (
         <img src={story.thumbnail_url} alt={story.title} loading="lazy" />
       ) : (
-        <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg,var(--purple),var(--brand))" }} />
-      )}
-      {story.is_placeholder && (
-        <span className="placeholder-badge" style={{ position: "absolute", top: 12, left: 12 }}>Placeholder</span>
+        <div style={{ width: "100%", height: "100%", position: "absolute", inset: 0, background: "linear-gradient(135deg,var(--brown-rich),var(--terracotta-deep))" }} />
       )}
       <span className="shade">
         <h3>{story.title}</h3>

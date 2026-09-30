@@ -56,7 +56,7 @@ export default function PressGallery({ items, publications, years }) {
             {p.publication && <span className="press-pub-badge">{p.publication}</span>}
             <img src={p.image_url} alt={altFor(p)} loading="lazy" />
             <figcaption>
-              {p.is_placeholder && <span className="placeholder-badge">Placeholder</span>}{" "}
+              
               {[p.headline].filter(Boolean).join(" — ")}{" "}
               <span style={{ opacity: 0.6 }}>
                 ({p.type === "page_collage" ? "Page collage" : "Clipping"}{p.year ? `, ${p.year}` : ""})

@@ -1,6 +1,7 @@
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import PressGallery from "../../components/PressGallery";
+import Reveal from "../../components/Reveal";
 import { getPressClippings } from "../../lib/db";
 
 export const revalidate = 60;
@@ -22,12 +23,13 @@ export default async function PressPage() {
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#7c3aed,#0097a7)" }}>
+      <section className="page-hero">
         <img className="hero-bg" src="/images/press-rajasthan-diwas.jpg" alt="Press coverage" />
-        <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
-          <span className="eyebrow" style={{ color: "#ffe082" }}>Press</span>
-          <h1>In the News</h1>
-          <p className="sub">Print coverage of our events — from Rajasthan Diwas to star-studded nights.</p>
+        <div className="hero-veil" aria-hidden="true" />
+        <div className="container hero-inner">
+          <Reveal><span className="eyebrow">Press</span></Reveal>
+          <Reveal delay={1}><h1>As Seen In</h1></Reveal>
+          <Reveal delay={2}><p className="sub">Print coverage of our events — from Rajasthan Diwas to star-studded nights.</p></Reveal>
         </div>
       </section>
 

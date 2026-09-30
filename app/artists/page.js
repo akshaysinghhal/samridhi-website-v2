@@ -2,6 +2,7 @@ import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import ArtistTabs from "../../components/ArtistTabs";
+import Reveal from "../../components/Reveal";
 import { getContentMap, c } from "../../lib/content";
 import { getArtists, getArtistCategories, getSettings, setting } from "../../lib/db";
 
@@ -32,50 +33,70 @@ export default async function ArtistsPage() {
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#4a1d5e,#4c1d95)" }}>
+      <section className="page-hero">
         <img className="hero-bg" src="/images/diwali-live-musical.jpg" alt="Live musical night" />
-        <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
-          <span className="eyebrow" style={{ color: "#ffe082" }}>{c(map, "artists", "hero", "eyebrow")}</span>
-          <h1>{c(map, "artists", "hero", "title")}</h1>
-          <p className="sub">{c(map, "artists", "hero", "subtitle")}</p>
-          <div className="hero-ctas">
-            <Link className="btn btn-white" href="/contact">Book an Artist</Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="container">
-          <div className="center">
-            <span className="eyebrow">Line-up</span>
-            <h2 className="h2">{c(map, "artists", "list", "title")}</h2>
-            <p className="lead">{c(map, "artists", "list", "subtitle")} All artists are available for booking through Samridhi Films &amp; Television.</p>
-          </div>
-          <ArtistTabs artists={artists} categories={categories} />
+        <div className="hero-veil" aria-hidden="true" />
+        <div className="container hero-inner">
+          <Reveal><span className="eyebrow">{c(map, "artists", "hero", "eyebrow") || "Artist Management"}</span></Reveal>
+          <Reveal delay={1}><h1>{c(map, "artists", "hero", "title") || "Your Event. Your Artist. Our Responsibility."}</h1></Reveal>
+          <Reveal delay={2}><p className="sub">{c(map, "artists", "hero", "subtitle") || "Bollywood singers, actors, folk artists, bands, DJs and anchors — curated and stage-managed end to end."}</p></Reveal>
+          <Reveal delay={3}>
+            <div className="hero-ctas" style={{ marginTop: 30 }}>
+              <Link className="btn btn-primary" href="/contact">Book an Artist <span className="arr">→</span></Link>
+            </div>
+          </Reveal>
         </div>
       </section>
 
       <section className="section artist-band">
         <div className="container">
-          <span className="eyebrow">From Booking to Spotlight</span>
-          <h2 className="h2" style={{ color: "#fff" }}>We Manage Every Detail</h2>
-          <div className="process">
-            {PROCESS.map(([n, t, d]) => (
-              <div className="step" key={n}><b>{n}</b><span>{t}</span><p style={{ fontSize: 13, opacity: 0.75, margin: "8px 0 0" }}>{d}</p></div>
-            ))}
-          </div>
-          <p className="lead" style={{ marginTop: 26 }}>One team. Complete coordination. Star-studded experiences.</p>
+          <Reveal>
+            <div className="center">
+              <span className="eyebrow"><span className="sec-num">01</span> Line-up</span>
+              <h2 className="h2">{c(map, "artists", "list", "title") || "The Artists"}</h2>
+              <p className="lead">{c(map, "artists", "list", "subtitle") || "A curated roster across every genre and stage."} All artists are available for booking through Samridhi Films &amp; Television.</p>
+            </div>
+          </Reveal>
+          <ArtistTabs artists={artists} categories={categories} />
         </div>
       </section>
 
-      <section className="section" style={{ background: "linear-gradient(120deg,#7c3aed,#6d28d9)", color: "#fff", textAlign: "center" }}>
+      <section className="section" style={{ background: "var(--ivory)" }}>
         <div className="container">
-          <h2 className="h2" style={{ color: "#fff" }}>{c(map, "artists", "cta", "title")}</h2>
-          <p className="lead" style={{ color: "#f3e3f7", margin: "0 auto 30px" }}>{c(map, "artists", "cta", "subtitle")}</p>
-          <div className="hero-ctas" style={{ justifyContent: "center" }}>
-            <Link className="btn btn-white" href="/contact">Book an Artist</Link>
-            <a className="btn btn-outline" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">Chat on WhatsApp</a>
+          <Reveal>
+            <div className="center">
+              <span className="eyebrow"><span className="sec-num">02</span> From Booking to Spotlight</span>
+              <h2 className="h2">We Manage Every Detail</h2>
+            </div>
+          </Reveal>
+          <div className="process" style={{ marginTop: 44 }}>
+            {PROCESS.map(([n, t, d], i) => (
+              <Reveal key={n} delay={i} className="step" style={{ background: "var(--warm-white)", border: "1px solid var(--border-gold)" }}>
+                <b style={{ color: "var(--gold)", fontFamily: "var(--font-display)", fontSize: 22 }}>{n}</b>
+                <span style={{ color: "var(--brown)", display: "block", fontWeight: 700, margin: "6px 0" }}>{t}</span>
+                <p style={{ fontSize: 13.5, color: "var(--text-muted)", margin: 0 }}>{d}</p>
+              </Reveal>
+            ))}
           </div>
+          <Reveal>
+            <p className="lead center" style={{ marginTop: 30 }}>One team. Complete coordination. Star-studded experiences.</p>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="section contact-band">
+        <div className="container">
+          <Reveal>
+            <div className="center">
+              <span className="eyebrow">Book an Artist</span>
+              <h2 className="h2">{c(map, "artists", "cta", "title") || "Tell Us Who You Dream Of"}</h2>
+              <p className="lead">{c(map, "artists", "cta", "subtitle") || "Share your event date and budget — we will come back with confirmed options."}</p>
+              <div className="hero-ctas" style={{ justifyContent: "center", marginTop: 30 }}>
+                <Link className="btn btn-primary" href="/contact">Book an Artist <span className="arr">→</span></Link>
+                <a className="btn btn-outline" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">Chat on WhatsApp</a>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
       <SiteFooter />

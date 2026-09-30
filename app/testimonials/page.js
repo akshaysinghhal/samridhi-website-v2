@@ -1,5 +1,6 @@
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
+import Reveal from "../../components/Reveal";
 import { getTestimonials } from "../../lib/db";
 
 export const revalidate = 60;
@@ -10,36 +11,38 @@ export const metadata = {
 };
 
 export default async function TestimonialsPage() {
-  const testimonials = await getTestimonials();
+  const raw = await getTestimonials();
+  // Only genuine testimonials are ever presented publicly.
+  const testimonials = raw.filter((t) => !t.is_placeholder);
 
   return (
     <>
       <SiteHeader />
-      <section className="hero" style={{ background: "linear-gradient(120deg,#0097a7,#6d28d9)" }}>
+      <section className="page-hero">
         <img className="hero-bg" src="/images/ig-sparkler-celebration.jpg" alt="Celebration" />
-        <div className="container hero-inner" style={{ padding: "80px 0 70px" }}>
-          <span className="eyebrow" style={{ color: "#ffe082" }}>Testimonials</span>
-          <h1>Words That Keep Us Going</h1>
-          <p className="sub">From government clients to wedding families — hear it from the people we celebrate with.</p>
+        <div className="hero-veil" aria-hidden="true" />
+        <div className="container hero-inner">
+          <Reveal><span className="eyebrow">Testimonials</span></Reveal>
+          <Reveal delay={1}><h1>Words That Keep Us Going</h1></Reveal>
+          <Reveal delay={2}><p className="sub">From government clients to wedding families — hear it from the people we celebrate with.</p></Reveal>
         </div>
       </section>
 
-      <section className="section">
+      <section className="section" style={{ background: "var(--ivory)" }}>
         <div className="container">
           {testimonials.length === 0 ? (
             <p className="lead center">Client testimonials are being added — check back soon.</p>
           ) : (
             <div className="testi-grid">
-              {testimonials.map((t) => (
-                <div className="testi-card" key={t.id}>
-                  {t.is_placeholder && <span className="placeholder-badge">Placeholder</span>}
-                  <p className="tquote">“{t.quote}”</p>
+              {testimonials.map((t, i) => (
+                <Reveal key={t.id} delay={i % 3} className="testi-card">
+                  <p className="tquote">&ldquo;{t.quote}&rdquo;</p>
                   <p className="tauthor">
                     {t.author_name}
                     {t.company ? `, ${t.company}` : ""}
-                    {t.event_name ? <span style={{ display: "block", fontWeight: 400, fontSize: 13, color: "var(--muted)" }}>{t.event_name}</span> : null}
+                    {t.event_name ? <span style={{ display: "block", fontWeight: 400, fontSize: 13, color: "var(--text-muted)", letterSpacing: 0.4, textTransform: "none" }}>{t.event_name}</span> : null}
                   </p>
-                </div>
+                </Reveal>
               ))}
             </div>
           )}
