@@ -6,7 +6,7 @@ import {
   calcTotals, inr, nextDocNo, waLink, quoteWaMessage, invoiceWaMessage,
   paymentReminderMessage, receiptWaMessage, fmtDate,
 } from "../../../lib/billing";
-import { buildQuotePdf, buildInvoicePdf, buildReceiptPdf, logoDataUrl } from "../../../lib/billingPdf";
+import { buildQuotePdf, buildInvoicePdf, buildReceiptPdf, logoDataUrl, fetchDataUrl } from "../../../lib/billingPdf";
 
 const QUOTE_STATUS = ["draft", "sent", "approved", "rejected", "converted"];
 const PAY_MODES = ["Cash", "UPI", "Bank transfer", "Cheque", "Card"];
@@ -34,10 +34,17 @@ function useCompany() {
           phone: legal.phone || s.phone1 || "+91 96022 28846",
           email: legal.email || s.email || "samridhifilms@yahoo.co.in",
           gstin: legal.gstin || "",
+          pan: legal.pan || "",
+          legalName: legal.legal_name || "",
+          bank: legal.bank || {},
+          showSignature: legal.show_signature !== false,
+          signatureDataUrl: legal.show_signature !== false && legal.signature_url
+            ? await fetchDataUrl(legal.signature_url)
+            : "",
           quotePrefix: s.quote_prefix || "",
           invoicePrefix: s.invoice_prefix || "",
           receiptPrefix: s.receipt_prefix || "",
-          logoDataUrl: await logoDataUrl(),
+          logoDataUrl: await logoDataUrl(String(s.logo_url || "").trim() || "/images/logo.png"),
         });
       } catch { /* keep defaults */ }
     })();
@@ -138,36 +145,62 @@ function DocForm({ kind, initial, existingNos, onSave, onCancel, company }) {
 
   return (
     <div className="editor" style={{ marginBottom: 22, border: "2px solid #8F3F2D" }}>
-      <h3 style={{ marginTop: 0 }}>{initial?.id ? "Edit" : "New"} {kind === "quote" ? "Quotation" : "Invoice"} — {f[noKey]}</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
-        <div className="field"><label>{kind === "quote" ? "Quote no." : "Invoice no."}</label><input value={f[noKey]} onChange={(e) => set(noKey, e.target.value)} /></div>
-        <div className="field"><label>Client name *</label><input value={f.client_name} onChange={(e) => set("client_name", e.target.value)} /></div>
-        <div className="field"><label>Client phone</label><input value={f.client_phone} onChange={(e) => set("client_phone", e.target.value)} placeholder="For WhatsApp sharing" /></div>
-        <div className="field"><label>Client email</label><input value={f.client_email} onChange={(e) => set("client_email", e.target.value)} /></div>
-        <div className="field"><label>Event title</label><input value={f.event_title} onChange={(e) => set("event_title", e.target.value)} placeholder="e.g. Sharma Wedding Sangeet" /></div>
-        <div className="field"><label>Event date</label><input type="date" value={f.event_date || ""} onChange={(e) => set("event_date", e.target.value)} /></div>
-        <div className="field"><label>Venue</label><input value={f.venue} onChange={(e) => set("venue", e.target.value)} /></div>
-      </div>
-      <div className="field">
-        <label>✨ AI item suggestions — describe the event, AI drafts the line items (you fill in the rates)</label>
-        <div style={{ display: "flex", gap: 8 }}>
-          <input value={aiDesc} onChange={(e) => setAiDesc(e.target.value)} placeholder="e.g. haldi ceremony for 150 guests at a farmhouse in Chittorgarh" style={{ flex: 1 }} />
-          <button type="button" className="btn-sm btn-edit" disabled={aiBusy} onClick={aiDraft}>{aiBusy ? "Thinking…" : "Draft items"}</button>
+      <h3 style={{ marginTop: 0 }}>{initial?.id ? "Edit" : "New"} {kind === "quote" ? "Quotation" : "Invoice"}</h3>
+
+      <div className="bill-form-sec">
+        <h4>Document</h4>
+        <div className="field" style={{ margin: 0, maxWidth: 320 }}>
+          <label>{kind === "quote" ? "Quote no." : "Invoice no."}</label>
+          <input value={f[noKey]} onChange={(e) => set(noKey, e.target.value)} />
         </div>
       </div>
-      <ItemsEditor items={f.items} setItems={(v) => set("items", v)} />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 12 }}>
-        <div className="field" style={{ margin: 0 }}><label>Discount (Rs.)</label><input type="number" min={0} value={f.discount} onChange={(e) => set("discount", e.target.value)} /></div>
-        <div className="field" style={{ margin: 0 }}><label>GST %</label><input type="number" min={0} max={28} step={0.5} value={f.gst_percent} onChange={(e) => set("gst_percent", e.target.value)} placeholder="0 = no GST" /></div>
-        <div className="field" style={{ margin: 0 }}><label>Status</label>
-          <select value={f.status} onChange={(e) => set("status", e.target.value)}>
-            {(kind === "quote" ? QUOTE_STATUS : ["unpaid", "partial", "paid", "overdue", "cancelled"]).map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+
+      <div className="bill-form-sec">
+        <h4>Client</h4>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+          <div className="field" style={{ margin: 0 }}><label>Client name *</label><input value={f.client_name} onChange={(e) => set("client_name", e.target.value)} /></div>
+          <div className="field" style={{ margin: 0 }}><label>Client phone</label><input value={f.client_phone} onChange={(e) => set("client_phone", e.target.value)} placeholder="For WhatsApp sharing" /></div>
+          <div className="field" style={{ margin: 0 }}><label>Client email</label><input value={f.client_email} onChange={(e) => set("client_email", e.target.value)} /></div>
         </div>
       </div>
-      <div className="field"><label>Notes</label><textarea rows={2} value={f.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Payment terms, inclusions, anything the client should know" /></div>
-      <TotalsPreview items={f.items} discount={f.discount} gstPercent={f.gst_percent} />
-      <div style={{ display: "flex", gap: 10 }}>
+
+      <div className="bill-form-sec">
+        <h4>Event</h4>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+          <div className="field" style={{ margin: 0 }}><label>Event title</label><input value={f.event_title} onChange={(e) => set("event_title", e.target.value)} placeholder="e.g. Sharma Wedding Sangeet" /></div>
+          <div className="field" style={{ margin: 0 }}><label>Event date</label><input type="date" value={f.event_date || ""} onChange={(e) => set("event_date", e.target.value)} /></div>
+          <div className="field" style={{ margin: 0 }}><label>Venue</label><input value={f.venue} onChange={(e) => set("venue", e.target.value)} /></div>
+        </div>
+      </div>
+
+      <div className="bill-form-sec">
+        <h4>Line items</h4>
+        <div className="field">
+          <label>✨ AI item suggestions — describe the event, AI drafts the line items (you fill in the rates)</label>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input value={aiDesc} onChange={(e) => setAiDesc(e.target.value)} placeholder="e.g. haldi ceremony for 150 guests at a farmhouse in Chittorgarh" style={{ flex: 1 }} />
+            <button type="button" className="btn-sm btn-edit" disabled={aiBusy} onClick={aiDraft}>{aiBusy ? "Thinking…" : "Draft items"}</button>
+          </div>
+        </div>
+        <ItemsEditor items={f.items} setItems={(v) => set("items", v)} />
+      </div>
+
+      <div className="bill-form-sec">
+        <h4>Totals &amp; terms</h4>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 12 }}>
+          <div className="field" style={{ margin: 0 }}><label>Discount (Rs.)</label><input type="number" min={0} value={f.discount} onChange={(e) => set("discount", e.target.value)} /></div>
+          <div className="field" style={{ margin: 0 }}><label>GST %</label><input type="number" min={0} max={28} step={0.5} value={f.gst_percent} onChange={(e) => set("gst_percent", e.target.value)} placeholder="0 = no GST" /></div>
+          <div className="field" style={{ margin: 0 }}><label>Status</label>
+            <select value={f.status} onChange={(e) => set("status", e.target.value)}>
+              {(kind === "quote" ? QUOTE_STATUS : ["unpaid", "partial", "paid", "overdue", "cancelled"]).map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="field"><label>Notes</label><textarea rows={2} value={f.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Payment terms, inclusions, anything the client should know" /></div>
+        <TotalsPreview items={f.items} discount={f.discount} gstPercent={f.gst_percent} />
+      </div>
+
+      <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
         <button type="button" className="btn btn-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "💾 Save"}</button>
         <button type="button" className="btn btn-dark" onClick={onCancel}>Cancel</button>
       </div>
@@ -181,6 +214,7 @@ function QuotesTab({ company, onConvert }) {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null); // null | "new" | quote
   const [q, setQ] = useState("");
+  const [statusF, setStatusF] = useState("all");
 
   const load = async () => {
     setLoading(true);
@@ -213,13 +247,27 @@ function QuotesTab({ company, onConvert }) {
   };
 
   const filtered = quotes.filter((x) =>
+    (statusF === "all" || x.status === statusF) &&
     (x.client_name + " " + x.event_title + " " + x.quote_no).toLowerCase().includes(q.toLowerCase()));
+
+  const totals = quotes.reduce((a, x) => a + calcTotals(x.items, x.discount, x.gst_percent).total, 0);
+  const countBy = (s) => quotes.filter((x) => x.status === s).length;
 
   return (
     <div>
+      <div className="bill-summary">
+        <div className="bill-stat"><div className="k">Quotations</div><div className="v">{quotes.length}</div></div>
+        <div className="bill-stat"><div className="k">Total quoted</div><div className="v">{inr(totals)}</div></div>
+        <div className="bill-stat"><div className="k">Approved</div><div className="v good">{countBy("approved")}</div></div>
+        <div className="bill-stat"><div className="k">Awaiting reply</div><div className="v warn">{countBy("sent") + countBy("draft")}</div></div>
+      </div>
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
         <button type="button" className="btn btn-primary" onClick={() => setEditing("new")}>＋ New quotation</button>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search client / event / number…" style={{ flex: 1, minWidth: 200 }} />
+        <select value={statusF} onChange={(e) => setStatusF(e.target.value)} aria-label="Filter by status" style={{ maxWidth: 170 }}>
+          <option value="all">All statuses</option>
+          {QUOTE_STATUS.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
       </div>
       {editing && (
         <DocForm kind="quote" company={company}
@@ -232,17 +280,20 @@ function QuotesTab({ company, onConvert }) {
           {filtered.map((x) => {
             const t = calcTotals(x.items, x.discount, x.gst_percent);
             return (
-              <div key={x.id} className="editor" style={{ margin: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+              <div key={x.id} className="bill-card">
+                <div className="bill-card-top">
                   <div>
-                    <b>{x.quote_no}</b> · {x.client_name}
-                    {x.event_title && <span className="seo-hint"> — {x.event_title}{x.event_date ? ` (${fmtDate(x.event_date)})` : ""}</span>}
-                    <div style={{ marginTop: 4 }}>
+                    <div className="bill-title">
+                      {x.quote_no}
                       <span className={`badge badge-${x.status === "approved" ? "published" : x.status === "rejected" ? "draft" : "pending"}`}>{x.status}</span>
-                      <b style={{ marginLeft: 10, color: "#8F3F2D" }}>{inr(t.total)}</b>
+                    </div>
+                    <div className="bill-sub">{x.client_name}{x.event_title ? ` · ${x.event_title}` : ""}{x.event_date ? ` · ${fmtDate(x.event_date)}` : ""}</div>
+                    <div className="bill-amounts">
+                      <span>Total <b>{inr(t.total)}</b></span>
+                      <span>{(x.items || []).length} item{(x.items || []).length === 1 ? "" : "s"}</span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <div className="bill-actions">
                     <button type="button" className="btn-sm btn-edit" onClick={() => pdf(x)}>📄 PDF</button>
                     <button type="button" className="btn-sm btn-edit" onClick={() => share(x)}>💬 WhatsApp</button>
                     {x.status !== "converted" && <button type="button" className="btn-sm btn-edit" onClick={() => onConvert(x)}>→ Invoice</button>}
@@ -275,6 +326,7 @@ function InvoicesTab({ company, convertQuote, clearConvert }) {
   const [openPay, setOpenPay] = useState(null); // invoice id with payments open
   const [payForm, setPayForm] = useState({ amount: "", mode: "UPI", paid_on: new Date().toISOString().slice(0, 10), notes: "" });
   const [q, setQ] = useState("");
+  const [statusF, setStatusF] = useState("all");
 
   const load = async () => {
     setLoading(true);
@@ -378,13 +430,30 @@ function InvoicesTab({ company, convertQuote, clearConvert }) {
   };
 
   const filtered = invoices.filter((x) =>
+    (statusF === "all" || x.status === statusF) &&
     (x.client_name + " " + x.event_title + " " + x.invoice_no).toLowerCase().includes(q.toLowerCase()));
+
+  const sumTotals = invoices.reduce((a, x) => a + calcTotals(x.items, x.discount, x.gst_percent).total, 0);
+  const sumPaid = payments.reduce((a, p) => a + (+p.amount || 0), 0);
+  const sumDue = Math.max(0, sumTotals - sumPaid);
+  const countBy = (s) => invoices.filter((x) => x.status === s).length;
 
   return (
     <div>
+      <div className="bill-summary">
+        <div className="bill-stat"><div className="k">Invoiced</div><div className="v">{inr(sumTotals)}</div></div>
+        <div className="bill-stat"><div className="k">Collected</div><div className="v good">{inr(sumPaid)}</div></div>
+        <div className="bill-stat"><div className="k">Outstanding</div><div className={`v${sumDue > 0.5 ? " warn" : " good"}`}>{inr(sumDue)}</div></div>
+        <div className="bill-stat"><div className="k">Paid invoices</div><div className="v good">{countBy("paid")}</div></div>
+        <div className="bill-stat"><div className="k">Pending</div><div className="v warn">{countBy("unpaid") + countBy("partial")}</div></div>
+      </div>
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
         <button type="button" className="btn btn-primary" onClick={() => setEditing("new")}>＋ New invoice</button>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search client / event / number…" style={{ flex: 1, minWidth: 200 }} />
+        <select value={statusF} onChange={(e) => setStatusF(e.target.value)} aria-label="Filter by status" style={{ maxWidth: 170 }}>
+          <option value="all">All statuses</option>
+          {["unpaid", "partial", "paid", "overdue", "cancelled"].map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
       </div>
       {editing && (
         <DocForm kind="invoice" company={company}
@@ -400,23 +469,26 @@ function InvoicesTab({ company, convertQuote, clearConvert }) {
             const bal = Math.max(0, t.total - paid);
             const dd = daysTo(x.event_date);
             const showReminder = bal > 0.5 && dd !== null && dd <= 14;
+            const payCount = payments.filter((p) => p.invoice_id === x.id).length;
             return (
-              <div key={x.id} className="editor" style={{ margin: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+              <div key={x.id} className="bill-card">
+                <div className="bill-card-top">
                   <div>
-                    <b>{x.invoice_no}</b> · {x.client_name}
-                    {x.event_title && <span className="seo-hint"> — {x.event_title}{x.event_date ? ` (${fmtDate(x.event_date)})` : ""}</span>}
-                    <div style={{ marginTop: 4, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                    <div className="bill-title">
+                      {x.invoice_no}
                       <span className={`badge badge-${x.status === "paid" ? "published" : x.status === "partial" ? "pending" : "draft"}`}>{x.status}</span>
-                      <span style={{ fontSize: 13 }}>Total <b>{inr(t.total)}</b></span>
-                      <span style={{ fontSize: 13, color: "#1e7a3c" }}>Paid <b>{inr(paid)}</b></span>
-                      <span style={{ fontSize: 13, color: bal > 0.5 ? "#8F3F2D" : "#1e7a3c" }}>Balance <b>{inr(bal)}</b></span>
                       {showReminder && <span className="badge badge-pending">⚠ {dd < 0 ? "event passed" : `event in ${dd}d`} · balance due</span>}
                     </div>
+                    <div className="bill-sub">{x.client_name}{x.event_title ? ` · ${x.event_title}` : ""}{x.event_date ? ` · ${fmtDate(x.event_date)}` : ""}</div>
+                    <div className="bill-amounts">
+                      <span>Total <b>{inr(t.total)}</b></span>
+                      <span className="good">Paid <b>{inr(paid)}</b></span>
+                      <span className={bal > 0.5 ? "warn" : "good"}>Balance <b>{inr(bal)}</b></span>
+                    </div>
                   </div>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <div className="bill-actions">
                     <button type="button" className="btn-sm btn-edit" onClick={() => setOpenPay(openPay === x.id ? null : x.id)}>
-                      💰 Payments ({payments.filter((p) => p.invoice_id === x.id).length})
+                      💰 Payments ({payCount})
                     </button>
                     <button type="button" className="btn-sm btn-edit" onClick={() => pdf(x)}>📄 PDF</button>
                     <button type="button" className="btn-sm btn-edit" onClick={() => share(x)}>💬 WhatsApp</button>
@@ -473,6 +545,8 @@ function ChecklistsTab() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null); // null | "new" | checklist
   const [q, setQ] = useState("");
+  const [statusF, setStatusF] = useState("all"); // all | active | complete
+  const [expanded, setExpanded] = useState(null); // checklist id with all tasks shown
 
   const load = async () => {
     setLoading(true);
@@ -501,48 +575,81 @@ function ChecklistsTab() {
     catch (e) { toast("Failed: " + e.message, "error"); }
   };
 
-  const filtered = lists.filter((x) =>
-    (x.event_title + " " + x.client_name).toLowerCase().includes(q.toLowerCase()));
+  const pctOf = (cl) => {
+    const done = (cl.items || []).filter((i) => i.done).length;
+    return { done, total: (cl.items || []).length, pct: cl.items?.length ? Math.round((done / cl.items.length) * 100) : 0 };
+  };
+
+  const filtered = lists.filter((x) => {
+    const { pct } = pctOf(x);
+    if (statusF === "complete" && pct !== 100) return false;
+    if (statusF === "active" && pct === 100) return false;
+    return (x.event_title + " " + x.client_name).toLowerCase().includes(q.toLowerCase());
+  });
+
+  const totTasks = lists.reduce((a, x) => a + (x.items || []).length, 0);
+  const doneTasks = lists.reduce((a, x) => a + (x.items || []).filter((i) => i.done).length, 0);
+  const completeLists = lists.filter((x) => pctOf(x).pct === 100).length;
 
   return (
     <div>
+      <div className="bill-summary">
+        <div className="bill-stat"><div className="k">Checklists</div><div className="v">{lists.length}</div></div>
+        <div className="bill-stat"><div className="k">Tasks done</div><div className="v good">{doneTasks}<span style={{ fontSize: 14, color: "#8a6a5c" }}> / {totTasks}</span></div></div>
+        <div className="bill-stat"><div className="k">Completed events</div><div className="v good">{completeLists}</div></div>
+        <div className="bill-stat"><div className="k">In progress</div><div className="v warn">{lists.length - completeLists}</div></div>
+      </div>
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
         <button type="button" className="btn btn-primary" onClick={() => setEditing("new")}>＋ New checklist</button>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search event…" style={{ flex: 1, minWidth: 200 }} />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search event / client…" style={{ flex: 1, minWidth: 200 }} />
+        <select value={statusF} onChange={(e) => setStatusF(e.target.value)} aria-label="Filter by progress" style={{ maxWidth: 170 }}>
+          <option value="all">All</option>
+          <option value="active">In progress</option>
+          <option value="complete">Complete</option>
+        </select>
       </div>
       {editing && <ChecklistForm initial={editing === "new" ? null : editing} onSave={save} onCancel={() => setEditing(null)} />}
       {loading ? <p className="admin-sub">Loading…</p> : (
         <div style={{ display: "grid", gap: 12 }}>
           {filtered.map((cl) => {
-            const done = cl.items.filter((i) => i.done).length;
-            const pct = cl.items.length ? Math.round((done / cl.items.length) * 100) : 0;
+            const { done, total, pct } = pctOf(cl);
+            const showAll = expanded === cl.id;
+            const visible = showAll ? cl.items : (cl.items || []).slice(0, 6);
             return (
-              <div key={cl.id} className="editor" style={{ margin: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-                  <div>
-                    <b>{cl.event_title}</b>
-                    <span className="seo-hint">{cl.client_name && ` · ${cl.client_name}`}{cl.event_date && ` · ${fmtDate(cl.event_date)}`}</span>
-                    <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ width: 160, height: 8, background: "#eee", borderRadius: 4, overflow: "hidden" }}>
-                        <div style={{ width: pct + "%", height: "100%", background: pct === 100 ? "#1e7a3c" : "#B9553A" }} />
-                      </div>
-                      <span style={{ fontSize: 13 }}>{done}/{cl.items.length} · {pct}%</span>
+              <div key={cl.id} className="bill-card">
+                <div className="bill-card-top">
+                  <div style={{ flex: "1 1 260px" }}>
+                    <div className="bill-title">
+                      {cl.event_title}
+                      {pct === 100
+                        ? <span className="badge badge-published">✓ complete</span>
+                        : <span className="badge badge-pending">in progress</span>}
+                    </div>
+                    <div className="bill-sub">{cl.client_name}{cl.event_date ? ` · ${fmtDate(cl.event_date)}` : ""}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+                      <div className={`check-progress${pct === 100 ? " done" : ""}`}><div style={{ width: pct + "%" }} /></div>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: pct === 100 ? "#1e7a3c" : "#8F3F2D", whiteSpace: "nowrap" }}>{done}/{total} · {pct}%</span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 6 }}>
+                  <div className="bill-actions">
                     <button type="button" className="btn-sm btn-edit" onClick={() => setEditing(cl)}>Open</button>
                     <button type="button" className="btn-sm btn-del" onClick={() => del(cl.id)}>Delete</button>
                   </div>
                 </div>
-                <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 4 }}>
-                  {cl.items.slice(0, 6).map((it, i) => (
-                    <label key={i} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13.5, cursor: "pointer" }}>
+                <div className="check-tasks">
+                  {visible.map((it, i) => (
+                    <label key={i} className="check-task">
                       <input type="checkbox" checked={!!it.done} onChange={() => quickToggle(cl, i)} />
                       <span style={it.done ? { textDecoration: "line-through", color: "#999" } : undefined}>{it.label}</span>
                     </label>
                   ))}
-                  {cl.items.length > 6 && <span className="seo-hint">+ {cl.items.length - 6} more — open to see all</span>}
                 </div>
+                {total > 6 && (
+                  <button type="button" className="btn-sm btn-edit" style={{ marginTop: 8 }}
+                    onClick={() => setExpanded(showAll ? null : cl.id)}>
+                    {showAll ? "Show less" : `Show all ${total} tasks`}
+                  </button>
+                )}
               </div>
             );
           })}
@@ -577,37 +684,67 @@ function ChecklistForm({ initial, onSave, onCancel }) {
     try { await onSave(f); } finally { setSaving(false); }
   };
 
+  const doneCount = f.items.filter((it) => it.done).length;
+
   return (
     <div className="editor" style={{ marginBottom: 22, border: "2px solid #8F3F2D" }}>
       <h3 style={{ marginTop: 0 }}>{f.id ? "Edit" : "New"} event checklist</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
-        <div className="field" style={{ margin: 0 }}><label>Event title *</label><input value={f.event_title} onChange={(e) => set("event_title", e.target.value)} /></div>
-        <div className="field" style={{ margin: 0 }}><label>Event date</label><input type="date" value={f.event_date || ""} onChange={(e) => set("event_date", e.target.value)} /></div>
-        <div className="field" style={{ margin: 0 }}><label>Client</label><input value={f.client_name} onChange={(e) => set("client_name", e.target.value)} /></div>
-        <div className="field" style={{ margin: 0 }}><label>Start from template</label>
+
+      <div className="bill-form-sec">
+        <h4>Event</h4>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+          <div className="field" style={{ margin: 0 }}><label>Event title *</label><input value={f.event_title} onChange={(e) => set("event_title", e.target.value)} placeholder="e.g. Sharma Wedding — Udaipur" /></div>
+          <div className="field" style={{ margin: 0 }}><label>Event date</label><input type="date" value={f.event_date || ""} onChange={(e) => set("event_date", e.target.value)} /></div>
+          <div className="field" style={{ margin: 0 }}><label>Client</label><input value={f.client_name} onChange={(e) => set("client_name", e.target.value)} /></div>
+        </div>
+      </div>
+
+      <div className="bill-form-sec">
+        <h4>Start from a template</h4>
+        <div className="field" style={{ margin: 0 }}>
           <div style={{ display: "flex", gap: 8 }}>
             <select value={tpl} onChange={(e) => setTpl(e.target.value)} style={{ flex: 1 }}>
-              <option value="">Choose…</option>
-              {Object.keys(CHECKLIST_TEMPLATES).map((t) => <option key={t}>{t}</option>)}
+              <option value="">Choose a template…</option>
+              {Object.keys(CHECKLIST_TEMPLATES).map((t) => <option key={t}>{t} ({CHECKLIST_TEMPLATES[t].length} tasks)</option>)}
             </select>
             <button type="button" className="btn-sm btn-edit" onClick={applyTemplate}>Apply</button>
           </div>
+          <span className="seo-hint">Replaces the current task list — confirm when asked.</span>
         </div>
       </div>
-      <div style={{ display: "grid", gap: 4, marginBottom: 10 }}>
-        {f.items.map((it, i) => (
-          <div key={i} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <input type="checkbox" checked={!!it.done} onChange={() => set("items", f.items.map((x, j) => (j === i ? { ...x, done: !x.done } : x)))} />
-            <input value={it.label} onChange={(e) => set("items", f.items.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} style={{ flex: 1 }} />
-            <button type="button" className="btn-sm btn-del" onClick={() => set("items", f.items.filter((_, j) => j !== i))}>✕</button>
+
+      <div className="bill-form-sec">
+        <h4>Tasks · {doneCount} of {f.items.length} done</h4>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+          <div className={`check-progress${f.items.length && doneCount === f.items.length ? " done" : ""}`}>
+            <div style={{ width: (f.items.length ? Math.round((doneCount / f.items.length) * 100) : 0) + "%" }} />
           </div>
-        ))}
+          <button type="button" className="btn-sm btn-edit"
+            onClick={() => {
+              const allDone = f.items.length && doneCount === f.items.length;
+              set("items", f.items.map((it) => ({ ...it, done: !allDone })));
+            }}>
+            {f.items.length && doneCount === f.items.length ? "Uncheck all" : "Check all"}
+          </button>
+        </div>
+        <div style={{ display: "grid", gap: 6, marginBottom: 10 }}>
+          {f.items.map((it, i) => (
+            <div key={i} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input type="checkbox" checked={!!it.done} style={{ width: 18, height: 18, accentColor: "#8F3F2D", flex: "0 0 auto" }}
+                onChange={() => set("items", f.items.map((x, j) => (j === i ? { ...x, done: !x.done } : x)))} />
+              <input value={it.label} onChange={(e) => set("items", f.items.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} style={{ flex: 1 }} />
+              <button type="button" className="btn-sm btn-del" onClick={() => set("items", f.items.filter((_, j) => j !== i))} aria-label="Remove task">✕</button>
+            </div>
+          ))}
+          {!f.items.length && <p className="admin-sub" style={{ margin: 0 }}>No tasks yet — apply a template or add your own below.</p>}
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="Add a custom task… (Enter to add)" style={{ flex: 1 }}
+            onKeyDown={(e) => { if (e.key === "Enter" && newTask.trim()) { set("items", [...f.items, { label: newTask.trim(), done: false }]); setNewTask(""); } }} />
+          <button type="button" className="btn-sm btn-edit" onClick={() => { if (newTask.trim()) { set("items", [...f.items, { label: newTask.trim(), done: false }]); setNewTask(""); } }}>＋ Add</button>
+        </div>
       </div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-        <input value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="Add a custom task…" style={{ flex: 1 }}
-          onKeyDown={(e) => { if (e.key === "Enter" && newTask.trim()) { set("items", [...f.items, { label: newTask.trim(), done: false }]); setNewTask(""); } }} />
-        <button type="button" className="btn-sm btn-edit" onClick={() => { if (newTask.trim()) { set("items", [...f.items, { label: newTask.trim(), done: false }]); setNewTask(""); } }}>＋ Add</button>
-      </div>
+
       <div style={{ display: "flex", gap: 10 }}>
         <button type="button" className="btn btn-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "💾 Save checklist"}</button>
         <button type="button" className="btn btn-dark" onClick={onCancel}>Cancel</button>

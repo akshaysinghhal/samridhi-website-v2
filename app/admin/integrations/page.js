@@ -1,10 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
-import { api } from "../../../lib/adminApi";
+import { useEffect, useRef, useState } from "react";
+import { api, uploadFile } from "../../../lib/adminApi";
 import { revalidateSite, SaveButton, AdminLoader, toast } from "../_lib/ui";
 import { TextField, PasswordField } from "../_lib/settingsFields";
 
-const EMPTY_LEGAL = { legal_name: "", trade_name: "Samridhi Films & Television", gstin: "", pan: "", address: "", state: "Rajasthan", email: "", phone: "", grievance_officer: { name: "", email: "", phone: "" } };
+const EMPTY_LEGAL = { legal_name: "", trade_name: "Samridhi Films & Television", gstin: "", pan: "", address: "", state: "Rajasthan", email: "", phone: "", show_signature: true, grievance_officer: { name: "", email: "", phone: "" } };
 
 export default function IntegrationsAdmin() {
   const [s, setS] = useState({});
@@ -30,6 +30,23 @@ export default function IntegrationsAdmin() {
   const legal = (s.legal_entity && typeof s.legal_entity === "object") ? { ...EMPTY_LEGAL, ...s.legal_entity } : { ...EMPTY_LEGAL };
   const setLegal = (k, v) => set("legal_entity", { ...legal, [k]: v });
   const setGrievance = (k, v) => set("legal_entity", { ...legal, grievance_officer: { ...(legal.grievance_officer || {}), [k]: v } });
+  const bank = (legal.bank && typeof legal.bank === "object") ? legal.bank : {};
+  const setBank = (k, v) => set("legal_entity", { ...legal, bank: { ...bank, [k]: v } });
+
+  // Signature image upload (direct to Cloudinary, like other admin uploads).
+  const sigInput = useRef(null);
+  const [sigUploading, setSigUploading] = useState(false);
+  const uploadSig = async (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    setSigUploading(true);
+    try {
+      const r = await uploadFile(f);
+      if (r?.secure_url) { setLegal("signature_url", r.secure_url); toast("Signature uploaded — save Legal entity to keep it."); }
+    } catch (err) { toast("Signature upload failed: " + err.message, "error"); }
+    setSigUploading(false);
+  };
 
   const save = async (keys, label) => {
     setMsg(""); setOkMsg("");
@@ -124,6 +141,37 @@ export default function IntegrationsAdmin() {
           <div className="field"><label>Name</label><input value={legal.grievance_officer?.name || ""} onChange={(e) => setGrievance("name", e.target.value)} /></div>
           <div className="field"><label>Email</label><input value={legal.grievance_officer?.email || ""} onChange={(e) => setGrievance("email", e.target.value)} /></div>
           <div className="field"><label>Phone</label><input value={legal.grievance_officer?.phone || ""} onChange={(e) => setGrievance("phone", e.target.value)} /></div>
+        </div>
+        <h3 style={{ marginTop: 14 }}>Bank details <span className="seo-hint" style={{ fontWeight: 400 }}>— printed on invoices &amp; receipts only when filled</span></h3>
+        <div className="form-row">
+          <div className="field"><label>Bank name</label><input value={bank.bank_name || ""} onChange={(e) => setBank("bank_name", e.target.value)} placeholder="e.g. State Bank of India" /></div>
+          <div className="field"><label>Account holder name</label><input value={bank.account_name || ""} onChange={(e) => setBank("account_name", e.target.value)} /></div>
+        </div>
+        <div className="form-row">
+          <div className="field"><label>Account number</label><input value={bank.account_no || ""} onChange={(e) => setBank("account_no", e.target.value)} inputMode="numeric" /></div>
+          <div className="field"><label>IFSC</label><input value={bank.ifsc || ""} onChange={(e) => setBank("ifsc", e.target.value)} style={{ textTransform: "uppercase" }} /></div>
+          <div className="field"><label>UPI ID (optional)</label><input value={bank.upi || ""} onChange={(e) => setBank("upi", e.target.value)} placeholder="name@upi" /></div>
+        </div>
+        <h3 style={{ marginTop: 14 }}>Authorised signatory signature</h3>
+        <label className="check-row" style={{ marginBottom: 10 }}>
+          <input type="checkbox" checked={legal.show_signature !== false} onChange={(e) => setLegal("show_signature", e.target.checked)} />
+          <b>Show signature on PDFs</b>
+          <span className="seo-hint" style={{ margin: 0 }}>— switch off to hide it from quotations, invoices &amp; receipts</span>
+        </label>
+        <div className="field">
+          <label>Signature image <span className="seo-hint" style={{ fontWeight: 400 }}>— transparent PNG works best; printed above the signatory line on every PDF</span></label>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <button type="button" className="btn-sm btn-edit" onClick={() => sigInput.current?.click()} disabled={sigUploading}>
+              {sigUploading ? "Uploading…" : "📤 Upload signature"}
+            </button>
+            {legal.signature_url && <button type="button" className="btn-sm btn-del" onClick={() => setLegal("signature_url", "")}>Remove</button>}
+            <input ref={sigInput} type="file" accept="image/*" hidden onChange={uploadSig} />
+          </div>
+          {legal.signature_url && (
+            <div className="img-preview" style={{ marginTop: 8, background: "#fff" }}>
+              <img src={legal.signature_url} alt="Authorised signatory signature" style={{ maxHeight: 64 }} />
+            </div>
+          )}
         </div>
         <SaveButton onClick={() => save(["legal_entity"], "Legal entity")}>Save</SaveButton>
       </div>
