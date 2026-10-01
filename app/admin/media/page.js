@@ -237,7 +237,7 @@ export default function MediaLibrary() {
               <div style={{ position: "absolute", top: 8, right: 8, zIndex: 2, background: "rgba(255,255,255,0.92)", borderRadius: 8, padding: 4 }}>
                 <CheckCell checked={bulk.selected.has(m.id)} onChange={() => bulk.toggleOne(m.id)} label="Select media" />
               </div>
-              <div onClick={() => setPreview(m)} style={{ cursor: "zoom-in" }} title="Click to preview">
+              <div onClick={() => setPreview(m)} style={{ cursor: "zoom-in", position: "relative" }} title="Click to preview">
                 {m.kind === "video" ? (
                   <img src={m.thumb} alt={m.alt || "Video"} loading="lazy" />
                 ) : (
