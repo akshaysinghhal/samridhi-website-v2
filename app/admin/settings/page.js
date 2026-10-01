@@ -42,33 +42,39 @@ export default function SettingsAdmin() {
     } catch (e) { setMsg("Failed: " + e.message); }
   };
 
-  const Text = ({ k, label, hint }) => (
+// Field components live at module level (not inside the page component) so their
+// identity is stable across renders. Defining them inside would remount every
+// input on each keystroke — losing text-field focus and instantly closing the
+// native colour-picker popup while dragging.
+function TextField({ k, s, set, label, hint }) {
+  return (
     <div className="field"><label>{label}</label>
       <input value={s[k] || ""} onChange={(e) => set(k, e.target.value)} />
       {hint && <div className="seo-hint">{hint}</div>}
     </div>
   );
+}
 
-  const themeVal = (k) => (isHex(s[k]) ? s[k].trim() : THEME_DEFAULTS[k]);
-  const setThemeHex = (k, raw) => {
+function ColorField({ k, s, set, label, hint }) {
+  const valid = isHex(s[k]) ? String(s[k]).trim() : THEME_DEFAULTS[k];
+  const setHex = (raw) => {
     let h = String(raw || "").trim();
     if (/^[0-9a-fA-F]{6}$/.test(h)) h = "#" + h;
     set(k, h);
   };
-
-  const ColorField = ({ k, label, hint }) => (
+  return (
     <div className="field"><label>{label}</label>
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <input
           type="color"
-          value={themeVal(k)}
+          value={valid}
           onChange={(e) => set(k, e.target.value)}
           aria-label={label + " colour picker"}
           style={{ width: 52, height: 42, padding: 4, border: "1.5px solid #ecd9e4", borderRadius: 10, cursor: "pointer", background: "#fff" }}
         />
         <input
           value={s[k] ?? ""}
-          onChange={(e) => setThemeHex(k, e.target.value)}
+          onChange={(e) => setHex(e.target.value)}
           placeholder={THEME_DEFAULTS[k]}
           spellCheck={false}
           style={{ maxWidth: 130, fontFamily: "ui-monospace, monospace" }}
@@ -78,6 +84,7 @@ export default function SettingsAdmin() {
       {hint && <div className="seo-hint">{hint}</div>}
     </div>
   );
+}
 
   const saveTheme = async () => {
     setMsg(""); setOkMsg("");
@@ -113,10 +120,10 @@ export default function SettingsAdmin() {
 
       <div className="content-group">
         <div className="sec">Company</div><h2>Company</h2>
-        <Text k="company_name" label="Company name" />
-        <Text k="tagline1" label="Tagline 1" />
-        <Text k="tagline2" label="Tagline 2" />
-        <Text k="since" label="Serving since (year)" />
+        <TextField s={s} set={set} k="company_name" label="Company name" />
+        <TextField s={s} set={set} k="tagline1" label="Tagline 1" />
+        <TextField s={s} set={set} k="tagline2" label="Tagline 2" />
+        <TextField s={s} set={set} k="since" label="Serving since (year)" />
         <SaveButton onClick={() => save(["company_name", "tagline1", "tagline2", "since"], "Company")}>Save</SaveButton>
       </div>
 
@@ -124,14 +131,14 @@ export default function SettingsAdmin() {
         <div className="sec">Theme</div><h2>Website theme</h2>
         <p className="seo-hint" style={{ marginTop: 0 }}>One place to re-skin the whole website — buttons, links, headings, badges and highlights everywhere update to your colours.</p>
         <div className="theme-row">
-          <ColorField k="theme_primary" label="Primary" hint="Buttons, links, main accents" />
-          <ColorField k="theme_deep" label="Deep shade" hint="Hover states, dark sections" />
-          <ColorField k="theme_gold" label="Gold accent" hint="Badges, dividers, highlights" />
+          <ColorField s={s} set={set} k="theme_primary" label="Primary" hint="Buttons, links, main accents" />
+          <ColorField s={s} set={set} k="theme_deep" label="Deep shade" hint="Hover states, dark sections" />
+          <ColorField s={s} set={set} k="theme_gold" label="Gold accent" hint="Badges, dividers, highlights" />
         </div>
         <div className="theme-preview" aria-hidden="true">
-          <span className="tp-btn" style={{ background: themeVal("theme_primary") }}>Book Now</span>
-          <span className="tp-text" style={{ color: themeVal("theme_deep") }}>Creating Experiences. Delivering Excellence.</span>
-          <span className="tp-badge" style={{ background: themeVal("theme_gold") }}>Since 1999</span>
+          <span className="tp-btn" style={{ background: isHex(s.theme_primary) ? s.theme_primary.trim() : THEME_DEFAULTS.theme_primary }}>Book Now</span>
+          <span className="tp-text" style={{ color: isHex(s.theme_deep) ? s.theme_deep.trim() : THEME_DEFAULTS.theme_deep }}>Creating Experiences. Delivering Excellence.</span>
+          <span className="tp-badge" style={{ background: isHex(s.theme_gold) ? s.theme_gold.trim() : THEME_DEFAULTS.theme_gold }}>Since 1999</span>
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
           <SaveButton onClick={saveTheme}>Save Theme</SaveButton>
@@ -142,14 +149,14 @@ export default function SettingsAdmin() {
       <div className="content-group">
         <div className="sec">Contact</div><h2>Contact</h2>
         <div className="form-row">
-          <Text k="phone1" label="Phone 1" />
-          <Text k="phone2" label="Phone 2" />
+          <TextField s={s} set={set} k="phone1" label="Phone 1" />
+          <TextField s={s} set={set} k="phone2" label="Phone 2" />
         </div>
         <div className="form-row">
-          <Text k="whatsapp" label="WhatsApp number" hint="Digits only, with country code: 919602228846" />
-          <Text k="whatsapp_msg" label="Default WhatsApp message" />
+          <TextField s={s} set={set} k="whatsapp" label="WhatsApp number" hint="Digits only, with country code: 919602228846" />
+          <TextField s={s} set={set} k="whatsapp_msg" label="Default WhatsApp message" />
         </div>
-        <Text k="email" label="Email" />
+        <TextField s={s} set={set} k="email" label="Email" />
         <SaveButton onClick={() => save(["phone1", "phone2", "whatsapp", "whatsapp_msg", "email"], "Contact")}>Save</SaveButton>
       </div>
 
@@ -162,25 +169,25 @@ export default function SettingsAdmin() {
 
       <div className="content-group">
         <div className="sec">Socials</div><h2>Social media</h2>
-        <Text k="instagram" label="Instagram URL" />
-        <Text k="facebook" label="Facebook URL" />
-        <Text k="youtube" label="YouTube URL" />
+        <TextField s={s} set={set} k="instagram" label="Instagram URL" />
+        <TextField s={s} set={set} k="facebook" label="Facebook URL" />
+        <TextField s={s} set={set} k="youtube" label="YouTube URL" />
         <SaveButton onClick={() => save(["instagram", "facebook", "youtube"], "Socials")}>Save</SaveButton>
       </div>
 
       <div className="content-group">
         <div className="sec">Hero</div><h2>Hero video</h2>
         <p className="seo-hint">Managed in detail at <a href="/admin/homepage">Homepage → Hero video</a>.</p>
-        <Text k="hero_video" label="Desktop video URL" />
-        <Text k="hero_video_mobile" label="Mobile video URL" />
-        <Text k="hero_poster" label="Poster image URL" />
+        <TextField s={s} set={set} k="hero_video" label="Desktop video URL" />
+        <TextField s={s} set={set} k="hero_video_mobile" label="Mobile video URL" />
+        <TextField s={s} set={set} k="hero_poster" label="Poster image URL" />
         <SaveButton onClick={() => save(["hero_video", "hero_video_mobile", "hero_poster"], "Hero video")}>Save</SaveButton>
       </div>
 
       <div className="content-group">
         <div className="sec">Analytics</div><h2>Analytics</h2>
-        <Text k="ga4_id" label="GA4 Measurement ID" hint="e.g. G-XXXXXXXXXX" />
-        <Text k="meta_pixel_id" label="Meta Pixel ID" />
+        <TextField s={s} set={set} k="ga4_id" label="GA4 Measurement ID" hint="e.g. G-XXXXXXXXXX" />
+        <TextField s={s} set={set} k="meta_pixel_id" label="Meta Pixel ID" />
         <SaveButton onClick={() => save(["ga4_id", "meta_pixel_id"], "Analytics")}>Save</SaveButton>
       </div>
 
@@ -219,7 +226,7 @@ export default function SettingsAdmin() {
 
       <div className="content-group">
         <div className="sec">Leads</div><h2>Lead notifications</h2>
-        <Text k="lead_notify_email" label="Notification email for new leads" hint="Comma-separate multiple addresses." />
+        <TextField s={s} set={set} k="lead_notify_email" label="Notification email for new leads" hint="Comma-separate multiple addresses." />
         <SaveButton onClick={() => save(["lead_notify_email"], "Lead notifications")}>Save</SaveButton>
       </div>
 

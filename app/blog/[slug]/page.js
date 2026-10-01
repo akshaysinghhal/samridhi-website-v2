@@ -46,15 +46,18 @@ export async function generateMetadata({ params }) {
   const post = await getPost(params.slug);
   if (!post) return { title: "Post not found" };
   const og = post.og_image || post.cover_image;
+  const canonical = `/blog/${post.slug}`;
   return {
     title: post.meta_title || post.title,
     description: post.meta_description || post.excerpt || "",
     keywords: post.keywords ? post.keywords.split(",").map((k) => k.trim()) : undefined,
+    alternates: { canonical },
     openGraph: {
       title: post.meta_title || post.title,
       description: post.meta_description || post.excerpt || "",
       type: "article",
       publishedTime: post.published_at || undefined,
+      url: canonical,
       images: og ? [{ url: og }] : undefined,
     },
   };

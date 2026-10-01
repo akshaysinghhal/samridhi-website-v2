@@ -14,9 +14,16 @@ export async function generateMetadata({ params }) {
   const page = await getLandingPage(params.slug);
   if (!page) return {};
   const seo = page.seo || {};
+  const canonical = `/${page.slug}`;
   return {
     title: seo.title || page.h1,
     description: seo.description || page.intro,
+    alternates: { canonical },
+    openGraph: {
+      title: seo.title || page.h1,
+      description: seo.description || page.intro || "",
+      url: canonical,
+    },
   };
 }
 

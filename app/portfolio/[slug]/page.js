@@ -12,9 +12,17 @@ export async function generateMetadata({ params }) {
   const e = await getEvent(params.slug);
   if (!e) return {};
   const seo = e.seo || {};
+  const canonical = `/portfolio/${e.slug}`;
   return {
     title: seo.title || e.title,
     description: seo.description || e.description,
+    alternates: { canonical },
+    openGraph: {
+      title: seo.title || e.title,
+      description: seo.description || e.description || "",
+      url: canonical,
+      images: e.cover_image ? [{ url: e.cover_image }] : undefined,
+    },
   };
 }
 

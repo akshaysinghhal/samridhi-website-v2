@@ -20,7 +20,8 @@ Log in with the email + password you created in Supabase. Everything you save go
 Every quote request, artist booking enquiry, wedding enquiry and contact message lands here.
 
 - **Filter** by status (New / Contacted / Quote Sent / Negotiation / Won / Lost) or search by name/phone.
-- Open a lead to see everything the visitor typed, which page they came from, and their UTM source.
+- Click any row to open the lead in a **popup** — details, contact buttons, notes and follow-up all stay in the popup.
+- **Source page** in the popup is clickable — opens the page the enquiry came from in a new tab.
 - **Advance the status** as you work the lead. Use **Assign to** to note who owns it.
 - **Notes + follow-up date** — internal only, never shown on the website.
 - One-click **Call**, **WhatsApp**, **Email** buttons.
@@ -118,6 +119,11 @@ The *last updated* date stamps automatically when you save.
 - **Lead notifications**: email address that gets notified of new leads.
 - **SEO indexing toggle** — keep **OFF** while placeholders remain (the Launch page warns you
   loudly if it's on too early).
+- **Website theme**: change the whole website's colours from one place — **Primary**
+  (buttons, links, accents), **Deep shade** (hover states, dark sections), **Gold accent**
+  (badges, dividers). Pick colours or type a hex code, preview live, then **Save Theme**.
+  **Reset to defaults** restores the terracotta palette. The change applies site-wide within
+  about a minute.
 
 ## 13. Navigation (`/admin/navigation`) & SEO (`/admin/seo`)
 
@@ -146,6 +152,20 @@ Weddings** (videos) and use the upload buttons. Bulk-select works for photos.
 (or three folders: *Press Photos*, *Celebrity Feedback Videos*, *Wedding Photos*). Everything
 gets uploaded to Cloudinary and filed into the right modules with proper labels — then you
 manage them from admin from then on.
+
+---
+
+## Lists, search, filters & bulk actions
+
+Every admin list (Blog, Portfolio, Services, Press, Artists, Gallery, Couple Stories, Team,
+Clients, Testimonials, International shows, Leads…) has the same toolbar:
+
+- **Search** — filters the list as you type.
+- **Status filter** — every list that has a status (Published / Draft / Scheduled, or the lead
+  pipeline) lets you filter by it.
+- **Select all** — the checkbox in the blue bulk bar selects everything *currently visible*
+  (respecting search, status filter and the active tab, e.g. Photos vs Videos in Gallery).
+- **Bulk publish / unpublish / delete** — apply to all selected rows at once.
 
 ---
 

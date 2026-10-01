@@ -13,9 +13,17 @@ export const revalidate = 60;
 export async function generateMetadata({ params }) {
   const a = await getArtist(params.slug);
   if (!a) return {};
+  const canonical = `/artists/${a.slug}`;
   return {
     title: `${a.name} — Book for Your Event`,
     description: `${a.name} (${a.category || "Artist"}) is available for booking through Samridhi Films & Television. ${a.bio ? a.bio.slice(0, 140) : ""}`,
+    alternates: { canonical },
+    openGraph: {
+      title: `${a.name} — Book for Your Event`,
+      description: `${a.name} (${a.category || "Artist"}) is available for booking through Samridhi Films & Television.`,
+      url: canonical,
+      images: a.photo_url ? [{ url: a.photo_url }] : undefined,
+    },
   };
 }
 

@@ -12,9 +12,17 @@ export async function generateMetadata({ params }) {
   const sv = await getService(params.slug);
   if (!sv) return {};
   const seo = sv.seo || {};
+  const canonical = `/services/${sv.slug}`;
   return {
     title: seo.title || sv.title,
     description: seo.description || sv.summary,
+    alternates: { canonical },
+    openGraph: {
+      title: seo.title || sv.title,
+      description: seo.description || sv.summary || "",
+      url: canonical,
+      images: sv.hero_image ? [{ url: sv.hero_image }] : undefined,
+    },
   };
 }
 

@@ -28,7 +28,29 @@ export async function generateMetadata() {
       "Samridhi Films & Television — Chittorgarh's complete event management company since 1999. Weddings, celebrity shows, government & corporate events. You Just Think & We Will Manage It!",
     keywords: ["event management", "wedding planner Rajasthan", "celebrity management", "Chittorgarh events", "corporate events"],
     robots: indexing ? { index: true, follow: true } : { index: false, follow: false, nocache: true },
-    openGraph: { type: "website", siteName: "Samridhi Films & Television" },
+    manifest: "/site.webmanifest",
+    icons: {
+      icon: [
+        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+        { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      ],
+      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    },
+    openGraph: {
+      type: "website",
+      siteName: "Samridhi Films & Television",
+      title: "Samridhi Films & Television | Event Management, Weddings & Artist Management",
+      description:
+        "Samridhi Films & Television — Chittorgarh's complete event management company since 1999. Weddings, celebrity shows, government & corporate events across Rajasthan.",
+      images: [{ url: "/images/logo.png", width: 1200, height: 567, alt: "Samridhi Films & Television" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Samridhi Films & Television | Event Management, Weddings & Artist Management",
+      description:
+        "Weddings, celebrity shows, government & corporate events across Rajasthan since 1999. You Just Think & We Will Manage It!",
+      images: ["/images/logo.png"],
+    },
   };
 }
 
