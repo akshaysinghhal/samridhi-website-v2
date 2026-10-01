@@ -37,7 +37,7 @@ const STEP_FALLBACKS = [
 ];
 
 function svcImage(sv) {
-  return sv.image_url || sv.cover_image || sv.image || "";
+  return sv.hero_image || sv.image_url || sv.cover_image || sv.image || "";
 }
 
 export default async function Home() {
@@ -147,7 +147,7 @@ export default async function Home() {
               const img = svcImage(sv);
               const size = i === 0 ? "svc-lg" : i <= 2 ? "svc-md" : i <= 5 ? "svc-sm" : "svc-md";
               return (
-                <Reveal key={sv.slug || sv.id || i} delay={i % 3} className={`svc-card ${size}`}>
+                <Reveal key={sv.slug || sv.id || i} delay={i % 3} className={`svc-card ${size}${img ? " has-img" : ""}`}>
                   <Link href={`/services/${sv.slug}`} style={{ textDecoration: "none", display: "flex", flexDirection: "column", height: "100%", justifyContent: "flex-end" }} aria-label={sv.title}>
                     {size === "svc-lg" && img ? (
                       <>

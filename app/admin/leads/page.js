@@ -5,6 +5,26 @@ import { SaveButton } from "../_lib/ui";
 
 const STATUSES = ["New", "Contacted", "Quote Sent", "Negotiation", "Won", "Lost"];
 
+// Human-friendly labels for the raw type keys stored in the DB.
+const TYPE_LABELS = {
+  artist_booking: "Artist Booking",
+  quote: "Quote",
+  wedding: "Wedding",
+  contact: "Contact",
+};
+function prettyType(t) { return TYPE_LABELS[t] || String(t || "—").replace(/_/g, " "); }
+
+// Status pill colors for quick triage.
+const STATUS_STYLE = {
+  "New":         { bg: "#fdeee6", fg: "#a03d24", bd: "#f0c4ab" },
+  "Contacted":   { bg: "#e8f1fd", fg: "#1d5bbf", bd: "#bcd6f7" },
+  "Quote Sent":  { bg: "#f1e9fb", fg: "#6a3fb5", bd: "#d5c2f0" },
+  "Negotiation": { bg: "#fdf3df", fg: "#9a6b12", bd: "#f0d9a0" },
+  "Won":         { bg: "#e6f6ec", fg: "#1e7b3c", bd: "#b7e3c6" },
+  "Lost":        { bg: "#f1f1f1", fg: "#6b6b6b", bd: "#d5d5d5" },
+};
+function statusStyle(s) { return STATUS_STYLE[s] || STATUS_STYLE["New"]; }
+
 function digits(phone) { return String(phone || "").replace(/\D/g, ""); }
 function waPhone(phone) {
   const d = digits(phone);
@@ -93,7 +113,11 @@ export default function LeadsAdmin() {
         </select>
         <input value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} placeholder="Search name, phone, email…" style={{ flex: 1, minWidth: 200 }} />
         <button className="btn-sm btn-edit" onClick={load}>Search</button>
-        <label className="check-row" style={{ margin: 0 }}><input type="checkbox" checked={hideSpam} onChange={(e) => setHideSpam(e.target.checked)} /> Hide spam</label>
+        <label className="switch" title="Hide leads marked as spam">
+          <input type="checkbox" checked={hideSpam} onChange={(e) => setHideSpam(e.target.checked)} />
+          <span className="sw" aria-hidden="true" />
+          Hide spam
+        </label>
         <button className="btn-sm btn-new" onClick={exportCsv}>⬇ CSV export</button>
       </div>
 
@@ -105,21 +129,35 @@ export default function LeadsAdmin() {
               <tbody>
                 {shown.map((l) => {
                   const dup = digits(l.phone) && dupPhones[digits(l.phone)] > 1;
+                  const st = statusStyle(l.status);
+                  const isSel = selected && selected.id === l.id;
                   return (
-                    <tr key={l.id} className={selected && selected.id === l.id ? "row-selected" : ""} onClick={() => openLead(l)} style={{ cursor: "pointer" }}>
+                    <tr key={l.id} className={isSel ? "row-selected" : ""} onClick={() => openLead(l)} style={{ cursor: "pointer" }}>
                       <td>
-                        <b>{l.name || "—"}</b>
-                        <div className={dup ? "dup-phone" : "seo-hint"} title={dup ? "Duplicate phone number" : ""}>{l.phone || "—"}</div>
-                        {l.spam && <span className="badge draft">spam</span>}
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <b>{l.name || "—"}</b>
+                          {l.spam && <span className="badge draft">spam</span>}
+                          {dup && <span className="badge dup" title="Same phone number appears on another lead">dup</span>}
+                        </div>
+                        <div className={dup ? "dup-phone" : "seo-hint"} title={dup ? "Duplicate phone number" : l.phone}>{l.phone || "—"}</div>
                       </td>
-                      <td>{l.type}</td>
-                      <td>{l.event_type || "—"}{l.event_date ? <div className="seo-hint">{l.event_date}</div> : null}</td>
+                      <td><span className="type-badge">{prettyType(l.type)}</span></td>
+                      <td>
+                        <div>{l.event_type || "—"}</div>
+                        {l.event_date ? <div className="seo-hint">{l.event_date}</div> : null}
+                      </td>
                       <td onClick={(e) => e.stopPropagation()}>
-                        <select value={l.status} onChange={(e) => patchLead(l.id, { status: e.target.value })} style={{ padding: "6px 8px" }}>
+                        <select
+                          value={l.status}
+                          onChange={(e) => patchLead(l.id, { status: e.target.value })}
+                          className="status-pill"
+                          style={{ background: st.bg, color: st.fg, borderColor: st.bd }}
+                          aria-label="Lead status"
+                        >
                           {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </td>
-                      <td className="seo-hint">{new Date(l.created_at).toLocaleDateString("en-IN")}</td>
+                      <td className="seo-hint" style={{ whiteSpace: "nowrap" }}>{new Date(l.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
                     </tr>
                   );
                 })}
@@ -130,21 +168,42 @@ export default function LeadsAdmin() {
 
         {selected && (
           <div className="leads-detail editor">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h2 style={{ margin: 0 }}>{selected.name}</h2>
-              <button className="btn-sm btn-del" onClick={() => setSelected(null)}>✕</button>
+            <div className="lead-head">
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <h2 style={{ margin: 0 }}>{selected.name || "Unnamed lead"}</h2>
+                  <span className="type-badge">{prettyType(selected.type)}</span>
+                </div>
+                <div className="seo-hint" style={{ marginTop: 4 }}>
+                  Received {new Date(selected.created_at).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                </div>
+              </div>
+              <button className="btn-sm btn-del" onClick={() => setSelected(null)} aria-label="Close lead details">✕</button>
             </div>
+
+            <div className="lead-status-row">
+              <label>Status</label>
+              <select
+                value={selected.status}
+                onChange={(e) => patchLead(selected.id, { status: e.target.value })}
+                className="status-pill"
+                style={{ background: statusStyle(selected.status).bg, color: statusStyle(selected.status).fg, borderColor: statusStyle(selected.status).bd }}
+              >
+                {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
             <div className="detail-grid">
-              <div><span>Phone</span><b>{selected.phone || "—"}</b></div>
-              <div><span>Email</span><b>{selected.email || "—"}</b></div>
-              <div><span>Company</span><b>{selected.company || "—"}</b></div>
-              <div><span>Type</span><b>{selected.type}</b></div>
-              <div><span>Event type</span><b>{selected.event_type || "—"}</b></div>
-              <div><span>Event date</span><b>{selected.event_date || "—"}</b></div>
-              <div><span>Location</span><b>{selected.location || "—"}</b></div>
-              <div><span>Guests</span><b>{selected.guests || "—"}</b></div>
-              <div><span>Budget</span><b>{selected.budget || "—"}</b></div>
-              <div><span>Source page</span><b style={{ wordBreak: "break-all" }}>{selected.source_page || "—"}</b></div>
+              <div className="d-field"><span>Phone</span><b>{selected.phone || "—"}</b></div>
+              <div className="d-field d-full"><span>Email</span><b className="break-all">{selected.email || "—"}</b></div>
+              <div className="d-field"><span>Company</span><b>{selected.company || "—"}</b></div>
+              <div className="d-field"><span>Type</span><b>{prettyType(selected.type)}</b></div>
+              <div className="d-field"><span>Event type</span><b>{selected.event_type || "—"}</b></div>
+              <div className="d-field"><span>Event date</span><b>{selected.event_date || "—"}</b></div>
+              <div className="d-field"><span>Location</span><b>{selected.location || "—"}</b></div>
+              <div className="d-field"><span>Guests</span><b>{selected.guests || "—"}</b></div>
+              <div className="d-field"><span>Budget</span><b>{selected.budget || "—"}</b></div>
+              <div className="d-field d-full"><span>Source page</span><b className="break-all">{selected.source_page || "—"}</b></div>
             </div>
             {selected.message && <div className="field" style={{ marginTop: 12 }}><label>Message</label><div className="detail-msg">{selected.message}</div></div>}
             {selected.utm && Object.keys(selected.utm).length > 0 && (

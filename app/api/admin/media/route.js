@@ -10,7 +10,7 @@ async function listCloudinary() {
     let nextCursor;
     do {
       const res = await cloud().search
-        .expression(`folder:samridhi/* AND resource_type:${resourceType}`)
+        .expression(`resource_type:${resourceType}`)
         .sort_by("created_at", "desc")
         .max_results(500)
         .next_cursor(nextCursor)

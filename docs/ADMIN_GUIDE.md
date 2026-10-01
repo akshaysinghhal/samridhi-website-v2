@@ -88,6 +88,9 @@ price/booking notes (never shown publicly), status.
 - **Copy URL** to paste a file's link anywhere; **Delete** removes it from Cloudinary permanently.
 - In any add/edit form, the **📚 Choose from library** button opens this same library as a popup —
   e.g. artist photos, artist performance videos, blog cover images, wedding photos.
+- The popup has **search + Photos/Videos + folder filters**.
+- For gallery fields the popup lets you **tick multiple photos and add them all at once**
+  ("Add N photos" button).
 
 ## 10. Clients, Testimonials, Team, International shows
 

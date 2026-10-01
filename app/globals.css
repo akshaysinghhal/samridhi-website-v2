@@ -365,22 +365,25 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 .svc-card:hover h3, .svc-card:hover p, .svc-card:hover .svc-link { color: #fff; }
 .svc-card:hover .svc-num { color: var(--gold-soft); }
 .svc-card:hover .svc-link .arr { transform: translateX(6px); color: #fff; }
-.svc-card.svc-lg { grid-column: span 3; min-height: 420px; padding: 0; justify-content: flex-end; }
+.svc-card.svc-lg { grid-column: span 3; min-height: 420px; justify-content: flex-end; }
+/* Image variant: photo background with light text over a dark gradient. */
+/* Without has-img the card keeps the default padding + dark text. */
+.svc-card.svc-lg.has-img { padding: 0; background: var(--brown-rich); }
 .svc-card.svc-md { grid-column: span 3; }
 .svc-card.svc-sm { grid-column: span 2; }
 .svc-card .svc-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s ease; }
-.svc-card.svc-lg:hover .svc-img { transform: scale(1.06); }
-.svc-card.svc-lg .svc-shade {
+.svc-card.svc-lg.has-img:hover .svc-img { transform: scale(1.06); }
+.svc-card.svc-lg.has-img .svc-shade {
   position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(42,27,22,0.05) 30%, rgba(42,27,22,0.82) 100%);
   transition: background 0.35s ease;
 }
-.svc-card.svc-lg .svc-body { position: relative; padding: 36px; }
-.svc-card.svc-lg .svc-num { color: var(--gold-soft); padding-bottom: 24px; }
-.svc-card.svc-lg h3 { color: #fff; font-size: 32px; }
-.svc-card.svc-lg p { color: rgba(252,250,245,0.85); }
-.svc-card.svc-lg .svc-link { color: var(--gold-soft); }
-.svc-card.svc-lg:hover { background: var(--warm-white); }
+.svc-card.svc-lg.has-img .svc-body { position: relative; padding: 36px; }
+.svc-card.svc-lg.has-img .svc-num { color: var(--gold-soft); padding-bottom: 24px; }
+.svc-card.svc-lg.has-img h3 { color: #fff; font-size: 32px; }
+.svc-card.svc-lg.has-img p { color: rgba(252,250,245,0.85); }
+.svc-card.svc-lg.has-img .svc-link { color: var(--gold-soft); }
+.svc-card.svc-lg.has-img:hover { background: var(--warm-white); }
 
 /* ---------- artists — dark luxury carousel ---------- */
 .artist-band { background: var(--brown); color: var(--warm-white); }

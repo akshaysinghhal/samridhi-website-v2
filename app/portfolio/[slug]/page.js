@@ -51,7 +51,7 @@ export default async function PortfolioDetailPage({ params }) {
           </p>
           {e.description && <p className="lead" style={{ maxWidth: 800, marginBottom: 40 }}>{e.description}</p>}
 
-          <PortfolioMedia gallery={e.gallery} videoSource={e.video_source} videoRef={e.video_ref} />
+          <PortfolioMedia gallery={e.gallery} videoSource={e.video_source} videoRef={e.video_ref} videoUrl={e.video_url} />
 
           {services.length > 0 && (
             <div style={{ marginTop: 44 }}>

@@ -37,10 +37,11 @@ export default function WeddingEditor() {
     setUploading("");
   };
 
-  const applyPick = (item) => {
+  const applyPick = (items) => {
     if (!picker) return;
-    if (picker.target === "gallery") setF((p) => ({ ...p, gallery: [...p.gallery, item.url] }));
-    else setF((p) => ({ ...p, cover_image: item.url }));
+    const arr = Array.isArray(items) ? items : [items];
+    if (picker.target === "gallery") setF((p) => ({ ...p, gallery: [...p.gallery, ...arr.map((i) => i.url)] }));
+    else setF((p) => ({ ...p, cover_image: arr[0] ? arr[0].url : "" }));
   };
 
   const save = async () => {
@@ -100,7 +101,7 @@ export default function WeddingEditor() {
         <div className="field"><label>Photo gallery</label>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <input type="file" accept="image/*" multiple onChange={(e) => { for (const file of e.target.files) upload(file, "gallery"); }} style={{ flex: "1 1 200px" }} />
-            <button type="button" className="btn-sm btn-edit" onClick={() => setPicker({ kind: "image", target: "gallery" })}>📚 Choose from library</button>
+            <button type="button" className="btn-sm btn-edit" onClick={() => setPicker({ kind: "image", target: "gallery", multi: true })}>📚 Choose from library</button>
           </div>
           {uploading === "gallery" && <div className="seo-hint">Uploading…</div>}
           <div className="img-preview">{f.gallery.map((g) => (
@@ -110,7 +111,7 @@ export default function WeddingEditor() {
       </div>
 
       <button className="btn btn-primary" disabled={busy} onClick={save}>{busy ? "Saving…" : "💾 Save Wedding"}</button>
-      {picker && <MediaPicker open={!!picker} kind={picker.kind} onClose={() => setPicker(null)} onSelect={applyPick} />}
+      {picker && <MediaPicker open={!!picker} kind={picker.kind} multi={!!picker.multi} onClose={() => setPicker(null)} onSelect={applyPick} />}
       {preview && <PreviewModal url={preview.url} kind={preview.kind} onClose={() => setPreview(null)} />}
     </>
   );

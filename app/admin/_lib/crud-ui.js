@@ -187,14 +187,15 @@ export default function AdminCrud({
     } finally { setUploading(false); e.target.value = ""; }
   };
 
-  // MediaPicker selection lands here: set (or append) the chosen URL.
-  const onPick = (item) => {
+  // MediaPicker selection lands here: set (or append) the chosen URL(s).
+  const onPick = (items) => {
     if (!picker) return;
     const { key, multi } = picker;
+    const arr = Array.isArray(items) ? items : [items];
     if (multi) {
-      setForm((f) => ({ ...f, [key]: [...(Array.isArray(f[key]) ? f[key] : []), item.url] }));
+      setForm((f) => ({ ...f, [key]: [...(Array.isArray(f[key]) ? f[key] : []), ...arr.map((i) => i.url)] }));
     } else {
-      set(key, item.url);
+      set(key, arr[0] ? arr[0].url : "");
     }
   };
 
@@ -374,6 +375,7 @@ export default function AdminCrud({
         <MediaPicker
           open={!!picker}
           kind={picker.kind}
+          multi={!!picker.multi}
           onClose={() => setPicker(null)}
           onSelect={onPick}
         />
