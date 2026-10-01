@@ -177,7 +177,7 @@ function DocForm({ kind, initial, existingNos, onSave, onCancel, company }) {
         <h4>Line items</h4>
         <div className="field">
           <label>✨ AI item suggestions — describe the event, AI drafts the line items (you fill in the rates)</label>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="bill-ai-row">
             <input value={aiDesc} onChange={(e) => setAiDesc(e.target.value)} placeholder="e.g. haldi ceremony for 150 guests at a farmhouse in Chittorgarh" style={{ flex: 1 }} />
             <button type="button" className="btn-sm btn-edit" disabled={aiBusy} onClick={aiDraft}>{aiBusy ? "Thinking…" : "Draft items"}</button>
           </div>
