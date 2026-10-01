@@ -2,9 +2,10 @@
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
 import { revalidateSite, uploadOne, SaveButton, AdminLoader, toast } from "../_lib/ui";
+import MediaPicker from "../_lib/MediaPicker";
 
 const SECTION_LABELS = {
-  stats: "Stats band",
+  stats: "Hero stats",
   services: "Services",
   artists: "Artist management",
   portfolio: "Portfolio",
@@ -25,6 +26,7 @@ export default function HomepageAdmin() {
   const [okMsg, setOkMsg] = useState("");
   const [uploading, setUploading] = useState(false);
   const [stats, setStats] = useState([]);
+  const [picker, setPicker] = useState(null); // "hero_video" | "hero_video_mobile" | "hero_poster"
 
   const load = async () => {
     setBusy(true);
@@ -86,16 +88,36 @@ export default function HomepageAdmin() {
         <div className="sec">Hero</div>
         <h2>Hero video</h2>
         <div className="form-row">
-          <div className="field"><label>Desktop video URL</label><input value={settings.hero_video || ""} onChange={(e) => setSetting("hero_video", e.target.value)} placeholder="Cloudinary / mp4 URL" /></div>
-          <div className="field"><label>Mobile video URL (optional)</label><input value={settings.hero_video_mobile || ""} onChange={(e) => setSetting("hero_video_mobile", e.target.value)} placeholder="Smaller file for phones" /></div>
+          <div className="field"><label>Desktop video URL</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input style={{ flex: 1 }} value={settings.hero_video || ""} onChange={(e) => setSetting("hero_video", e.target.value)} placeholder="Cloudinary / mp4 URL" />
+              <button type="button" className="btn-sm btn-edit" onClick={() => setPicker("hero_video")} style={{ whiteSpace: "nowrap" }}>📚 Library</button>
+            </div>
+          </div>
+          <div className="field"><label>Mobile video URL (optional)</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input style={{ flex: 1 }} value={settings.hero_video_mobile || ""} onChange={(e) => setSetting("hero_video_mobile", e.target.value)} placeholder="Smaller file for phones" />
+              <button type="button" className="btn-sm btn-edit" onClick={() => setPicker("hero_video_mobile")} style={{ whiteSpace: "nowrap" }}>📚 Library</button>
+            </div>
+          </div>
         </div>
         <div className="field"><label>Poster image (shown while the video loads)</label>
-          <input type="file" accept="image/*" onChange={async (e) => { const u = await uploadOne(e.target.files[0], setUploading, setMsg); if (u) setSetting("hero_poster", u); e.target.value = ""; }} />
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <button type="button" className="btn-sm btn-edit" onClick={() => setPicker("hero_poster")}>📚 Choose from library</button>
+            <span className="seo-hint" style={{ margin: 0 }}>or upload:</span>
+            <input type="file" accept="image/*" onChange={async (e) => { const u = await uploadOne(e.target.files[0], setUploading, setMsg); if (u) setSetting("hero_poster", u); e.target.value = ""; }} />
+          </div>
           {uploading && <div className="seo-hint">Uploading…</div>}
           {settings.hero_poster && <div className="img-preview"><img src={settings.hero_poster} alt="" /></div>}
         </div>
         <SaveButton onClick={() => saveSettingsKeys(["hero_video", "hero_video_mobile", "hero_poster"])}>Save Hero Media</SaveButton>
       </div>
+      <MediaPicker
+        open={!!picker}
+        kind={picker === "hero_poster" ? "image" : "video"}
+        onClose={() => setPicker(null)}
+        onSelect={(m) => { if (picker && m?.url) setSetting(picker, m.url); }}
+      />
 
       <div className="content-group">
         <div className="sec">Hero</div>
@@ -110,7 +132,8 @@ export default function HomepageAdmin() {
 
       <div className="content-group">
         <div className="sec">Stats</div>
-        <h2>Stats band</h2>
+        <h2>Hero stats</h2>
+        <p className="seo-hint" style={{ marginTop: 0 }}>Shown once, overlaid at the bottom of the homepage hero (first 3 used).</p>
         {stats.map((s, i) => (
           <div key={i} className="form-row" style={{ alignItems: "flex-end" }}>
             <div className="field"><label>Value</label><input value={s.value || ""} onChange={(e) => { const n = [...stats]; n[i] = { ...n[i], value: e.target.value }; setStats(n); }} /></div>

@@ -33,6 +33,8 @@ Stack: **Next.js 14 (App Router, JavaScript)** · **Supabase** (Postgres + Auth)
    5. `supabase/migration-005.sql` (billing: quotations, invoices, payments with
       receipt numbers, event checklists — run once; on an **existing** database,
       run only this file)
+   6. `supabase/migration-006.sql` (About Us page content blocks — run once;
+      on an **existing** database, run only this file)
 3. Verify: `select count(*) from services;` → **8**. `select count(*) from site_settings;` → > 0.
 4. **Project Settings → API** → copy: **Project URL**, **anon public key**, **service_role key**
    (service_role stays secret — only goes into Vercel env vars, never in code or chat).
@@ -101,6 +103,8 @@ you create in 4 clicks (dashboard → Settings → Upload → Upload presets →
   per-user roles (`profiles` table) are a documented follow-up, not in this build.
 - `artist-categories` has an API but no admin UI page yet — categories are chosen from a
   dropdown in the artist editor.
-- Uploads go through the Next.js server to Cloudinary (buffered). Fine for photos and short
-  videos; for very large video files use Cloudinary's dashboard upload and paste the URL.
+- Uploads go **directly from the browser to Cloudinary** (unsigned preset) — no
+  serverless size limit, so large videos upload fine. The preset name is set in
+  Admin → Integrations → Media uploads (or the `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`
+  env var).
 - See `docs/OPEN_ITEMS.md` for content-level open items (B Praak spelling, logo SVG, etc.).
