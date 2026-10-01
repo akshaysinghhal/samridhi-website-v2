@@ -4,6 +4,7 @@ import SiteFooter from "../components/SiteFooter";
 import LeadForm from "../components/LeadForm";
 import CoupleStories from "../components/CoupleStories";
 import Reveal from "../components/Reveal";
+import HeroMedia from "../components/HeroMedia";
 import { getContentMap, c } from "../lib/content";
 import {
   getSettings, setting, getServices, getArtists, getEvents,
@@ -80,13 +81,11 @@ export default async function Home() {
 
       {/* ============ HERO ============ */}
       <section className="hero">
-        {heroVideo ? (
-          <video className="hero-bg" autoPlay muted loop playsInline poster={heroPoster}>
-            <source src={heroVideo} type="video/mp4" />
-          </video>
-        ) : (
-          <img className="hero-bg" src={heroPoster} alt="A Samridhi Films & Television celebration — stage, lights and crowd" fetchPriority="high" />
-        )}
+        <HeroMedia
+          video={heroVideo}
+          poster={heroPoster}
+          alt="A Samridhi Films & Television celebration — stage, lights and crowd"
+        />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal>

@@ -30,6 +30,9 @@ Stack: **Next.js 14 (App Router, JavaScript)** · **Supabase** (Postgres + Auth)
    3. `supabase/migration-003.sql` (all v3 tables, RLS, seed data)
    4. `supabase/migration-004.sql` (SEO slugs for international shows — run once;
       on an **existing** database that already ran 1–3, run only this file)
+   5. `supabase/migration-005.sql` (billing: quotations, invoices, payments with
+      receipt numbers, event checklists — run once; on an **existing** database,
+      run only this file)
 3. Verify: `select count(*) from services;` → **8**. `select count(*) from site_settings;` → > 0.
 4. **Project Settings → API** → copy: **Project URL**, **anon public key**, **service_role key**
    (service_role stays secret — only goes into Vercel env vars, never in code or chat).

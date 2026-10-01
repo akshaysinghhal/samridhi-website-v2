@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, SaveButton, AdminLoader } from "../_lib/ui";
+import { revalidateSite, SaveButton, AdminLoader, toast } from "../_lib/ui";
 import { TextField, PasswordField } from "../_lib/settingsFields";
 
 const EMPTY_LEGAL = { legal_name: "", trade_name: "Samridhi Films & Television", gstin: "", pan: "", address: "", state: "Rajasthan", email: "", phone: "", grievance_officer: { name: "", email: "", phone: "" } };
@@ -12,12 +12,14 @@ export default function IntegrationsAdmin() {
   const [msg, setMsg] = useState("");
   const [okMsg, setOkMsg] = useState("");
   const [launchTotal, setLaunchTotal] = useState(null);
+  const [keySaved, setKeySaved] = useState(false);
 
   const load = async () => {
     setBusy(true);
     try {
       const [r, l] = await Promise.all([api("/api/admin/site-settings"), api("/api/admin/launch")]);
       setS(r.settings || {});
+      setKeySaved(Array.isArray(r.masked) && r.masked.includes("gemini_api_key"));
       setLaunchTotal(l.total ?? null);
     } catch { /* ignore */ }
     setBusy(false);
@@ -32,10 +34,16 @@ export default function IntegrationsAdmin() {
   const save = async (keys, label) => {
     setMsg(""); setOkMsg("");
     try {
-      for (const k of keys) await api("/api/admin/site-settings", { method: "PUT", body: { key: k, value: s[k] ?? null } });
+      for (const k of keys) {
+        // Write-only secrets: skip when the field is empty so the stored key is kept.
+        if (k === "gemini_api_key" && !s[k]) continue;
+        await api("/api/admin/site-settings", { method: "PUT", body: { key: k, value: s[k] ?? null } });
+      }
+      if (s.gemini_api_key) { setKeySaved(true); set("gemini_api_key", ""); }
       await revalidateSite(["/"]);
       setOkMsg((label || "Settings") + " saved.");
-    } catch (e) { setMsg("Failed: " + e.message); }
+      toast((label || "Settings") + " saved.");
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   const indexingOn = s.seo_indexing_enabled === true;
@@ -56,7 +64,7 @@ export default function IntegrationsAdmin() {
           Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">aistudio.google.com/apikey</a> and paste it below.
           The key is stored server-side and never shown to website visitors.
         </p>
-        <PasswordField s={s} set={set} k="gemini_api_key" label="Gemini API key" hint="Starts with AIza… — keep it private." />
+        <PasswordField s={s} set={set} k="gemini_api_key" label="Gemini API key" hint={keySaved ? "✓ Key saved on the server. Leave blank to keep it, or paste a new key to replace it." : "Starts with AIza… — keep it private."} />
         <TextField s={s} set={set} k="gemini_model" label="Model" hint="Default: gemini-2.0-flash. Change only if Google renames models." mono />
         <SaveButton onClick={() => save(["gemini_api_key", "gemini_model"], "AI")}>Save</SaveButton>
       </div>
@@ -69,9 +77,30 @@ export default function IntegrationsAdmin() {
       </div>
 
       <div className="content-group">
+        <div className="sec">Media</div><h2>Media uploads</h2>
+        <p className="seo-hint" style={{ marginTop: 0 }}>
+          Photos and videos upload <b>directly from your browser to Cloudinary</b> (no file-size limit),
+          using an <b>unsigned upload preset</b> from your Cloudinary dashboard
+          (Settings → Upload → Upload presets → create one with Signing Mode <i>Unsigned</i>).
+          Files land in the folder your preset points to.
+        </p>
+        <TextField s={s} set={set} k="cloudinary_upload_preset" label="Cloudinary unsigned upload preset" hint="Paste the preset name here. Uploads are disabled until this is set." mono />
+        <SaveButton onClick={() => save(["cloudinary_upload_preset"], "Media uploads")}>Save</SaveButton>
+      </div>
+
+      <div className="content-group">
         <div className="sec">Leads</div><h2>Lead notifications</h2>
         <TextField s={s} set={set} k="lead_notify_email" label="Notification email for new leads" hint="Comma-separate multiple addresses." />
         <SaveButton onClick={() => save(["lead_notify_email"], "Lead notifications")}>Save</SaveButton>
+      </div>
+
+      <div className="content-group">
+        <div className="sec">Billing</div><h2>Document numbering</h2>
+        <p className="seo-hint" style={{ marginTop: 0 }}>Optional prefixes for new quotations and invoices. Leave blank for plain financial-year numbers (e.g. 2026-27/004).</p>
+        <TextField s={s} set={set} k="quote_prefix" label="Quotation prefix" hint="e.g. your own series code — nothing is assumed." />
+        <TextField s={s} set={set} k="invoice_prefix" label="Invoice prefix" />
+        <TextField s={s} set={set} k="receipt_prefix" label="Receipt prefix" />
+        <SaveButton onClick={() => save(["quote_prefix", "invoice_prefix", "receipt_prefix"], "Document numbering")}>Save</SaveButton>
       </div>
 
       <div className="content-group">

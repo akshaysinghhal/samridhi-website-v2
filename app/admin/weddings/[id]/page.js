@@ -5,6 +5,7 @@ import Link from "next/link";
 import { api, uploadFile } from "../../../../lib/adminApi";
 import MediaPicker from "../../_lib/MediaPicker";
 import PreviewModal from "../../_lib/PreviewModal";
+import { toast } from "../../_lib/ui";
 
 const empty = { title: "", location: "", event_date: "", description: "", cover_image: "", gallery: [], pinned: false, sort: 0, status: "published", is_placeholder: false };
 
@@ -54,6 +55,7 @@ export default function WeddingEditor() {
       } else {
         await api(`/api/admin/weddings/${id}`, { method: "PUT", body: f });
         setMsg("Saved ✓ — the website will refresh within a minute.");
+        toast("Wedding saved — live on the website now.");
       }
     } catch (e) { setMsg("Save failed: " + e.message); }
     setBusy(false);

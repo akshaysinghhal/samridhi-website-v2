@@ -109,3 +109,21 @@ export async function DELETE(request) {
   try { await db.from("media").delete().eq("id", id); } catch { /* ignore */ }
   return Response.json({ ok: true });
 }
+
+// POST /api/admin/media — register a file that was uploaded directly from the
+// browser to Cloudinary (unsigned preset). Tiny JSON body; the heavy bytes
+// never touch the serverless function. The media library lists from
+// Cloudinary itself — this row only carries alt text for future editing.
+export async function POST(request) {
+  const user = await verifyAdmin(request);
+  const denied = authedJson(user); if (denied) return denied;
+  const { public_id, url, kind, alt } = await request.json().catch(() => ({}));
+  if (!public_id || !url) return Response.json({ error: "Missing public_id/url" }, { status: 400 });
+  try {
+    const db = adminDb();
+    // No unique constraint on public_id in older schemas — replace manually.
+    await db.from("media").delete().eq("public_id", public_id);
+    await db.from("media").insert({ public_id, url, kind: kind === "video" ? "video" : "image", alt: alt || "" });
+  } catch { /* best effort */ }
+  return Response.json({ ok: true });
+}

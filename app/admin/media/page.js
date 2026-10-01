@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { api, uploadFile } from "../../../lib/adminApi";
-import { revalidateSite, useBulk, BulkBar, CheckCell, AdminLoader } from "../_lib/ui";
+import { revalidateSite, useBulk, BulkBar, CheckCell, AdminLoader, toast, CircleProgress } from "../_lib/ui";
 import PreviewModal from "../_lib/PreviewModal";
 
 function fmtMB(bytes) {
@@ -14,13 +14,14 @@ export default function MediaLibrary() {
   const [usage, setUsage] = useState(null);
   const [busy, setBusy] = useState(true);
   const [err, setErr] = useState("");
-  const [uploading, setUploading] = useState(false);
+  const [uploads, setUploads] = useState([]); // [{ id, name, progress, error }]
   const [copied, setCopied] = useState("");
   const [notice, setNotice] = useState("");
   const [deletingId, setDeletingId] = useState(null);
   const [q, setQ] = useState("");
   const [type, setType] = useState("all");
   const [folder, setFolder] = useState("all");
+  const [sort, setSort] = useState("newest");
   const [preview, setPreview] = useState(null);
 
   const load = async (silent) => {
@@ -43,13 +44,23 @@ export default function MediaLibrary() {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return media.filter((m) => {
+    const list = media.filter((m) => {
       if (type !== "all" && m.kind !== type) return false;
       if (folder !== "all" && m.folder !== folder) return false;
       if (needle && !(m.public_id || "").toLowerCase().includes(needle) && !(m.alt || "").toLowerCase().includes(needle)) return false;
       return true;
     });
-  }, [media, q, type, folder]);
+    const byName = (a, b) => (a.public_id || "").localeCompare(b.public_id || "");
+    switch (sort) {
+      case "oldest": return list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      case "name-asc": return list.sort(byName);
+      case "name-desc": return list.sort((a, b) => byName(b, a));
+      case "largest": return list.sort((a, b) => (b.bytes || 0) - (a.bytes || 0));
+      case "smallest": return list.sort((a, b) => (a.bytes || 0) - (b.bytes || 0));
+      case "newest":
+      default: return list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+  }, [media, q, type, folder, sort]);
 
   // Bulk selection is scoped to the FILTERED list, so "select all" only
   // touches what you can see — never the whole account behind a filter.
@@ -61,13 +72,36 @@ export default function MediaLibrary() {
   });
 
   const onFiles = async (e) => {
-    setUploading(true);
-    for (const file of e.target.files) {
-      try { await uploadFile(file); } catch { /* ignore */ }
-    }
-    setUploading(false);
+    const files = [...e.target.files];
+    if (!files.length) return;
     e.target.value = "";
-    await revalidateSite(); load(true);
+    const jobs = files.map((file, i) => ({ id: `${Date.now()}-${i}`, name: file.name, progress: 0, error: "" }));
+    setUploads((xs) => [...xs, ...jobs]);
+    const setJob = (id, patch) => setUploads((xs) => xs.map((j) => (j.id === id ? { ...j, ...patch } : j)));
+    let okCount = 0;
+    for (let i = 0; i < files.length; i++) {
+      const job = jobs[i];
+      try {
+        await uploadFile(files[i], (p) => setJob(job.id, { progress: p }));
+        setJob(job.id, { progress: 1 });
+        okCount++;
+      } catch (err) {
+        const msg = err.message || "Upload failed";
+        job.error = msg;
+        setJob(job.id, { error: msg });
+      }
+    }
+    if (okCount) {
+      toast(okCount === 1 ? "Upload complete." : `${okCount} uploads complete.`);
+      await revalidateSite(); load(true);
+    } else if (jobs.length) {
+      const firstErr = jobs.find((j) => j.error)?.error || "unknown error";
+      setErr("Upload failed: " + firstErr);
+    }
+    // Clear finished jobs after a moment; keep failed ones visible.
+    setTimeout(() => {
+      setUploads((xs) => xs.filter((j) => j.error));
+    }, 4000);
   };
 
   const copy = async (url) => {
@@ -85,10 +119,12 @@ export default function MediaLibrary() {
       setMedia((xs) => xs.filter((x) => x.id !== m.id));
       setNotice(`Deleted "${name}".`);
       setTimeout(() => setNotice(""), 5000);
+      toast(`Deleted "${name}".`);
       load(true); // refresh the list + storage usage silently
       await revalidateSite();
     } catch (e) {
       setErr("Delete failed: " + e.message);
+        toast("Delete failed: " + e.message, "error");
     } finally {
       setDeletingId(null);
     }
@@ -101,10 +137,32 @@ export default function MediaLibrary() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div><h1>Media Library</h1><p className="admin-sub">Every photo &amp; video in your Cloudinary account — click any item to preview it.</p></div>
         <label className="btn-sm btn-new" style={{ cursor: "pointer" }}>
-          {uploading ? "Uploading…" : "+ Upload"}
+          + Upload
           <input type="file" accept="image/*,video/*" multiple hidden onChange={onFiles} />
         </label>
       </div>
+
+      {uploads.length > 0 && (
+        <div className="editor" style={{ marginTop: 16 }}>
+          <div style={{ fontWeight: 800, marginBottom: 12 }}>Uploading…</div>
+          <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+            {uploads.map((j) => (
+              <div key={j.id} style={{ textAlign: "center" }}>
+                {j.error ? (
+                  <div style={{ width: 92 }}>
+                    <div style={{ fontSize: 28 }}>⚠️</div>
+                    <div style={{ fontSize: 11, color: "#c62828", fontWeight: 700, marginTop: 6, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }} title={j.error}>{j.name}</div>
+                    <div style={{ fontSize: 11, color: "#c62828" }}>{j.error}</div>
+                    <button className="btn-sm btn-del" style={{ marginTop: 6 }} onClick={() => setUploads((xs) => xs.filter((x) => x.id !== j.id))}>Dismiss</button>
+                  </div>
+                ) : (
+                  <CircleProgress value={j.progress} label={j.name} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {usage && (
         <div className="editor" style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
@@ -136,6 +194,14 @@ export default function MediaLibrary() {
         </select>
         <select value={folder} onChange={(e) => setFolder(e.target.value)} aria-label="Filter by folder">
           {folders.map((f) => <option key={f} value={f}>{f === "all" ? "All folders" : f}</option>)}
+        </select>
+        <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort media">
+          <option value="newest">Latest added first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="name-asc">Name A–Z</option>
+          <option value="name-desc">Name Z–A</option>
+          <option value="largest">Largest file first</option>
+          <option value="smallest">Smallest file first</option>
         </select>
         <span style={{ fontSize: 13, color: "#6b5d6e", marginLeft: "auto" }}>{filtered.length} of {media.length} files</span>
       </div>

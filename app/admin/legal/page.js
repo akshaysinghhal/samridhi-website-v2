@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, SaveButton, AdminLoader } from "../_lib/ui";
+import { revalidateSite, SaveButton, AdminLoader, toast } from "../_lib/ui";
 
 export default function LegalAdmin() {
   const [pages, setPages] = useState([]);
@@ -36,8 +36,9 @@ export default function LegalAdmin() {
       await api(`/api/admin/legal-pages/${active}`, { method: "PUT", body: { title, body } });
       await revalidateSite(["/privacy-policy", "/terms-and-conditions", "/cancellation-refund-policy", "/shipping-policy"]);
       setOkMsg(`Saved. Last updated timestamp set to ${new Date().toLocaleString("en-IN")}.`);
+      toast("Legal page saved.");
       load();
-    } catch (e) { setMsg("Failed: " + e.message); }
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   if (busy) return (<><h1>Legal Pages</h1><AdminLoader /></>);

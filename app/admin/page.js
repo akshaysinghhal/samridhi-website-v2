@@ -74,6 +74,16 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          <h2 style={{ marginTop: 28 }}>Quick actions</h2>
+          <div className="quick-actions">
+            <Link className="qa-card" href="/admin/billing"><span className="qa-icon">🧾</span><span>New quotation</span></Link>
+            <Link className="qa-card" href="/admin/portfolio"><span className="qa-icon">🎪</span><span>Add event</span></Link>
+            <Link className="qa-card" href="/admin/creatives"><span className="qa-icon">🎨</span><span>New creative</span></Link>
+            <Link className="qa-card" href="/admin/posts/new"><span className="qa-icon">📝</span><span>New blog post</span></Link>
+            <Link className="qa-card" href="/admin/testimonials"><span className="qa-icon">⭐</span><span>Add testimonial</span></Link>
+            <Link className="qa-card" href="/admin/media"><span className="qa-icon">🖼️</span><span>Upload media</span></Link>
+          </div>
+
           <h2 style={{ marginTop: 28 }}>Modules</h2>
           <div className="dash-cards">
             {modules.map(([icon, label, href]) => (

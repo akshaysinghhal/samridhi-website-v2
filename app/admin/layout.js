@@ -5,7 +5,7 @@ import Link from "next/link";
 import { supabaseBrowser } from "../../lib/supabaseClient";
 import { ADMIN_NAV } from "../../lib/adminNav";
 import { AiFloatHelper } from "./_lib/AiAssist";
-import { AdminLoader } from "./_lib/ui";
+import { AdminLoader, Toaster } from "./_lib/ui";
 import "./admin.css";
 
 export default function AdminLayout({ children }) {
@@ -14,6 +14,12 @@ export default function AdminLayout({ children }) {
   const router = useRouter();
   const path = usePathname();
   const isLogin = path === "/admin/login";
+
+  useEffect(() => {
+    // Mark body as admin so public mobile chrome CSS (bottom-bar padding) never applies here.
+    document.body.classList.add("is-admin");
+    return () => document.body.classList.remove("is-admin");
+  }, []);
 
   useEffect(() => {
     if (isLogin) { setReady(true); return; }
@@ -33,6 +39,11 @@ export default function AdminLayout({ children }) {
     router.push("/admin/login");
   };
 
+  const navHere =
+    [...ADMIN_NAV].reverse().find(([, , href]) => href !== "/admin" && path.startsWith(href)) ||
+    ADMIN_NAV.find(([, , href]) => href === "/admin");
+  const sectionLabel = navHere ? `${navHere[0]} ${navHere[1]}` : "Admin";
+
   if (isLogin) return <>{children}</>;
   if (!ready) return <AdminLoader />;
 
@@ -40,7 +51,7 @@ export default function AdminLayout({ children }) {
     <div className="admin-shell">
       <div className="admin-mobilebar">
         <img src="/images/logo.png" alt="Samridhi" />
-        <span className="mtitle">Admin</span>
+        <span className="mtitle">{sectionLabel}</span>
         <button onClick={() => setMenuOpen((o) => !o)} aria-label="Toggle menu">{menuOpen ? "✕" : "☰"}</button>
       </div>
       {menuOpen && (
@@ -48,6 +59,7 @@ export default function AdminLayout({ children }) {
           {ADMIN_NAV.map(([icon, label, href]) => (
             <Link key={href} href={href} className={path === href ? "active" : ""} onClick={() => setMenuOpen(false)}>{icon} {label}</Link>
           ))}
+          <a href="/" target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)}>🌐 View Website</a>
           <a href="#" className="logout" onClick={(e) => { e.preventDefault(); setMenuOpen(false); logout(); }}>🚪 Sign Out</a>
         </nav>
       )}
@@ -61,6 +73,7 @@ export default function AdminLayout({ children }) {
       </aside>
       <main className="admin-main">{children}</main>
       <AiFloatHelper />
+      <Toaster />
     </div>
   );
 }

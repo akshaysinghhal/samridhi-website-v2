@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import MediaPicker from "../_lib/MediaPicker";
 import { AiAssistModal } from "../_lib/AiAssist";
+import { toast } from "../_lib/ui";
+import { waLink } from "../../../lib/billing";
 import { TEMPLATES } from "./templates";
 
 // Creative Studio — design premium 1080×1080 social graphics (Instagram /
@@ -18,7 +20,15 @@ const EMPTY = {
   date: "",
   venue: "",
   showLogo: true,
+  showEyebrow: true,
+  palette: "peach",
 };
+
+const PASTEL_SWATCHES = [
+  { id: "peach", label: "Peach", bg: "#FDEFE4", deep: "#B9553A" },
+  { id: "mint", label: "Mint", bg: "#EAF4EC", deep: "#2F6B4F" },
+  { id: "lavender", label: "Lavender", bg: "#F0EAF7", deep: "#6B4A8F" },
+];
 
 function useScaled() {
   const ref = useRef(null);
@@ -91,6 +101,7 @@ export default function CreativesAdmin() {
       a.href = canvas.toDataURL("image/png");
       a.click();
       setMsg("PNG downloaded — ready to share on Instagram / Facebook.");
+      toast("PNG downloaded — ready to share.");
     } catch (e) {
       setMsg("Export failed: " + (e.message || "please try again."));
     }
@@ -127,7 +138,7 @@ export default function CreativesAdmin() {
       {msg && <div className="admin-ok" style={{ marginBottom: 16 }}>{msg}</div>}
 
       <h2 style={{ marginTop: 6 }}>1 · Choose a template</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 14, marginBottom: 8 }}>
+      <div className="creative-tpls" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 14, marginBottom: 8 }}>
         {TEMPLATES.map((t) => {
           const Mini = t.render;
           const active = t.id === templateId;
@@ -158,6 +169,30 @@ export default function CreativesAdmin() {
         <div>
           <h2 style={{ marginTop: 0 }}>2 · Add your content</h2>
           <button type="button" className="ai-gen" style={{ marginBottom: 16 }} onClick={() => setAiOpen(true)}>✨ Write with AI — auto-fills the fields</button>
+          {tpl.pastel && (
+            <div className="field">
+              <label>Pastel colourway</label>
+              <div style={{ display: "flex", gap: 10 }}>
+                {PASTEL_SWATCHES.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => set("palette", p.id)}
+                    title={p.label}
+                    aria-label={`Pastel colourway: ${p.label}`}
+                    style={{
+                      width: 52, height: 52, borderRadius: "50%", cursor: "pointer",
+                      background: `linear-gradient(135deg, ${p.bg} 50%, ${p.deep} 50%)`,
+                      border: f.palette === p.id ? "3px solid #8F3F2D" : "2px solid #e3d5c0",
+                    }}
+                  />
+                ))}
+                <span className="seo-hint" style={{ margin: 0, alignSelf: "center" }}>
+                  {PASTEL_SWATCHES.find((p) => p.id === f.palette)?.label}
+                </span>
+              </div>
+            </div>
+          )}
           {field("Top line (eyebrow)", "eyebrow", "Samridhi Films & Television Presents")}
           {field("Headline", "title", tpl.id === "greeting" ? "Happy Diwali" : "Govinda")}
           {field("Message", "subtitle", "One warm line for the graphic", true)}
@@ -176,6 +211,10 @@ export default function CreativesAdmin() {
             <input type="checkbox" checked={f.showLogo} onChange={(e) => set("showLogo", e.target.checked)} />
             <b>Show company logo</b>
           </label>
+          <label className="check-row">
+            <input type="checkbox" checked={f.showEyebrow} onChange={(e) => set("showEyebrow", e.target.checked)} />
+            <b>Show top line (eyebrow)</b>
+          </label>
           <div className="seo-hint" style={{ marginTop: 10 }}>Photos come from your Media Library — upload there first, or pick any image already uploaded.</div>
         </div>
 
@@ -189,8 +228,15 @@ export default function CreativesAdmin() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
-            <button type="button" className="btn btn-primary" onClick={download} disabled={downloading} style={{ padding: "13px 30px", fontSize: 15 }}>
+            <button type="button" className="btn btn-primary creative-dl" onClick={download} disabled={downloading} style={{ padding: "13px 30px", fontSize: 15 }}>
               {downloading ? "Preparing PNG…" : "⬇ Download PNG (1080 × 1080)"}
+            </button>
+            <button type="button" className="btn btn-dark" style={{ padding: "13px 24px", fontSize: 15 }}
+              onClick={() => {
+                const msg = `Sharing a creative from Samridhi Films & Television${f.title ? ` — "${f.title}"` : ""}.\n\nAttaching the image right after this message.`;
+                window.open(waLink("", msg), "_blank");
+              }}>
+              💬 Share on WhatsApp
             </button>
           </div>
           <div className="seo-hint" style={{ marginTop: 8 }}>Square 1080 × 1080 — perfect for Instagram posts and Facebook. Download, then share straight from your phone.</div>

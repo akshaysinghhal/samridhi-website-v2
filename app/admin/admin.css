@@ -252,3 +252,107 @@ tr.row-selected td { background: #f3eefd; }
   animation: admin-spin 0.8s linear infinite;
 }
 @keyframes admin-spin { to { transform: rotate(360deg); } }
+
+/* ---------- toast notifications ---------- */
+.admin-toasts { position: fixed; right: 22px; bottom: 22px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; max-width: min(360px, 90vw); }
+.admin-toast { display: flex; align-items: center; gap: 10px; background: #2b1454; color: #fff; padding: 13px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; box-shadow: 0 12px 32px rgba(20, 8, 40, 0.35); animation: admin-toast-in 0.25s ease; }
+.admin-toast-success { background: #1e7a3c; }
+.admin-toast-error { background: #b3372f; }
+.admin-toast-info { background: #2b1454; }
+.admin-toast-icon { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,0.22); font-size: 12px; flex-shrink: 0; }
+@keyframes admin-toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* ---------- AI form-fill panel ---------- */
+.ai-fill { border: 1.5px dashed #c9a15a; border-radius: 14px; background: #fdf9f0; overflow: hidden; }
+.ai-fill-toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; background: none; border: 0; padding: 13px 18px; font-size: 15px; font-weight: 700; color: #8f3f2d; cursor: pointer; font-family: inherit; }
+.ai-fill-body { padding: 0 18px 16px; }
+.ai-fill-body textarea { width: 100%; border: 1px solid #e3d5c0; border-radius: 10px; padding: 12px; font-size: 14px; font-family: inherit; resize: vertical; background: #fff; }
+.ai-fill-row { display: flex; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+
+/* ---------- AI helper: quick actions + history ---------- */
+.ai-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.ai-chip { border: 1.5px solid #e3d5c0; background: #fff; border-radius: 999px; padding: 7px 13px; font-size: 13px; font-weight: 600; color: #8f3f2d; cursor: pointer; font-family: inherit; }
+.ai-chip:hover { border-color: #c9a15a; background: #fdf9f0; }
+.ai-history { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
+.ai-history-item { display: flex; flex-direction: column; gap: 2px; text-align: left; border: 1px solid #ece4d4; background: #faf7ef; border-radius: 10px; padding: 10px 12px; cursor: pointer; font-family: inherit; }
+.ai-history-item:hover { border-color: #c9a15a; }
+.ai-history-prompt { font-size: 13px; font-weight: 700; color: #5b3a2e; }
+.ai-history-snippet { font-size: 12.5px; color: #8a7a6a; }
+
+/* ---------- Mobile: app-like admin (phones) ---------- */
+@media (max-width: 860px) {
+  .admin-main { padding: 14px 14px 90px; padding-top: 72px; }
+  .admin-main h1 { font-size: 23px; }
+  .admin-sub { font-size: 13.5px; margin-bottom: 18px; }
+  .editor, .content-group { padding: 16px; border-radius: 12px; }
+  .content-group h2 { font-size: 17px; }
+
+  /* dashboard cards: 2-up, compact, tappable */
+  .dash-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .dash-card { padding: 16px 14px; border-radius: 12px; }
+  .dash-card .n { font-size: 27px; }
+  .dash-card .l { font-size: 10.5px; letter-spacing: 1px; }
+  .pipeline-chip { min-width: 0; flex: 1 1 28%; padding: 12px 8px; }
+
+  /* tables scroll sideways instead of crushing */
+  .admin-table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .row-actions { flex-wrap: wrap; }
+  .btn-sm { padding: 10px 16px; font-size: 13.5px; min-height: 40px; }
+
+  /* toolbars */
+  .list-bar, .leads-bar { padding: 10px 12px; gap: 8px; }
+  .bulk-bar { top: 64px; padding: 10px 12px; }
+
+  /* stop iOS auto-zoom on focus */
+  .field input, .field select, .field textarea,
+  .list-filter, .leads-bar select, .leads-bar input,
+  .bulk-bar select, .ai-prompt, .ai-fill-body textarea { font-size: 16px; }
+
+  /* blog editor */
+  .md-split textarea { min-height: 260px; }
+  .md-preview { min-height: 200px; font-size: 14px; }
+
+  /* media library */
+  .media-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 14px; }
+
+  /* lead popup fits the screen */
+  .lead-modal-overlay { padding: 12px; }
+  .lead-modal { padding: 20px 18px; width: calc(100vw - 24px); }
+  .detail-grid { grid-template-columns: 1fr; }
+
+  /* toasts sit below the mobile bar, above the AI float button */
+  .admin-toasts { left: 12px; right: 12px; top: 66px; bottom: auto; max-width: none; }
+
+  /* mobile drawer: roomier tap targets */
+  .admin-mobilenav { grid-template-columns: 1fr 1fr; }
+  .admin-mobilenav a { font-size: 14.5px; padding: 12px; }
+
+  /* billing: line items stack card-style */
+  .bill-items-row { grid-template-columns: 1fr 1fr 44px !important; }
+  .bill-items-row > *:first-child { grid-column: 1 / -1; }
+  .pay-grid { grid-template-columns: 1fr !important; }
+  .pay-grid .btn { width: 100%; }
+
+  /* creatives: 2 template columns, full-width download */
+  .creative-tpls { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .creative-dl { width: 100%; }
+
+  /* public mobile bottom-bar padding must not apply inside admin */
+  body.is-admin { padding-bottom: 0 !important; }
+}
+
+/* ---------- dashboard quick actions (app-like one-tap tools) ---------- */
+.quick-actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.qa-card {
+  background: #fff; border-radius: 14px; padding: 18px 14px; box-shadow: var(--shadow);
+  text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  font-size: 13.5px; font-weight: 700; color: var(--brand-dark); text-align: center;
+  border: 1.5px solid transparent; transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.qa-card:hover { transform: translateY(-3px); border-color: var(--brand); }
+.qa-icon { font-size: 30px; line-height: 1; }
+@media (max-width: 860px) {
+  .quick-actions { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .qa-card { padding: 14px 8px; font-size: 12px; }
+  .qa-icon { font-size: 26px; }
+}

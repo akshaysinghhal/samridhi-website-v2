@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, SaveButton, AdminLoader } from "../_lib/ui";
+import { revalidateSite, uploadOne, SaveButton, AdminLoader, toast } from "../_lib/ui";
 
 const SECTION_LABELS = {
   stats: "Stats band",
@@ -50,7 +50,8 @@ export default function HomepageAdmin() {
       for (const k of keys) await api("/api/admin/site-settings", { method: "PUT", body: { key: k, value: settings[k] ?? null } });
       await revalidateSite(["/"]);
       setOkMsg("Saved — homepage updated.");
-    } catch (e) { setMsg("Failed: " + e.message); }
+      toast("Saved — homepage updated.");
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   const saveBlocks = async (ids) => {
@@ -62,7 +63,8 @@ export default function HomepageAdmin() {
       });
       await revalidateSite(["/"]);
       setOkMsg("Saved — homepage updated.");
-    } catch (e) { setMsg("Failed: " + e.message); }
+      toast("Saved — homepage updated.");
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   const saveStats = () => { setSetting("stats", stats); saveSettingsKeys(["stats"]); };

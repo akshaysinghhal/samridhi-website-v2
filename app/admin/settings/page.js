@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, SaveButton, AdminLoader } from "../_lib/ui";
+import { revalidateSite, SaveButton, AdminLoader, toast } from "../_lib/ui";
 import { TextField, ColorField, AddressListField, THEME_DEFAULTS, isHex } from "../_lib/settingsFields";
 
 // Website theme defaults — the luxury editorial palette. Changing these in
@@ -31,7 +31,8 @@ export default function SettingsAdmin() {
       for (const k of keys) await api("/api/admin/site-settings", { method: "PUT", body: { key: k, value: s[k] ?? null } });
       await revalidateSite(["/"]);
       setOkMsg((label || "Settings") + " saved.");
-    } catch (e) { setMsg("Failed: " + e.message); }
+      toast((label || "Settings") + " saved.");
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   const saveTheme = async () => {
@@ -41,7 +42,8 @@ export default function SettingsAdmin() {
       // Theme lives in the shared layout — revalidate it, not just one page.
       await revalidateSite(["/"], "layout");
       setOkMsg("Theme saved — the whole website now uses your colours.");
-    } catch (e) { setMsg("Failed: " + e.message); }
+      toast("Theme saved — the whole website now uses your colours.");
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   const resetTheme = async () => {
@@ -52,7 +54,7 @@ export default function SettingsAdmin() {
       for (const [k, v] of Object.entries(THEME_DEFAULTS)) await api("/api/admin/site-settings", { method: "PUT", body: { key: k, value: v } });
       await revalidateSite(["/"], "layout");
       setOkMsg("Theme reset to the default terracotta palette.");
-    } catch (e) { setMsg("Failed: " + e.message); }
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   if (busy) return (<><h1>Settings</h1><AdminLoader /></>);

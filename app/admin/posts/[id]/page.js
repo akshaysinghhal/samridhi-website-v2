@@ -4,7 +4,8 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { api, uploadFile } from "../../../../lib/adminApi";
-import { openPreview } from "../../_lib/ui";
+import { openPreview, toast } from "../../_lib/ui";
+import { AiFormFill } from "../../_lib/AiFormFill";
 import MediaPicker from "../../_lib/MediaPicker";
 import PreviewModal from "../../_lib/PreviewModal";
 import { AiFieldButton } from "../../_lib/AiAssist";
@@ -80,6 +81,7 @@ export default function PostEditor() {
         await api(`/api/admin/posts/${id}`, { method: "PUT", body: payload });
         setF((p) => ({ ...p, status }));
         setMsg("Saved ✓ — the website will refresh within a minute.");
+        toast("Post saved — live on the website now.");
       }
     } catch (e) { setMsg("Save failed: " + e.message); }
     setBusy(false);
@@ -104,6 +106,19 @@ export default function PostEditor() {
       {msg && <div className="login-err" style={{ background: "#e8f5e9", color: "#2e7d32" }}>{msg}</div>}
 
       <div className="editor" style={{ marginBottom: 20 }}>
+        <AiFormFill
+          title="Describe the post — AI fills the fields"
+          hint="Describe the topic in a line or two — AI drafts the title, excerpt and body."
+          fields={[
+            { key: "title", label: "Blog title" },
+            { key: "excerpt", label: "Excerpt (one or two lines)" },
+            { key: "content", label: "Body (Markdown allowed)" },
+            { key: "keywords", label: "Keywords (comma separated)" },
+            { key: "meta_description", label: "Meta description" },
+          ]}
+          context="Samridhi Films & Television, an event and wedding planning company in Chittorgarh, Rajasthan."
+          onFill={(values) => setF((p) => ({ ...p, ...values }))}
+        />
         <h2 style={{ marginTop: 0 }}>Content</h2>
         <div className="field"><div className="ai-field-row"><label>Title *</label><AiFieldButton onInsert={fill("title")} label="Write blog title with AI" seedPrompt="Write a catchy blog post title for an event company blog" /></div><input value={f.title} onChange={set("title")} placeholder="e.g. A Royal Wedding in Udaipur" /></div>
         <div className="field"><label>URL slug *</label><input value={f.slug} onChange={(e) => { setSlugTouched(true); set("slug")(e); }} placeholder="a-royal-wedding-in-udaipur" />

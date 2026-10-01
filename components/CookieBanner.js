@@ -1,12 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 // Cookie consent banner. Loads analytics (GA4 / Meta Pixel) only after consent.
-// Wired to the Cookie Policy page (/cookie-policy).
+// Wired to the Cookie Policy page (/cookie-policy). Never shown inside /admin.
 export default function CookieBanner({ ga4Id, pixelId, text }) {
   const [show, setShow] = useState(false);
+  const path = usePathname();
+  const isAdmin = path && path.startsWith("/admin");
 
   useEffect(() => {
+    if (isAdmin) return;
     try {
       if (!localStorage.getItem("samridhi_cookie_consent")) setShow(true);
       else if (localStorage.getItem("samridhi_cookie_consent") === "accepted") loadAnalytics();
@@ -14,7 +18,7 @@ export default function CookieBanner({ ga4Id, pixelId, text }) {
       setShow(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAdmin]);
 
   const loadAnalytics = () => {
     if (ga4Id && !document.getElementById("ga4-tag")) {
@@ -44,7 +48,7 @@ export default function CookieBanner({ ga4Id, pixelId, text }) {
     setShow(false);
   };
 
-  if (!show) return null;
+  if (isAdmin || !show) return null;
   return (
     <div className="cookie-banner" role="dialog" aria-label="Cookie consent">
       <p>{text || "We use cookies to improve your experience and analyse site traffic. You can accept or decline."}</p>

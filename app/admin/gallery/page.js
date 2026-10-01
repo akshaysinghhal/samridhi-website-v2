@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { api, uploadFile } from "../../../lib/adminApi";
 import { ytThumb } from "../../../lib/video";
-import { revalidateSite, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter, AdminLoader } from "../_lib/ui";
+import { revalidateSite, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter, AdminLoader, toast, CircleProgress } from "../_lib/ui";
 import PreviewModal from "../_lib/PreviewModal";
 
 const CATEGORIES = ["Events", "Weddings", "Corporate", "Celebrity Shows", "Cultural", "Press", "Highlight Videos", "Other"];
@@ -12,6 +12,7 @@ export default function GalleryAdmin() {
   const [items, setItems] = useState([]);
   const [busy, setBusy] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploads, setUploads] = useState([]); // [{ id, name, progress, error }]
   const [ytTitle, setYtTitle] = useState("");
   const [ytUrl, setYtUrl] = useState("");
   const [msg, setMsg] = useState("");
@@ -56,15 +57,45 @@ export default function GalleryAdmin() {
 
   const update = (id, patch) => setItems((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)));
 
-  const addPhotos = async (e) => {
+  // Shared upload runner with circular progress. `makeItem(m, file)` builds the
+  // gallery-item body from the uploaded Cloudinary file.
+  const runUploads = async (files, makeItem) => {
+    const list = [...files];
+    if (!list.length) return;
+    const jobs = list.map((file, i) => ({ id: `${Date.now()}-${i}`, name: file.name, progress: 0, error: "" }));
+    setUploads((xs) => [...xs, ...jobs]);
+    const setJob = (id, patch) => setUploads((xs) => xs.map((j) => (j.id === id ? { ...j, ...patch } : j)));
     setUploading(true); setMsg("");
-    for (const file of e.target.files) {
+    let okCount = 0;
+    for (let i = 0; i < list.length; i++) {
+      const job = jobs[i];
       try {
-        const m = await uploadFile(file);
-        await api("/api/admin/gallery-items", { method: "POST", body: { kind: "photo", title: file.name.replace(/\.[^.]+$/, ""), image_url: m.url, category: "Events", status: "published" } });
-      } catch (err) { setMsg("Upload failed: " + err.message); }
+        const m = await uploadFile(list[i], (p) => setJob(job.id, { progress: p }));
+        setJob(job.id, { progress: 1 });
+        await api("/api/admin/gallery-items", { method: "POST", body: makeItem(m, list[i]) });
+        okCount++;
+      } catch (err) {
+        const msg = err.message || "Upload failed";
+        job.error = msg;
+        setJob(job.id, { error: msg });
+      }
     }
-    setUploading(false); e.target.value = ""; await revalidateSite(); refresh();
+    setUploading(false);
+    if (okCount) {
+      toast(okCount === 1 ? "Upload complete." : `${okCount} uploads complete.`);
+      await revalidateSite(); refresh();
+    } else {
+      setMsg("Upload failed: " + (jobs.find((j) => j.error)?.error || "unknown error"));
+    }
+    setTimeout(() => setUploads((xs) => xs.filter((j) => j.error)), 4000);
+  };
+
+  const addPhotos = async (e) => {
+    const files = e.target.files; e.target.value = "";
+    await runUploads(files, (m, file) => ({
+      kind: "photo", title: file.name.replace(/\.[^.]+$/, ""),
+      image_url: m.url, category: "Events", status: "published",
+    }));
   };
 
   const addYouTube = async () => {
@@ -80,14 +111,11 @@ export default function GalleryAdmin() {
   };
 
   const addVideoFile = async (e) => {
-    setUploading(true); setMsg("");
-    for (const file of e.target.files) {
-      try {
-        const m = await uploadFile(file);
-        await api("/api/admin/gallery-items", { method: "POST", body: { kind: "video", title: file.name.replace(/\.[^.]+$/, ""), video_url: m.url, image_url: "", category: "Events", status: "published" } });
-      } catch (err) { setMsg("Upload failed: " + err.message); }
-    }
-    setUploading(false); e.target.value = ""; await revalidateSite(); refresh();
+    const files = e.target.files; e.target.value = "";
+    await runUploads(files, (m, file) => ({
+      kind: "video", title: file.name.replace(/\.[^.]+$/, ""),
+      video_url: m.url, image_url: "", category: "Events", status: "published",
+    }));
   };
 
   const saveItem = async (item) => {
@@ -98,7 +126,8 @@ export default function GalleryAdmin() {
       });
       // The card already holds the edited values — just close the editor, no reload flash.
       setEditing(null); await revalidateSite();
-    } catch (e) { setMsg("Failed: " + e.message); }
+      toast("Gallery item saved.");
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   const remove = async (id) => {
@@ -106,6 +135,7 @@ export default function GalleryAdmin() {
     await api(`/api/admin/gallery-items?id=${id}`, { method: "DELETE" });
     await revalidateSite();
     setItems((xs) => xs.filter((x) => x.id !== id));
+    toast("Deleted from gallery.");
   };
 
   const card = (item) => (
@@ -200,10 +230,32 @@ export default function GalleryAdmin() {
           selection instead of floating at the top of the page. */}
       {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
 
+      {uploads.length > 0 && (
+        <div className="editor" style={{ marginBottom: 16 }}>
+          <div style={{ fontWeight: 800, marginBottom: 12 }}>Uploading…</div>
+          <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+            {uploads.map((j) => (
+              <div key={j.id} style={{ textAlign: "center" }}>
+                {j.error ? (
+                  <div style={{ width: 92 }}>
+                    <div style={{ fontSize: 28 }}>⚠️</div>
+                    <div style={{ fontSize: 11, color: "#c62828", fontWeight: 700, marginTop: 6, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }} title={j.error}>{j.name}</div>
+                    <div style={{ fontSize: 11, color: "#c62828" }}>{j.error}</div>
+                    <button className="btn-sm btn-del" style={{ marginTop: 6 }} onClick={() => setUploads((xs) => xs.filter((x) => x.id !== j.id))}>Dismiss</button>
+                  </div>
+                ) : (
+                  <CircleProgress value={j.progress} label={j.name} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {tab === "photos" && (
         <>
           <label className="btn btn-primary" style={{ cursor: "pointer" }}>
-            {uploading ? "Uploading…" : "+ Upload Photos"}
+            + Upload Photos
             <input type="file" accept="image/*" multiple hidden onChange={addPhotos} />
           </label>
           {busy ? <AdminLoader /> : <div className="media-grid">{photos.map(card)}</div>}
@@ -224,7 +276,7 @@ export default function GalleryAdmin() {
           <div className="editor" style={{ marginBottom: 20 }}>
             <h2 style={{ marginTop: 0 }}>Or upload a video file</h2>
             <label className="btn btn-dark" style={{ cursor: "pointer" }}>
-              {uploading ? "Uploading…" : "+ Upload Video"}
+              + Upload Video
               <input type="file" accept="video/*" multiple hidden onChange={addVideoFile} />
             </label>
           </div>

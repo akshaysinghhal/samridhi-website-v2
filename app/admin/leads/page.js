@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { SaveButton, AdminLoader } from "../_lib/ui";
+import { SaveButton, AdminLoader, toast } from "../_lib/ui";
 
 const STATUSES = ["New", "Contacted", "Quote Sent", "Negotiation", "Won", "Lost"];
 
@@ -76,7 +76,8 @@ export default function LeadsAdmin() {
       const r = await api(`/api/admin/leads/${id}`, { method: "PUT", body: patch });
       setLeads((xs) => xs.map((l) => (l.id === id ? r.lead : l)));
       if (selected && selected.id === id) setSelected(r.lead);
-    } catch (e) { setMsg("Failed: " + e.message); }
+      toast("Lead updated.");
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   const addNote = async () => {
@@ -87,7 +88,8 @@ export default function LeadsAdmin() {
         body: { body: noteBody.trim(), follow_up_at: followUp || null },
       });
       setNotes((n) => [r.note, ...n]); setNoteBody(""); setFollowUp("");
-    } catch (e) { setMsg("Failed: " + e.message); }
+      toast("Note added.");
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   const exportCsv = () => {

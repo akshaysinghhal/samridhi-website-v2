@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "../../../lib/adminApi";
 
 // Authenticated draft preview: the endpoint verifies the admin session
@@ -147,7 +147,9 @@ export function BulkBar({ bulk, onDone, scopeCount }) {
     const res = await fn();
     if (!res) return;
     if (onDone) onDone();
-    setNote(res.failed ? `${verb}: ${res.done} ok, ${res.failed} failed.` : `${verb}: ${res.done} done.`);
+    const noteText = res.failed ? `${verb}: ${res.done} ok, ${res.failed} failed.` : `${verb}: ${res.done} done.`;
+    setNote(noteText);
+    toast(noteText, res.failed ? "error" : "success");
   };
   const scopeNote = typeof scopeCount === "number" ? ` (of ${scopeCount} shown)` : "";
   return (
@@ -201,6 +203,69 @@ export function AdminLoader() {
   return (
     <div className="admin-loader-wrap" role="status" aria-label="Loading">
       <div className="admin-loader" />
+    </div>
+  );
+}
+
+// ---------- Toast notifications ----------
+// Fire-and-forget: toast("Saved", "success"). The <Toaster/> in the admin
+// layout listens for these events and renders them.
+export function toast(msg, type = "success") {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("admin-toast", {
+    detail: { msg: String(msg), type, id: Date.now() + Math.random() },
+  }));
+}
+
+export function Toaster() {
+  const [items, setItems] = useState([]);
+  useEffect(() => {
+    const onToast = (e) => {
+      const t = e.detail || {};
+      setItems((prev) => [...prev.slice(-3), t]);
+      setTimeout(() => setItems((prev) => prev.filter((x) => x.id !== t.id)), 3400);
+    };
+    window.addEventListener("admin-toast", onToast);
+    return () => window.removeEventListener("admin-toast", onToast);
+  }, []);
+  const icons = { success: "✓", error: "✕", info: "i" };
+  return (
+    <div className="admin-toasts" aria-live="polite">
+      {items.map((t) => (
+        <div key={t.id} className={`admin-toast admin-toast-${t.type || "success"}`}>
+          <span className="admin-toast-icon">{icons[t.type] || icons.success}</span>
+          <span>{t.msg}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Circular upload progress ring. Shows % uploaded in the middle and the
+// remaining % underneath, e.g. "38%" big with "62% left" below it.
+export function CircleProgress({ value = 0, size = 92, label }) {
+  const pct = Math.max(0, Math.min(100, Math.round(value * 100)));
+  const r = (size - 12) / 2;
+  const c = 2 * Math.PI * r;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+      <div style={{ position: "relative", width: size, height: size }}>
+        <svg width={size} height={size} aria-hidden="true">
+          <circle cx={size / 2} cy={size / 2} r={r} stroke="#efe4d8" strokeWidth="9" fill="none" />
+          <circle
+            cx={size / 2} cy={size / 2} r={r}
+            stroke="var(--brand, #B9553A)" strokeWidth="9" fill="none" strokeLinecap="round"
+            strokeDasharray={c} strokeDashoffset={c * (1 - value)}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            style={{ transition: "stroke-dashoffset 0.15s linear" }}
+          />
+        </svg>
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1.15 }}>
+          <strong style={{ fontSize: size * 0.22, color: "#3d2b23" }}>{pct}%</strong>
+          <span style={{ fontSize: size * 0.115, color: "#8a7a72", fontWeight: 700 }}>{100 - pct}% left</span>
+        </div>
+      </div>
+      {label && <div style={{ fontSize: 12, color: "#6b5d6e", maxWidth: 180, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</div>}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, slugify, SaveButton, StatusFilter, AdminLoader } from "./ui";
+import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, slugify, SaveButton, StatusFilter, AdminLoader, toast } from "./ui";
+import { AiFormFill } from "./AiFormFill";
 import { AiFieldButton } from "./AiAssist";
 import MediaPicker from "./MediaPicker";
 import PreviewModal from "./PreviewModal";
@@ -21,11 +22,12 @@ export const SIZE_HINTS = {
 // types: text|textarea|number|date|select|check|image|images|video|list|faq
 // sizeHint: e.g. SIZE_HINTS.cover — a recommended-dimensions guidance line.
 // previewFor: (row) => public URL to preview the row (or null to hide)
+// shareFor: (row) => WhatsApp share text for the row (or null to hide)
 // externalRefresh: change this value (e.g. a counter) to trigger a silent list refresh.
 export default function AdminCrud({
   title, sub, endpoint, listKey, columns, fields,
-  defaults = {}, validate, slugFrom, note, addLabel, beforeSave, previewFor, externalRefresh,
-  revalidatePaths,
+  defaults = {}, validate, slugFrom, note, addLabel, beforeSave, previewFor, shareFor, externalRefresh,
+  revalidatePaths, aiFillFields, aiFillHint,
 }) {
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(true);
@@ -120,8 +122,9 @@ export default function AdminCrud({
       }
       await bust(saved);
       setOkMsg("Saved — live on the website now.");
+      toast(editingId ? "Changes saved — live on the website now." : "Added — live on the website now.");
       setShowForm(false); setEditingId(null); setForm({ ...defaults });
-    } catch (e) { setMsg("Failed: " + e.message); }
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   const remove = async (row) => {
@@ -133,7 +136,8 @@ export default function AdminCrud({
       // Remove the row in place — no list reload flash.
       setRows((rs) => rs.filter((r) => r.id !== row.id));
       setSelected((s) => { const n = new Set(s); n.delete(row.id); return n; });
-    } catch (e) { setMsg("Failed: " + e.message); }
+      toast("Deleted.");
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   // --- bulk selection -------------------------------------------------------
@@ -168,7 +172,9 @@ export default function AdminCrud({
     setSelected(new Set());
     setBulkBusy("");
     await bust(null);
-    setOkMsg(failed ? `Updated ${done}, failed ${failed}.` : `Updated ${done} item${done > 1 ? "s" : ""} to ${bulkStatus}.`);
+    const okMsg = failed ? `Updated ${done}, failed ${failed}.` : `Updated ${done} item${done > 1 ? "s" : ""} to ${bulkStatus}.`;
+    setOkMsg(okMsg);
+    toast(okMsg, failed ? "error" : "success");
   };
 
   const bulkDelete = async () => {
@@ -187,7 +193,9 @@ export default function AdminCrud({
     setSelected(new Set());
     setBulkBusy("");
     await bust(null);
-    setOkMsg(failed ? `Deleted ${done}, failed ${failed}.` : `Deleted ${done} item${done > 1 ? "s" : ""}.`);
+    const okMsg2 = failed ? `Deleted ${done}, failed ${failed}.` : `Deleted ${done} item${done > 1 ? "s" : ""}.`;
+    setOkMsg(okMsg2);
+    toast(okMsg2, failed ? "error" : "success");
   };
 
   const onFile = async (e, key, multi) => {
@@ -334,6 +342,13 @@ export default function AdminCrud({
   const previewUrl = (row) => {
     try { return previewFor ? previewFor(row) : null; } catch { return null; }
   };
+  const shareText = (row) => {
+    try { return shareFor ? shareFor(row) : null; } catch { return null; }
+  };
+  const waShare = (row) => {
+    const t = shareText(row);
+    if (t) window.open("https://wa.me/?text=" + encodeURIComponent(t), "_blank");
+  };
 
   return (
     <>
@@ -352,6 +367,13 @@ export default function AdminCrud({
       {showForm && (
         <div className="editor" style={{ marginBottom: 20 }}>
           <h2 style={{ marginTop: 0 }}>{editingId ? "Edit" : "Add New"}</h2>
+          {aiFillFields && (
+            <AiFormFill
+              fields={aiFillFields}
+              hint={aiFillHint}
+              onFill={(values) => setForm((f) => ({ ...f, ...values }))}
+            />
+          )}
           {fields.map(renderField)}
           <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
             <SaveButton onClick={save}>{editingId ? "Save Changes" : "Add"}</SaveButton>
@@ -413,6 +435,7 @@ export default function AdminCrud({
                   {columns.map((c) => <td key={c.key}>{cell(row, c)}</td>)}
                   <td><div className="row-actions">
                     {url && <a className="btn-sm btn-view" href={url} target="_blank" rel="noreferrer">Preview</a>}
+                    {shareText(row) && <button className="btn-sm btn-edit" onClick={() => waShare(row)} title="Share on WhatsApp">💬</button>}
                     <button className="btn-sm btn-edit" onClick={() => startEdit(row)}>Edit</button>
                     <button className="btn-sm btn-del" onClick={() => remove(row)}>Delete</button>
                   </div></td>

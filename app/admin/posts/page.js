@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/adminApi";
-import { useBulk, BulkBar, CheckCell, revalidateSite, openPreview, StatusFilter, AdminLoader } from "../_lib/ui";
+import { useBulk, BulkBar, CheckCell, revalidateSite, openPreview, StatusFilter, AdminLoader, toast } from "../_lib/ui";
 
 // Draft preview goes through the authenticated /api/admin/preview endpoint
 // (sets a short-lived cookie and returns the public URL); published posts
@@ -42,6 +42,7 @@ export default function PostsList() {
     await revalidateSite();
     // Remove in place — no list reload flash.
     setPosts((ps) => ps.filter((p) => p.id !== id));
+    toast("Post deleted.");
   };
 
   return (

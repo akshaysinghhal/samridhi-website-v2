@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter, AdminLoader } from "../_lib/ui";
+import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter, AdminLoader, toast } from "../_lib/ui";
 
 const SOURCES = [
   { value: "youtube", label: "YouTube" },
@@ -75,8 +75,9 @@ export default function CoupleStoriesAdmin() {
       }
       await revalidateSite();
       setOkMsg("Saved — live on the website now.");
+      toast("Story saved — live on the website now.");
       setShowForm(false); setEditingId(null); setForm({ ...EMPTY });
-    } catch (e) { setMsg("Failed: " + e.message); }
+    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
   };
 
   const remove = async (r) => {
@@ -84,6 +85,7 @@ export default function CoupleStoriesAdmin() {
     await api(`/api/admin/couple-stories/${r.id}`, { method: "DELETE" });
     await revalidateSite();
     setRows((rs) => rs.filter((x) => x.id !== r.id));
+    toast("Story deleted.");
   };
 
   return (

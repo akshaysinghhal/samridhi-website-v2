@@ -15,6 +15,12 @@ export default function PortfolioAdmin() {
         const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
         return r.event_date && r.event_date >= today ? `/events/${r.slug}` : `/portfolio/${r.slug}`;
       }}
+      shareFor={(r) => {
+        if (!r.slug) return null;
+        const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+        const path = r.event_date && r.event_date >= today ? `/events/${r.slug}` : `/portfolio/${r.slug}`;
+        return `Take a look at this event by Samridhi Films & Television — ${r.title}\nhttps://samridhi-website-v2.vercel.app${path}`;
+      }}
       revalidatePaths={(saved) => [
         "/events",
         "/portfolio",
@@ -50,6 +56,16 @@ export default function PortfolioAdmin() {
       ]}
       defaults={{ category: "Corporate", status: "draft", sort: 0, featured: false, is_placeholder: false, services: [], gallery: [] }}
       validate={(f) => (!f.title || !f.title.trim() ? "Event name is required." : null)}
+      aiFillHint="Describe the event in a line or two — date, place, client, category, what you managed."
+      aiFillFields={[
+        { key: "title", label: "Event name" },
+        { key: "client", label: "Client / organiser" },
+        { key: "location", label: "Location" },
+        { key: "event_date", label: "Event date", type: "date" },
+        { key: "category", label: "Category", type: "select", options: CATS },
+        { key: "services", label: "Services provided", type: "list" },
+        { key: "description", label: "Description" },
+      ]}
     />
   );
 }

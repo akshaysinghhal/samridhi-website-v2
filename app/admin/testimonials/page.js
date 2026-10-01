@@ -26,6 +26,12 @@ export default function TestimonialsAdmin() {
         { key: "status", label: "Status", type: "select", options: STATUS_OPTIONS },
       ]}
       defaults={{ status: "draft", sort: 0, permission_granted: false }}
+      aiFillHint="Paste or describe the testimonial — AI extracts the quote, name and company."
+      aiFillFields={[
+        { key: "quote", label: "Testimonial quote" },
+        { key: "author_name", label: "Author name" },
+        { key: "company", label: "Company" },
+      ]}
       validate={(f) => {
         if (!f.quote || !f.quote.trim()) return "Quote is required.";
         if (f.status === "published" && !f.permission_granted) return "Permission must be granted before publishing a testimonial.";

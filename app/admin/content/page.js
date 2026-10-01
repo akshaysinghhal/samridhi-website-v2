@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api, uploadFile } from "../../../lib/adminApi";
-import { AdminLoader } from "../_lib/ui";
+import { AdminLoader, toast } from "../_lib/ui";
 
 export default function ContentEditor() {
   const [blocks, setBlocks] = useState([]);
@@ -23,7 +23,8 @@ export default function ContentEditor() {
     try {
       await api("/api/admin/content", { method: "PUT", body: { blocks: blocks.map((b) => ({ id: b.id, value: b.value, image_url: b.image_url })) } });
       setMsg("Saved ✓ — the website will refresh within a minute.");
-    } catch (e) { setMsg("Save failed: " + e.message); }
+      toast("Saved ✓ — the website will refresh within a minute.");
+    } catch (e) { setMsg("Save failed: " + e.message); toast("Save failed: " + e.message, "error"); }
     setSaving(false);
   };
 

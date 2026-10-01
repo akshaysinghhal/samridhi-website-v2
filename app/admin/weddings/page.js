@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, useBulk, BulkBar, CheckCell, AdminLoader } from "../_lib/ui";
+import { revalidateSite, useBulk, BulkBar, CheckCell, AdminLoader, toast } from "../_lib/ui";
 
 export default function WeddingsList() {
   const [rows, setRows] = useState([]);
@@ -28,6 +28,7 @@ export default function WeddingsList() {
     await api(`/api/admin/weddings/${w.id}`, { method: "PUT", body: { ...w, pinned: !w.pinned } });
     setRows((rs) => rs.map((x) => (x.id === w.id ? { ...x, pinned: !x.pinned } : x)));
     await revalidateSite();
+    toast(w.pinned ? "Unpinned from homepage." : "Pinned to homepage.");
   };
 
   const remove = async (id, title) => {
@@ -35,6 +36,7 @@ export default function WeddingsList() {
     await api(`/api/admin/weddings/${id}`, { method: "DELETE" });
     setRows((rs) => rs.filter((x) => x.id !== id));
     await revalidateSite();
+    toast("Wedding deleted.");
   };
 
   return (
