@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../../lib/adminApi";
+import { SaveButton } from "../_lib/ui";
 
 const STATUSES = ["New", "Contacted", "Quote Sent", "Negotiation", "Won", "Lost"];
 
@@ -174,7 +175,7 @@ export default function LeadsAdmin() {
             <div className="field"><label>Add note</label><textarea rows={3} value={noteBody} onChange={(e) => setNoteBody(e.target.value)} placeholder="Internal note (never shown publicly)…" /></div>
             <div className="form-row">
               <div className="field"><label>Follow-up reminder</label><input type="datetime-local" value={followUp} onChange={(e) => setFollowUp(e.target.value)} /></div>
-              <div className="field" style={{ display: "flex", alignItems: "flex-end" }}><button className="btn btn-primary" onClick={addNote}>Add Note</button></div>
+              <div className="field" style={{ display: "flex", alignItems: "flex-end" }}><SaveButton onClick={addNote}>Add Note</SaveButton></div>
             </div>
           </div>
         )}

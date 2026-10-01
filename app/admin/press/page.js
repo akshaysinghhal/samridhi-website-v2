@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import AdminCrud, { STATUS_OPTIONS } from "../_lib/crud-ui";
+import AdminCrud, { STATUS_OPTIONS, SIZE_HINTS } from "../_lib/crud-ui";
 import { api, uploadFile } from "../../../lib/adminApi";
 import { revalidateSite } from "../_lib/ui";
 
@@ -57,7 +57,7 @@ export default function PressAdmin() {
           { key: "is_placeholder", label: "Flag" },
         ]}
         fields={[
-          { key: "image_url", label: "Clipping image", type: "image", required: true },
+          { key: "image_url", label: "Clipping image", type: "image", required: true, sizeHint: SIZE_HINTS.cover },
           { key: "type", label: "Type", type: "select", options: [{ value: "single_clipping", label: "Single clipping" }, { value: "page_collage", label: "Page collage (full scanned page)" }] },
           { key: "publication", label: "Publication", type: "select", options: PUBS },
           { key: "city", label: "City" },

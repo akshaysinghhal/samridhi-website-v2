@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne } from "../_lib/ui";
+import { revalidateSite, uploadOne, SaveButton } from "../_lib/ui";
 
 const SECTION_LABELS = {
   stats: "Stats band",
@@ -92,7 +92,7 @@ export default function HomepageAdmin() {
           {uploading && <div className="seo-hint">Uploading…</div>}
           {settings.hero_poster && <div className="img-preview"><img src={settings.hero_poster} alt="" /></div>}
         </div>
-        <button className="btn btn-primary" onClick={() => saveSettingsKeys(["hero_video", "hero_video_mobile", "hero_poster"])}>Save Hero Media</button>
+        <SaveButton onClick={() => saveSettingsKeys(["hero_video", "hero_video_mobile", "hero_poster"])}>Save Hero Media</SaveButton>
       </div>
 
       <div className="content-group">
@@ -103,7 +103,7 @@ export default function HomepageAdmin() {
             <input value={b.value} onChange={(e) => setBlock(b.id, e.target.value)} />
           </div>
         ))}
-        <button className="btn btn-primary" onClick={() => saveBlocks(heroBlocks.map((b) => b.id))}>Save Hero Copy</button>
+        <SaveButton onClick={() => saveBlocks(heroBlocks.map((b) => b.id))}>Save Hero Copy</SaveButton>
       </div>
 
       <div className="content-group">
@@ -118,7 +118,7 @@ export default function HomepageAdmin() {
         ))}
         <div style={{ display: "flex", gap: 10 }}>
           <button className="btn-sm btn-edit" onClick={() => setStats([...stats, { value: "", label: "" }])}>+ Add stat</button>
-          <button className="btn btn-primary" onClick={saveStats}>Save Stats</button>
+          <SaveButton onClick={saveStats}>Save Stats</SaveButton>
         </div>
       </div>
 
@@ -131,7 +131,7 @@ export default function HomepageAdmin() {
             <input value={b.value} onChange={(e) => setBlock(b.id, e.target.value)} />
           </div>
         ))}
-        {coupleBlocks.length > 0 && <button className="btn btn-primary" onClick={() => saveBlocks(coupleBlocks.map((b) => b.id))}>Save Heading</button>}
+        {coupleBlocks.length > 0 && <SaveButton onClick={() => saveBlocks(coupleBlocks.map((b) => b.id))}>Save Heading</SaveButton>}
       </div>
 
       <div className="content-group">
@@ -146,7 +146,7 @@ export default function HomepageAdmin() {
             </label>
           ))}
         </div>
-        <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={saveSections}>Save Visibility</button>
+        <SaveButton style={{ marginTop: 12 }} onClick={saveSections}>Save Visibility</SaveButton>
       </div>
     </>
   );

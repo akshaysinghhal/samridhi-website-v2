@@ -76,7 +76,18 @@ price/booking notes (never shown publicly), status.
 
 - Weddings: title, location, date, description, **cover**, gallery, **Pin to homepage** (max 10),
   status, placeholder flag.
-- Gallery: upload photos or paste YouTube URLs; set **category**, caption, status.
+- Gallery: upload photos or paste YouTube URLs; click any thumbnail to preview it; use **Details**
+  to edit the title, **category**, caption, status (title no longer edits inline on the card).
+
+## 9a. Media Library (`/admin/media`) — NEW
+
+- Shows **every photo and video in your Cloudinary account**, not just recent uploads.
+- **Search** by file name, **filter** by Photos/Videos and by folder.
+- **Click any thumbnail** to preview the full image or play the video.
+- Top card shows **Cloudinary storage used** (with a progress bar).
+- **Copy URL** to paste a file's link anywhere; **Delete** removes it from Cloudinary permanently.
+- In any add/edit form, the **📚 Choose from library** button opens this same library as a popup —
+  e.g. artist photos, artist performance videos, blog cover images, wedding photos.
 
 ## 10. Clients, Testimonials, Team, International shows
 

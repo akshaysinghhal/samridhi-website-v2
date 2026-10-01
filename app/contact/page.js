@@ -34,7 +34,7 @@ export default async function ContactPage() {
           <Reveal delay={2}><p className="sub">Planning an event? Let our team understand your requirement and create the right event solution.</p></Reveal>
           <Reveal delay={3}>
             <div className="hero-ctas" style={{ marginTop: 30 }}>
-              <a className="btn btn-primary" href={"tel:" + phone1.replace(/\s/g,)}>Call Our Team</a>
+              <a className="btn btn-primary" href={"tel:" + phone1.replace(/\s/g, "")}>Call Our Team</a>
               <a className="btn btn-outline" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">WhatsApp Us</a>
             </div>
           </Reveal>
@@ -64,9 +64,9 @@ export default async function ContactPage() {
                 <div className="contact-line">
                   <h4>Call</h4>
                   <p>
-                    <a href={"tel:" + phone1.replace(/\s/g,)}>{phone1}</a>
+                    <a href={"tel:" + phone1.replace(/\s/g, "")}>{phone1}</a>
                     {"  ·  "}
-                    <a href={"tel:" + phone2.replace(/\s/g,)}>{phone2}</a>
+                    <a href={"tel:" + phone2.replace(/\s/g, "")}>{phone2}</a>
                   </p>
                 </div>
                 <div className="contact-line">

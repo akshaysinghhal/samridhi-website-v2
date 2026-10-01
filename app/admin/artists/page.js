@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, slugify, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell } from "../_lib/ui";
+import { revalidateSite, uploadOne, slugify, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton } from "../_lib/ui";
+import MediaPicker from "../_lib/MediaPicker";
+import PreviewModal from "../_lib/PreviewModal";
 
 const EMPTY = {
   name: "", slug: "", category: "", bio: "", image_url: "", videos: [],
@@ -20,6 +22,8 @@ export default function ArtistsAdmin() {
   const [okMsg, setOkMsg] = useState("");
   const [uploading, setUploading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [picker, setPicker] = useState(null); // { kind, onPick }
+  const [preview, setPreview] = useState(null); // { url, kind }
 
   const load = async () => {
     setBusy(true);
@@ -102,14 +106,21 @@ export default function ArtistsAdmin() {
               <div className="seo-hint">Categories are managed in the database (artist_categories).</div>
             </div>
             <div className="field"><label>Status</label>
-              <select value={form.status} onChange={(e) => set("status", e.target.value)}>{STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}</select>
+              <select value={form.status} onChange={(e) => set("status", e.target.value)}>{STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}</select>
             </div>
           </div>
           <div className="field"><label>Bio</label><textarea rows={5} value={form.bio} onChange={(e) => set("bio", e.target.value)} /></div>
           <div className="field"><label>Photo</label>
-            <input type="file" accept="image/*" onChange={async (e) => { const u = await uploadOne(e.target.files[0], setUploading, setMsg); if (u) set("image_url", u); e.target.value = ""; }} />
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <input type="file" accept="image/*" onChange={async (e) => { const u = await uploadOne(e.target.files[0], setUploading, setMsg); if (u) set("image_url", u); e.target.value = ""; }} style={{ flex: "1 1 200px" }} />
+              <button type="button" className="btn-sm btn-edit" onClick={() => setPicker({ kind: "image", onPick: (item) => set("image_url", item.url) })}>📚 Choose from library</button>
+            </div>
             {uploading && <div className="seo-hint">Uploading…</div>}
-            {form.image_url && <div className="img-preview"><img src={form.image_url} alt="" /></div>}
+            <div className="seo-hint">📐 Suggested: 800 × 1000 px (4:5 portrait)</div>
+            {form.image_url && <div className="img-preview"><div className="img-thumb">
+              <img src={form.image_url} alt="" onClick={() => setPreview({ url: form.image_url, kind: "image" })} style={{ cursor: "zoom-in" }} title="Click to preview" />
+              <button type="button" onClick={() => set("image_url", "")}>✕</button>
+            </div></div>}
           </div>
 
           <div className="field"><label>Performance videos</label>
@@ -123,8 +134,20 @@ export default function ArtistsAdmin() {
                   </div>
                   <div className="field"><label>Video title</label><input value={v.title || ""} onChange={(e) => setVideo(i, "title", e.target.value)} /></div>
                 </div>
-                <div className="field"><label>Reference (URL or ID)</label><input value={v.ref || ""} onChange={(e) => setVideo(i, "ref", e.target.value)} /></div>
-                <button type="button" className="btn-sm btn-del" onClick={() => set("videos", form.videos.filter((_, j) => j !== i))}>Remove video</button>
+                <div className="field"><label>Reference (URL or ID)</label>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                    <input value={v.ref || ""} onChange={(e) => setVideo(i, "ref", e.target.value)} style={{ flex: "1 1 200px" }} />
+                    {(v.source === "cloudinary" || v.source === "mp4_url") && (
+                      <button type="button" className="btn-sm btn-edit" onClick={() => setPicker({ kind: "video", onPick: (item) => setVideo(i, "ref", item.url) })}>📚 Choose from library</button>
+                    )}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  {v.ref && (v.source === "cloudinary" || v.source === "mp4_url") && (
+                    <button type="button" className="btn-sm btn-view" onClick={() => setPreview({ url: v.ref, kind: "video" })}>▶ Preview</button>
+                  )}
+                  <button type="button" className="btn-sm btn-del" onClick={() => set("videos", form.videos.filter((_, j) => j !== i))}>Remove video</button>
+                </div>
               </div>
             ))}
             <button type="button" className="btn-sm btn-edit" onClick={() => set("videos", [...form.videos, { source: "youtube", ref: "", title: "" }])}>+ Add video</button>
@@ -144,7 +167,7 @@ export default function ArtistsAdmin() {
           <label className="check-row"><input type="checkbox" checked={form.is_placeholder} onChange={(e) => set("is_placeholder", e.target.checked)} /> Mark as placeholder</label>
 
           <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-            <button className="btn btn-primary" onClick={save}>{editingId ? "Save Changes" : "Add Artist"}</button>
+            <SaveButton onClick={save}>{editingId ? "Save Changes" : "Add Artist"}</SaveButton>
             <button className="btn btn-dark" onClick={() => { setShowForm(false); setEditingId(null); }}>Cancel</button>
           </div>
         </div>
@@ -174,6 +197,12 @@ export default function ArtistsAdmin() {
             ))}
           </tbody>
         </table>
+      )}
+      {picker && (
+        <MediaPicker open={!!picker} kind={picker.kind} onClose={() => setPicker(null)} onSelect={(item) => picker.onPick(item)} />
+      )}
+      {preview && (
+        <PreviewModal url={preview.url} kind={preview.kind} onClose={() => setPreview(null)} />
       )}
     </>
   );

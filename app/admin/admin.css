@@ -141,3 +141,8 @@ tr.row-selected td { background: #f3eefd; }
 .dash-link { transition: transform 0.15s; }
 .dash-link:hover { transform: translateY(-3px); }
 @media (max-width: 1000px) { .leads-wrap { grid-template-columns: 1fr; } .leads-detail { position: static; max-height: none; } }
+
+/* Spinner for save buttons */
+.spin { display: inline-block; width: 14px; height: 14px; margin-right: 8px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin360 0.7s linear infinite; vertical-align: -2px; }
+.btn-sm .spin { width: 12px; height: 12px; margin-right: 6px; border-top-color: currentColor; border-color: rgba(0,0,0,0.15); border-top-color: currentColor; }
+@keyframes spin360 { to { transform: rotate(360deg); } }

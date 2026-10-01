@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { api, uploadFile } from "../../../lib/adminApi";
 import { ytThumb } from "../../../lib/video";
-import { revalidateSite, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell } from "../_lib/ui";
+import { revalidateSite, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton } from "../_lib/ui";
+import PreviewModal from "../_lib/PreviewModal";
 
 const CATEGORIES = ["Events", "Weddings", "Corporate", "Celebrity Shows", "Cultural", "Press", "Highlight Videos", "Other"];
 
@@ -15,6 +16,7 @@ export default function GalleryAdmin() {
   const [ytUrl, setYtUrl] = useState("");
   const [msg, setMsg] = useState("");
   const [editing, setEditing] = useState(null);
+  const [preview, setPreview] = useState(null);
 
   const load = async () => {
     setBusy(true);
@@ -98,37 +100,47 @@ export default function GalleryAdmin() {
       <div style={{ position: "absolute", top: 8, right: 8, zIndex: 2, background: "rgba(255,255,255,0.92)", borderRadius: 8, padding: 4 }}>
         <CheckCell checked={bulk.selected.has(item.id)} onChange={() => bulk.toggleOne(item.id)} label={`Select ${item.title}`} />
       </div>
-      {item.kind === "photo"
-        ? <img src={item.image_url} alt={item.title} loading="lazy" />
-        : (item.image_url ? <img src={item.image_url} alt={item.title} loading="lazy" /> : <video src={item.video_url} preload="metadata" muted />)}
-      {item.is_placeholder && <div style={{ position: "absolute", top: 8, left: 8 }}><PhBadge /></div>}
+      <div onClick={() => setPreview({ url: item.kind === "photo" ? item.image_url : (item.video_url || item.image_url), kind: item.kind })} style={{ cursor: "zoom-in" }} title="Click to preview">
+        {item.kind === "photo"
+          ? <img src={item.image_url} alt={item.title} loading="lazy" />
+          : (item.image_url ? <img src={item.image_url} alt={item.title} loading="lazy" /> : <video src={item.video_url} preload="metadata" muted />)}
+        {item.kind === "video" && (
+          <span style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 11, fontWeight: 800, padding: "4px 8px", borderRadius: 999 }}>▶</span>
+        )}
+      </div>
+      {item.is_placeholder && <div style={{ position: "absolute", top: 8, left: item.kind === "video" ? 62 : 8 }}><PhBadge /></div>}
       <div className="meta" style={{ flexDirection: "column" }}>
-        <input value={item.title} onChange={(e) => update(item.id, { title: e.target.value })}
-          style={{ fontSize: 13, padding: "8px 10px", border: "1.5px solid #ecd9e4", borderRadius: 8 }} />
+        {/* Title shows as text on the card; editing happens inside Details below. */}
+        <div style={{ fontSize: 13.5, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={item.title}>
+          {item.title || "Untitled"}
+        </div>
         <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
           <StatusBadge status={item.status} />
-          <span className="seo-hint">{item.category || "Events"}</span>
+          <span className="seo-hint" style={{ margin: 0 }}>{item.category || "Events"}</span>
         </div>
         {editing === item.id ? (
           <div style={{ marginTop: 10 }}>
+            <div className="field" style={{ marginBottom: 8 }}><label>Title</label>
+              <input value={item.title || ""} onChange={(e) => update(item.id, { title: e.target.value })} />
+            </div>
             <div className="field" style={{ marginBottom: 8 }}><label>Category</label>
               <select value={item.category || "Events"} onChange={(e) => update(item.id, { category: e.target.value })}>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="field" style={{ marginBottom: 8 }}><label>Caption</label>
-              <input value={item.caption || ""} onChange={(e) => update(item.id, { caption: e.target.value })} />
+              <input value={item.caption || ""} onChange={(e) => update(item.id, { caption: e.target.value })} placeholder="Shown under the photo on the website" />
             </div>
             <div className="field" style={{ marginBottom: 8 }}><label>Status</label>
               <select value={item.status || "published"} onChange={(e) => update(item.id, { status: e.target.value })}>
-                {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
               </select>
             </div>
             <label className="check-row" style={{ marginBottom: 8 }}>
               <input type="checkbox" checked={!!item.is_placeholder} onChange={(e) => update(item.id, { is_placeholder: e.target.checked })} /> Placeholder
             </label>
             <div style={{ display: "flex", gap: 8 }}>
-              <button className="btn-sm btn-new" onClick={() => saveItem(item)}>Save</button>
+              <SaveButton onClick={() => saveItem(item)} className="btn-sm btn-new">Save</SaveButton>
               <button className="btn-sm btn-edit" onClick={() => { setEditing(null); refresh(); }}>Cancel</button>
             </div>
           </div>
@@ -174,7 +186,7 @@ export default function GalleryAdmin() {
               <div className="field"><label>Title</label><input value={ytTitle} onChange={(e) => setYtTitle(e.target.value)} placeholder="e.g. Sangeet night highlights" /></div>
               <div className="field"><label>YouTube URL</label><input value={ytUrl} onChange={(e) => setYtUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=…" /></div>
             </div>
-            <button className="btn btn-primary" onClick={addYouTube}>+ Add Video</button>
+            <SaveButton onClick={addYouTube}>+ Add Video</SaveButton>
             <p className="seo-hint" style={{ marginTop: 10 }}>The thumbnail is picked up automatically from YouTube.</p>
           </div>
           <div className="editor" style={{ marginBottom: 20 }}>
@@ -186,6 +198,9 @@ export default function GalleryAdmin() {
           </div>
           {busy ? <p>Loading…</p> : <div className="media-grid">{videos.map(card)}</div>}
         </>
+      )}
+      {preview && (
+        <PreviewModal url={preview.url} kind={preview.kind} onClose={() => setPreview(null)} />
       )}
     </>
   );

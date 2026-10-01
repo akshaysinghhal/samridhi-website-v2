@@ -1,5 +1,5 @@
 "use client";
-import AdminCrud, { STATUS_OPTIONS } from "../_lib/crud-ui";
+import AdminCrud, { STATUS_OPTIONS, SIZE_HINTS } from "../_lib/crud-ui";
 
 export default function TestimonialsAdmin() {
   return (
@@ -20,7 +20,7 @@ export default function TestimonialsAdmin() {
         { key: "quote", label: "Quote", type: "textarea", rows: 4, required: true },
         { key: "author_name", label: "Author name", required: true },
         { key: "company", label: "Company" },
-        { key: "photo_url", label: "Photo", type: "image" },
+        { key: "photo_url", label: "Photo", type: "image", sizeHint: SIZE_HINTS.portrait },
         { key: "permission_granted", label: "Permission granted to publish", type: "check", hint: "Required before this can go public." },
         { key: "sort", label: "Display order", type: "number" },
         { key: "status", label: "Status", type: "select", options: STATUS_OPTIONS },

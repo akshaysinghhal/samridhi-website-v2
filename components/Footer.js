@@ -82,7 +82,7 @@ export default function Footer({ nav, settings }) {
             <p><strong>Chittorgarh</strong><br />{get("address_chittorgarh", "230/4, Main Collectorate Circle, Gandhi Nagar, Chittorgarh 312001, Rajasthan")}</p>
             <p style={{ marginTop: 12 }}><strong>Mumbai</strong><br />{get("address_mumbai", "Mumbai, Maharashtra")}</p>
             <p style={{ marginTop: 12 }}>
-              <a href={"tel:" + String(get("phone1", "+91 96022 28846")).replace(/\s/g,)} style={{ display: "inline" }}>{get("phone1", "+91 96022 28846")}</a>
+              <a href={"tel:" + String(get("phone1", "+91 96022 28846")).replace(/\s/g, "")} style={{ display: "inline" }}>{get("phone1", "+91 96022 28846")}</a>
             </p>
             <p>
               <a href={"mailto:" + get("email", "samridhifilms@yahoo.co.in")} style={{ display: "inline" }}>{get("email", "samridhifilms@yahoo.co.in")}</a>

@@ -1,5 +1,5 @@
 "use client";
-import AdminCrud, { STATUS_OPTIONS } from "../_lib/crud-ui";
+import AdminCrud, { STATUS_OPTIONS, SIZE_HINTS } from "../_lib/crud-ui";
 
 const CATS = ["Government", "Corporate", "Weddings", "Destination Weddings", "Celebrity Shows", "Cultural Programs", "Brand Promotions", "International"];
 
@@ -29,7 +29,7 @@ export default function PortfolioAdmin() {
         { key: "category", label: "Category", type: "select", options: CATS },
         { key: "services", label: "Services provided", type: "list", placeholder: "e.g. Stage Production" },
         { key: "description", label: "Description", type: "textarea", rows: 5 },
-        { key: "cover_image", label: "Cover photo", type: "image" },
+        { key: "cover_image", label: "Cover photo", type: "image", sizeHint: SIZE_HINTS.cover },
         { key: "gallery", label: "Photo gallery", type: "images" },
         { key: "video_url", label: "Video URL (YouTube / mp4)" },
         { key: "featured", label: "Featured on homepage", type: "check" },

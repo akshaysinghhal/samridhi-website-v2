@@ -59,9 +59,8 @@ export default function Header({ nav, phone, whatsapp }) {
     <>
       <header className={`site-header ${scrolled ? "scrolled" : ""}`}>
         <div className="container nav">
-          <Link href="/" className="brand brand-iso" aria-label="Samridhi Films & Television — home">
+          <Link href="/" className="brand" aria-label="Samridhi Films & Television — home">
             <img src="/images/logo.png" alt="Samridhi Films & Television logo" />
-            <img className="iso-badge" src="/images/iso-badge.png" alt="ISO 9001:2015 certified" />
           </Link>
           <nav className="nav-links" aria-label="Main navigation">
             {links.map((l) => (
@@ -71,12 +70,6 @@ export default function Header({ nav, phone, whatsapp }) {
             ))}
           </nav>
           <div className="nav-cta">
-            <a className="nav-call" href={telHref} aria-label={`Call us at ${tel}`}>
-              <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z" />
-              </svg>
-              {tel}
-            </a>
             <Link className="btn btn-primary" href="/contact">Plan Your Event</Link>
             <button className="burger" ref={burgerRef} onClick={() => setOpen(true)} aria-label="Open menu" aria-expanded={open}>
               <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" aria-hidden="true">

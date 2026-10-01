@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite } from "../_lib/ui";
+import { revalidateSite, SaveButton } from "../_lib/ui";
 
 const EMPTY_LEGAL = { legal_name: "", trade_name: "Samridhi Films & Television", gstin: "", pan: "", address: "", state: "Rajasthan", email: "", phone: "", grievance_officer: { name: "", email: "", phone: "" } };
 
@@ -61,7 +61,7 @@ export default function SettingsAdmin() {
         <Text k="tagline1" label="Tagline 1" />
         <Text k="tagline2" label="Tagline 2" />
         <Text k="since" label="Serving since (year)" />
-        <button className="btn btn-primary" onClick={() => save(["company_name", "tagline1", "tagline2", "since"], "Company")}>Save</button>
+        <SaveButton onClick={() => save(["company_name", "tagline1", "tagline2", "since"], "Company")}>Save</SaveButton>
       </div>
 
       <div className="content-group">
@@ -75,14 +75,14 @@ export default function SettingsAdmin() {
           <Text k="whatsapp_msg" label="Default WhatsApp message" />
         </div>
         <Text k="email" label="Email" />
-        <button className="btn btn-primary" onClick={() => save(["phone1", "phone2", "whatsapp", "whatsapp_msg", "email"], "Contact")}>Save</button>
+        <SaveButton onClick={() => save(["phone1", "phone2", "whatsapp", "whatsapp_msg", "email"], "Contact")}>Save</SaveButton>
       </div>
 
       <div className="content-group">
         <div className="sec">Addresses</div><h2>Addresses</h2>
         <div className="field"><label>Chittorgarh office</label><textarea rows={2} value={s.address_chittorgarh || ""} onChange={(e) => set("address_chittorgarh", e.target.value)} /></div>
         <div className="field"><label>Mumbai office</label><textarea rows={2} value={s.address_mumbai || ""} onChange={(e) => set("address_mumbai", e.target.value)} /></div>
-        <button className="btn btn-primary" onClick={() => save(["address_chittorgarh", "address_mumbai"], "Addresses")}>Save</button>
+        <SaveButton onClick={() => save(["address_chittorgarh", "address_mumbai"], "Addresses")}>Save</SaveButton>
       </div>
 
       <div className="content-group">
@@ -90,7 +90,7 @@ export default function SettingsAdmin() {
         <Text k="instagram" label="Instagram URL" />
         <Text k="facebook" label="Facebook URL" />
         <Text k="youtube" label="YouTube URL" />
-        <button className="btn btn-primary" onClick={() => save(["instagram", "facebook", "youtube"], "Socials")}>Save</button>
+        <SaveButton onClick={() => save(["instagram", "facebook", "youtube"], "Socials")}>Save</SaveButton>
       </div>
 
       <div className="content-group">
@@ -99,14 +99,14 @@ export default function SettingsAdmin() {
         <Text k="hero_video" label="Desktop video URL" />
         <Text k="hero_video_mobile" label="Mobile video URL" />
         <Text k="hero_poster" label="Poster image URL" />
-        <button className="btn btn-primary" onClick={() => save(["hero_video", "hero_video_mobile", "hero_poster"], "Hero video")}>Save</button>
+        <SaveButton onClick={() => save(["hero_video", "hero_video_mobile", "hero_poster"], "Hero video")}>Save</SaveButton>
       </div>
 
       <div className="content-group">
         <div className="sec">Analytics</div><h2>Analytics</h2>
         <Text k="ga4_id" label="GA4 Measurement ID" hint="e.g. G-XXXXXXXXXX" />
         <Text k="meta_pixel_id" label="Meta Pixel ID" />
-        <button className="btn btn-primary" onClick={() => save(["ga4_id", "meta_pixel_id"], "Analytics")}>Save</button>
+        <SaveButton onClick={() => save(["ga4_id", "meta_pixel_id"], "Analytics")}>Save</SaveButton>
       </div>
 
       <div className="content-group">
@@ -114,7 +114,7 @@ export default function SettingsAdmin() {
         <div className="field"><label>Disclaimer text (shown near artist listings)</label>
           <textarea rows={3} value={s.disclaimer || ""} onChange={(e) => set("disclaimer", e.target.value)} />
         </div>
-        <button className="btn btn-primary" onClick={() => save(["disclaimer"], "Disclaimer")}>Save</button>
+        <SaveButton onClick={() => save(["disclaimer"], "Disclaimer")}>Save</SaveButton>
       </div>
 
       <div className="content-group">
@@ -139,19 +139,19 @@ export default function SettingsAdmin() {
           <div className="field"><label>Email</label><input value={legal.grievance_officer?.email || ""} onChange={(e) => setGrievance("email", e.target.value)} /></div>
           <div className="field"><label>Phone</label><input value={legal.grievance_officer?.phone || ""} onChange={(e) => setGrievance("phone", e.target.value)} /></div>
         </div>
-        <button className="btn btn-primary" onClick={() => save(["legal_entity"], "Legal entity")}>Save</button>
+        <SaveButton onClick={() => save(["legal_entity"], "Legal entity")}>Save</SaveButton>
       </div>
 
       <div className="content-group">
         <div className="sec">Leads</div><h2>Lead notifications</h2>
         <Text k="lead_notify_email" label="Notification email for new leads" hint="Comma-separate multiple addresses." />
-        <button className="btn btn-primary" onClick={() => save(["lead_notify_email"], "Lead notifications")}>Save</button>
+        <SaveButton onClick={() => save(["lead_notify_email"], "Lead notifications")}>Save</SaveButton>
       </div>
 
       <div className="content-group">
         <div className="sec">Privacy</div><h2>Cookie banner</h2>
         <div className="field"><label>Cookie banner text</label><textarea rows={2} value={s.cookie_banner_text || ""} onChange={(e) => set("cookie_banner_text", e.target.value)} /></div>
-        <button className="btn btn-primary" onClick={() => save(["cookie_banner_text"], "Cookie banner")}>Save</button>
+        <SaveButton onClick={() => save(["cookie_banner_text"], "Cookie banner")}>Save</SaveButton>
       </div>
 
       <div className="content-group" style={indexingOn && launchTotal > 0 ? { border: "2px solid #e65100" } : undefined}>
@@ -165,7 +165,7 @@ export default function SettingsAdmin() {
             ⚠️ Indexing is ON but <b>{launchTotal} placeholder/draft items</b> still remain. Replace placeholders first (see <a href="/admin/launch">Launch Checklist</a>).
           </div>
         )}
-        <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => save(["seo_indexing_enabled"], "Indexing")}>Save</button>
+        <SaveButton style={{ marginTop: 12 }} onClick={() => save(["seo_indexing_enabled"], "Indexing")}>Save</SaveButton>
       </div>
     </>
   );

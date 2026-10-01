@@ -38,7 +38,24 @@ export function PhBadge() {
 }
 
 export function StatusBadge({ status }) {
-  return <span className={`badge ${status === "published" ? "pub" : "draft"}`}>{status || "—"}</span>;
+  const label = status ? status[0].toUpperCase() + status.slice(1) : "—";
+  return <span className={`badge ${status === "published" ? "pub" : "draft"}`}>{label}</span>;
+}
+
+// Self-contained save button with a spinner — drop in anywhere a save action
+// fires so every admin form shows a loader while its save is in flight.
+export function SaveButton({ onClick, children, className = "btn btn-primary", style }) {
+  const [saving, setSaving] = useState(false);
+  const click = async () => {
+    if (saving) return;
+    setSaving(true);
+    try { await onClick(); } finally { setSaving(false); }
+  };
+  return (
+    <button className={className} style={style} disabled={saving} onClick={click}>
+      {saving ? <><span className="spin" aria-hidden="true" /> Saving…</> : children}
+    </button>
+  );
 }
 
 // Upload a single file from an <input type=file> change event. Returns the URL or null.

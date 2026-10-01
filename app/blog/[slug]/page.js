@@ -30,9 +30,14 @@ async function getPost(slug) {
     let q = sb.from("posts").select("*").eq("slug", slug);
     if (!previewing()) q = q.eq("status", "published");
     const { data, error } = await q.single();
-    if (error) return null;
+    if (error) {
+      // Log server-side so Vercel Runtime Logs show why a post failed.
+      console.error(`[blog] getPost(${slug}) supabase error:`, error.message);
+      return null;
+    }
     return data;
-  } catch {
+  } catch (e) {
+    console.error(`[blog] getPost(${slug}) exception:`, e?.message || e);
     return null;
   }
 }
@@ -66,6 +71,12 @@ export default async function BlogPost({ params }) {
   if (!post) notFound();
   const yt = youTubeId(post.video_url);
   const isPreview = previewing() && post.status !== "published";
+  // Defensive normalisation: never let an unexpected DB shape 500 the page.
+  const title = typeof post.title === "string" ? post.title : String(post.title ?? "Untitled");
+  const author = typeof post.author === "string" && post.author ? post.author : "Samridhi Films & Television";
+  const content = typeof post.content === "string" ? post.content : String(post.content ?? "");
+  const gallery = Array.isArray(post.gallery) ? post.gallery.filter((g) => typeof g === "string" && g) : [];
+  const cover = typeof post.cover_image === "string" ? post.cover_image : "";
 
   return (
     <>
@@ -76,26 +87,26 @@ export default async function BlogPost({ params }) {
       )}
       <SiteHeader />
       <div className="article-hero">
-        {post.cover_image && <img src={post.cover_image} alt={post.title} />}
+        {cover && <img src={cover} alt={title} />}
         <div className="container"><div className="inner">
           <span className="eyebrow" style={{ color: "#ffe082" }}>Blog</span>
-          <h1>{post.title}</h1>
+          <h1>{title}</h1>
           <p style={{ opacity: 0.9 }}>
-            {post.author || "Samridhi Films & Television"}
+            {author}
             {post.published_at && " • " + new Date(post.published_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
           </p>
         </div></div>
       </div>
       <article className="article-body">
-        <ReactMarkdown>{post.content || ""}</ReactMarkdown>
-        {post.gallery && post.gallery.length > 0 && (
+        <ReactMarkdown>{content}</ReactMarkdown>
+        {gallery.length > 0 && (
           <div className="article-gallery">
-            {post.gallery.map((g) => <img key={g} src={g} alt={post.title} loading="lazy" />)}
+            {gallery.map((g) => <img key={g} src={g} alt={title} loading="lazy" />)}
           </div>
         )}
         {yt ? (
           <div className="video-wrap">
-            <iframe src={`https://www.youtube.com/embed/${yt}`} title={post.title} allowFullScreen />
+            <iframe src={`https://www.youtube.com/embed/${yt}`} title={title} allowFullScreen />
           </div>
         ) : post.video_url ? (
           <p><a className="btn btn-dark" href={post.video_url} target="_blank" rel="noreferrer">Watch the video</a></p>

@@ -1,5 +1,5 @@
 "use client";
-import AdminCrud, { STATUS_OPTIONS } from "../_lib/crud-ui";
+import AdminCrud, { STATUS_OPTIONS, SIZE_HINTS } from "../_lib/crud-ui";
 
 export default function InternationalAdmin() {
   return (
@@ -8,7 +8,7 @@ export default function InternationalAdmin() {
       sub="Shows and events abroad — these power the interactive world map."
       endpoint="/api/admin/international-shows"
       listKey="shows"
-        previewFor={() => `/international-shows`}
+        previewFor={(row) => (row.id ? `/international-shows/${row.id}` : `/international-shows`)}
       addLabel="Add Show"
       columns={[
         { key: "title", label: "Show" },
@@ -24,7 +24,7 @@ export default function InternationalAdmin() {
         { key: "city", label: "City" },
         { key: "show_date", label: "Show date", type: "date" },
         { key: "summary", label: "Summary", type: "textarea", rows: 4 },
-        { key: "cover_image", label: "Cover image", type: "image" },
+        { key: "cover_image", label: "Cover image", type: "image", sizeHint: SIZE_HINTS.cover },
         { key: "gallery", label: "Gallery", type: "images" },
         { key: "video_url", label: "Video URL" },
         { key: "sort", label: "Display order", type: "number" },

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell } from "../_lib/ui";
+import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton } from "../_lib/ui";
 
 const SOURCES = [
   { value: "youtube", label: "YouTube" },
@@ -122,11 +122,11 @@ export default function CoupleStoriesAdmin() {
           <div className="form-row">
             <div className="field" style={{ display: "flex", alignItems: "center" }}><label className="check-row"><input type="checkbox" checked={form.featured_on_home} onChange={(e) => set("featured_on_home", e.target.checked)} /> Featured on homepage <span className="seo-hint">(max 4)</span></label></div>
             <div className="field"><label>Order</label><input type="number" value={form.sort} onChange={(e) => set("sort", Number(e.target.value))} /></div>
-            <div className="field"><label>Status</label><select value={form.status} onChange={(e) => set("status", e.target.value)}>{STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}</select></div>
+            <div className="field"><label>Status</label><select value={form.status} onChange={(e) => set("status", e.target.value)}>{STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}</select></div>
           </div>
           <label className="check-row"><input type="checkbox" checked={form.is_placeholder} onChange={(e) => set("is_placeholder", e.target.checked)} /> Mark as placeholder</label>
           <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-            <button className="btn btn-primary" onClick={save}>{editingId ? "Save Changes" : "Add Story"}</button>
+            <SaveButton onClick={save}>{editingId ? "Save Changes" : "Add Story"}</SaveButton>
             <button className="btn btn-dark" onClick={() => { setShowForm(false); setEditingId(null); }}>Cancel</button>
           </div>
         </div>

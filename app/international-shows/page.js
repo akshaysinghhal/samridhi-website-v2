@@ -1,7 +1,6 @@
 import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
-import ShowMedia from "../../components/ShowMedia";
 import Reveal from "../../components/Reveal";
 import { getInternationalShows } from "../../lib/db";
 
@@ -38,19 +37,20 @@ export default async function InternationalShowsPage() {
                 <div className="intl-split" style={{ marginTop: idx === 0 ? 0 : 54 }}>
                   <div className="intl-media">
                     {show.cover_image && (
-                      <img src={show.cover_image} alt={show.title} loading={idx === 0 ? undefined : "lazy"} />
+                      <Link href={`/international-shows/${show.id}`} aria-label={`View ${show.title}`}>
+                        <img src={show.cover_image} alt={show.title} loading={idx === 0 ? undefined : "lazy"} />
+                      </Link>
                     )}
                   </div>
                   <div className="intl-panel">
                     <span className="eyebrow">{show.country || "International"}</span>
-                    <h3>{show.title}</h3>
+                    <h3><Link href={`/international-shows/${show.id}`} style={{ color: "inherit", textDecoration: "none" }}>{show.title}</Link></h3>
                     <div className="intl-loc">
                       {[show.city, show.country].filter(Boolean).join(", ")}
                       {show.show_date ? ` · ${new Date(show.show_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}` : ""}
                     </div>
                     {show.summary && <p>{show.summary}</p>}
-                    {show.highlights && <p>{show.highlights}</p>}
-                    <ShowMedia show={show} />
+                    <Link href={`/international-shows/${show.id}`} className="text-link">View show <span className="arr">→</span></Link>
                   </div>
                 </div>
               </Reveal>

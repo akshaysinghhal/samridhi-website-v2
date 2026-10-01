@@ -1,5 +1,6 @@
 "use client";
 import AdminCrud from "../_lib/crud-ui";
+import { SIZE_HINTS } from "../_lib/crud-ui";
 
 export default function ClientsAdmin() {
   return (
@@ -18,7 +19,7 @@ export default function ClientsAdmin() {
       ]}
       fields={[
         { key: "name", label: "Client name", required: true },
-        { key: "logo_url", label: "Logo", type: "image", hint: "Until the real logo is uploaded, the name renders as an elegant text wordmark." },
+        { key: "logo_url", label: "Logo", type: "image", hint: "Until the real logo is uploaded, the name renders as an elegant text wordmark.", sizeHint: SIZE_HINTS.logo },
         { key: "sector", label: "Sector", placeholder: "e.g. Cement" },
         { key: "permission_to_display", label: "Permission to display granted", type: "check", hint: "Only checked clients appear publicly." },
         { key: "is_placeholder", label: "Logo is a placeholder", type: "check" },

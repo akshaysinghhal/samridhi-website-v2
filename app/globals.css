@@ -152,16 +152,19 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
   box-shadow: 0 8px 30px rgba(42, 27, 22, 0.08);
 }
 .nav { display: flex; align-items: center; justify-content: space-between; height: 84px; transition: height 0.3s ease; }
+/* Wider container for the header so ten menu items fit without wrapping. */
+.nav.container { max-width: 1400px; }
 .site-header.scrolled .nav { height: 68px; }
+.brand { flex-shrink: 0; }
 .brand img { height: 56px; width: auto; transition: height 0.3s ease; }
 .site-header.scrolled .brand img { height: 46px; }
 .brand-iso { display: inline-flex; align-items: center; gap: 14px; text-decoration: none; }
 .brand-iso .iso-badge { height: 46px; width: auto; }
-.nav-links { display: flex; gap: 30px; align-items: center; }
+.nav-links { display: flex; gap: 20px; align-items: center; }
 .nav-links a {
-  text-decoration: none; font-weight: 600; font-size: 13.5px;
-  letter-spacing: 0.8px; text-transform: uppercase; color: var(--text);
-  position: relative; padding: 6px 0;
+  text-decoration: none; font-weight: 600; font-size: 12.5px;
+  letter-spacing: 0.7px; text-transform: uppercase; color: var(--text);
+  position: relative; padding: 6px 0; white-space: nowrap;
 }
 .nav-links a::after {
   content: ""; position: absolute; left: 0; bottom: 0; height: 1.5px; width: 0;
@@ -170,7 +173,7 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 .nav-links a:hover { color: var(--terracotta); }
 .nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
 .nav-links a.active { color: var(--terracotta); }
-.nav-cta { display: flex; gap: 12px; align-items: center; }
+.nav-cta { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
 .nav-cta .btn { padding: 12px 26px; font-size: 12px; }
 .nav-call {
   display: inline-flex; align-items: center; gap: 8px;
@@ -555,26 +558,37 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 .intl-panel h3 { color: #fff; font-size: clamp(30px, 3.2vw, 42px); margin: 0 0 12px; }
 .intl-loc { font-size: 12px; letter-spacing: 2.4px; text-transform: uppercase; color: var(--gold-soft); font-weight: 700; margin-bottom: 16px; }
 .intl-panel p { color: rgba(247,242,232,0.72); margin: 0 0 30px; }
+.text-link { color: var(--gold-soft); font-weight: 700; font-size: 14px; letter-spacing: 0.6px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+.text-link:hover { color: #fff; }
+.text-link .arr, .arr { transition: transform 0.3s ease; display: inline-block; }
+.text-link:hover .arr { transform: translateX(4px); }
+.back-link { color: var(--terracotta-deep); font-weight: 700; font-size: 14px; text-decoration: none; letter-spacing: 0.4px; }
+.back-link:hover { color: var(--terracotta); }
 
-/* ---------- press — newspaper editorial ---------- */
-.press-rail {
-  display: flex; gap: 26px; overflow-x: auto; margin-top: 50px;
-  padding: 6px 4px 26px; scroll-snap-type: x mandatory; scrollbar-width: none;
-  align-items: flex-start;
+/* ---------- press — newspaper editorial grid ---------- */
+.press-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; margin-top: 50px;
 }
-.press-rail::-webkit-scrollbar { display: none; }
 .press-clip {
-  flex: 0 0 300px; scroll-snap-align: start; background: var(--warm-white);
+  background: var(--warm-white);
   border: 1px solid var(--border); border-radius: 3px; overflow: hidden;
-  text-decoration: none; transition: transform 0.3s ease, box-shadow 0.3s ease;
-  position: relative;
+  text-decoration: none; position: relative;
+  transition: transform 0.45s ease, box-shadow 0.45s ease;
 }
-.press-clip:hover { transform: translateY(-5px); box-shadow: var(--shadow-soft); }
-.press-clip .pc-img { aspect-ratio: 4/4.6; overflow: hidden; background: var(--cream); position: relative; }
-.press-clip img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
-.press-clip figcaption { padding: 18px 20px 20px; border-top: 2px solid var(--gold); }
-.press-clip .pc-pub { font-size: 11px; letter-spacing: 2.2px; text-transform: uppercase; color: var(--terracotta); font-weight: 800; margin-bottom: 6px; }
-.press-clip .pc-head { font-family: var(--font-display); font-size: 19px; color: var(--brown); line-height: 1.35; }
+.press-clip:hover { transform: translateY(-4px); box-shadow: var(--shadow-soft); }
+.press-clip .pc-img { aspect-ratio: 4/4.6; overflow: hidden; background: var(--cream); position: relative; display: block; }
+.press-clip img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; transition: transform 0.6s ease; }
+.press-clip:hover img { transform: scale(1.045); }
+.press-clip .pc-cap {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  padding: 44px 18px 16px; display: block;
+  background: linear-gradient(to top, rgba(42, 27, 22, 0.9), rgba(42, 27, 22, 0));
+  opacity: 0; transform: translateY(10px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.press-clip:hover .pc-cap, .press-clip:focus-within .pc-cap { opacity: 1; transform: none; }
+.press-clip .pc-pub { display: block; font-size: 11px; letter-spacing: 2.2px; text-transform: uppercase; color: var(--gold-soft); font-weight: 800; margin-bottom: 6px; }
+.press-clip .pc-head { display: block; font-family: var(--font-display); font-size: 18px; color: #fff; line-height: 1.35; }
 .press-pub-badge {
   position: absolute; top: 12px; left: 12px; z-index: 2;
   background: rgba(42, 27, 22, 0.88); color: var(--gold-soft); font-size: 11px; font-weight: 800;
@@ -792,8 +806,11 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
   font-size: 20px; cursor: pointer;
 }
 .video-modal-close:hover { background: var(--terracotta); color: #fff; }
-.video-wrap { position: relative; padding-bottom: 56.25%; height: 0; margin: 30px 0; border-radius: 6px; overflow: hidden; }
-.video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.video-wrap { position: relative; padding-bottom: 56.25%; height: 0; margin: 30px 0; border-radius: 6px; overflow: hidden; background: #000; }
+/* A <video> tag must be absolutely positioned like the iframe — otherwise the
+   padding-hack parent (height: 0) collapses it to zero height: audio plays
+   but the picture is invisible. */
+.video-wrap iframe, .video-wrap video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; object-fit: contain; background: #000; }
 
 /* ---------- services legacy / bento (kept working, restyled) ---------- */
 .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 22px; margin-top: 44px; }
@@ -992,7 +1009,7 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
   .testi-grid { grid-template-columns: 1fr 1fr; }
   .footer-top { grid-template-columns: 1fr 1fr; }
 }
-@media (max-width: 900px) {
+@media (max-width: 1300px) {
   .nav-links, .nav-cta .nav-call, .nav-cta .btn { display: none; }
   .burger { display: block; }
   .about-grid { grid-template-columns: 1fr; gap: 44px; }
@@ -1019,7 +1036,7 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
   .testi-grid { grid-template-columns: 1fr; }
   .wed-list { grid-template-columns: 1fr; }
   .form-card { padding: 32px 24px; }
-  .press-rail { margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; }
+  .press-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 40px; }
   .artist-rail { margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; }
   .logo-wall { gap: 16px 34px; }
   .intl-panel { padding: 44px 30px; }

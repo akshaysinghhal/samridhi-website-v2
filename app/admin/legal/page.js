@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite } from "../_lib/ui";
+import { revalidateSite, SaveButton } from "../_lib/ui";
 
 export default function LegalAdmin() {
   const [pages, setPages] = useState([]);
@@ -65,7 +65,7 @@ export default function LegalAdmin() {
         <div className="field"><label>Content (Markdown)</label>
           <textarea rows={22} style={{ fontFamily: "ui-monospace, monospace", fontSize: 13.5, lineHeight: 1.6 }} value={body} onChange={(e) => setBody(e.target.value)} />
         </div>
-        <button className="btn btn-primary" onClick={save}>Save Page</button>
+        <SaveButton onClick={save}>Save Page</SaveButton>
       </div>
     </>
   );

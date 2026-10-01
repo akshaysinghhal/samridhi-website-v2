@@ -385,18 +385,17 @@ export default async function Home() {
                 <h2 className="h2">As Seen In</h2>
               </div>
             </Reveal>
-            <div className="press-rail">
+            <div className="press-grid">
               {pressFallback.map((p, i) => (
                 <Reveal key={p.id} delay={i % 3} className="press-clip">
                   <Link href="/press" style={{ textDecoration: "none" }} aria-label={p.headline || p.publication || "Press coverage"}>
                     <span className="pc-img">
-                      {p.publication && <span className="press-pub-badge">{p.publication}</span>}
                       <img src={p.image_url} alt={p.headline ? `${p.headline} — ${p.publication || "press"}` : `${p.publication || "Press"} clipping`} loading="lazy" />
+                      <span className="pc-cap">
+                        {p.publication && <span className="pc-pub">{p.publication}</span>}
+                        <span className="pc-head">{p.headline || "Press coverage"}</span>
+                      </span>
                     </span>
-                    <figcaption>
-                      {p.publication && <div className="pc-pub">{p.publication}</div>}
-                      <div className="pc-head">{p.headline || "Press coverage"}</div>
-                    </figcaption>
                   </Link>
                 </Reveal>
               ))}
@@ -427,9 +426,9 @@ export default async function Home() {
                 <div className="contact-line">
                   <h4>Call</h4>
                   <p>
-                    <a href={"tel:" + String(setting(s, "phone1", "+91 96022 28846")).replace(/\s/g,)}>{setting(s, "phone1", "+91 96022 28846")}</a>
+                    <a href={"tel:" + String(setting(s, "phone1", "+91 96022 28846")).replace(/\s/g, "")}>{setting(s, "phone1", "+91 96022 28846")}</a>
                     {"  ·  "}
-                    <a href={"tel:" + String(setting(s, "phone2", "+91 77372 89938")).replace(/\s/g,)}>{setting(s, "phone2", "+91 77372 89938")}</a>
+                    <a href={"tel:" + String(setting(s, "phone2", "+91 77372 89938")).replace(/\s/g, "")}>{setting(s, "phone2", "+91 77372 89938")}</a>
                   </p>
                 </div>
                 <div className="contact-line">

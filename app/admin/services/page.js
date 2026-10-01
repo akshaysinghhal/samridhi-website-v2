@@ -1,5 +1,5 @@
 "use client";
-import AdminCrud, { STATUS_OPTIONS } from "../_lib/crud-ui";
+import AdminCrud, { STATUS_OPTIONS, SIZE_HINTS } from "../_lib/crud-ui";
 
 export default function ServicesAdmin() {
   return (
@@ -21,7 +21,7 @@ export default function ServicesAdmin() {
         { key: "slug", label: "URL slug", hint: "Auto-filled from the title." },
         { key: "summary", label: "Summary", type: "textarea", rows: 3 },
         { key: "icon", label: "Icon (emoji or text)", placeholder: "e.g. 💒" },
-        { key: "hero_image", label: "Hero image", type: "image" },
+        { key: "hero_image", label: "Hero image", type: "image", sizeHint: SIZE_HINTS.hero },
         { key: "items", label: "What we deliver (checklist)", type: "list", placeholder: "e.g. Stage Setup" },
         { key: "faq", label: "FAQs", type: "faq" },
         { key: "sort", label: "Display order", type: "number" },

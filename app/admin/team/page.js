@@ -1,5 +1,5 @@
 "use client";
-import AdminCrud, { STATUS_OPTIONS } from "../_lib/crud-ui";
+import AdminCrud, { STATUS_OPTIONS, SIZE_HINTS } from "../_lib/crud-ui";
 
 export default function TeamAdmin() {
   return (
@@ -20,7 +20,7 @@ export default function TeamAdmin() {
         { key: "name", label: "Name", required: true },
         { key: "role", label: "Role", placeholder: "e.g. Founder & Managing Director" },
         { key: "bio", label: "Bio", type: "textarea", rows: 5 },
-        { key: "photo_url", label: "Photo", type: "image" },
+        { key: "photo_url", label: "Photo", type: "image", sizeHint: SIZE_HINTS.portrait },
         { key: "instagram", label: "Instagram handle", placeholder: "@username" },
         { key: "sort", label: "Display order", type: "number" },
         { key: "status", label: "Status", type: "select", options: STATUS_OPTIONS },

@@ -1,11 +1,24 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, slugify } from "./ui";
+import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, slugify, SaveButton } from "./ui";
+import MediaPicker from "./MediaPicker";
+import PreviewModal from "./PreviewModal";
+
+// Recommended dimensions shown as guidance under media fields. These are
+// suggestions, not enforced rules — Akshay asked for them as hints.
+export const SIZE_HINTS = {
+  cover: "Suggested: 1600 × 900 px (16:9)",
+  hero: "Suggested: 1920 × 1080 px (16:9)",
+  portrait: "Suggested: 800 × 1000 px (4:5)",
+  square: "Suggested: 1080 × 1080 px (1:1)",
+  logo: "Suggested: 512 × 512 px, transparent PNG",
+};
 
 // Config-driven admin CRUD: list table + add/edit form.
-// fields: [{key,label,type,required,placeholder,options,rows,hint}]
-// types: text|textarea|number|date|select|check|image|images|list|faq
+// fields: [{key,label,type,required,placeholder,options,rows,hint,sizeHint}]
+// types: text|textarea|number|date|select|check|image|images|video|list|faq
+// sizeHint: e.g. SIZE_HINTS.cover — a recommended-dimensions guidance line.
 // previewFor: (row) => public URL to preview the row (or null to hide)
 // externalRefresh: change this value (e.g. a counter) to trigger a silent list refresh.
 export default function AdminCrud({
@@ -23,6 +36,8 @@ export default function AdminCrud({
   const [selected, setSelected] = useState(() => new Set());
   const [bulkBusy, setBulkBusy] = useState("");
   const [bulkStatus, setBulkStatus] = useState("published");
+  const [picker, setPicker] = useState(null); // { key, multi, kind }
+  const [preview, setPreview] = useState(null); // { url, kind }
 
   // silent=true refreshes data without flashing the "Loading…" state.
   const load = async (silent) => {
@@ -160,9 +175,23 @@ export default function AdminCrud({
     } finally { setUploading(false); e.target.value = ""; }
   };
 
+  // MediaPicker selection lands here: set (or append) the chosen URL.
+  const onPick = (item) => {
+    if (!picker) return;
+    const { key, multi } = picker;
+    if (multi) {
+      setForm((f) => ({ ...f, [key]: [...(Array.isArray(f[key]) ? f[key] : []), item.url] }));
+    } else {
+      set(key, item.url);
+    }
+  };
+
+  const openPicker = (key, multi, kind) => setPicker({ key, multi, kind });
+
   const renderField = (f) => {
     const v = form[f.key];
     const req = f.required ? " *" : null;
+    const sizeHint = f.sizeHint ? <div className="seo-hint">📐 {f.sizeHint}</div> : null;
     switch (f.type) {
       case "textarea":
         return <div className="field" key={f.key}><label>{f.label}{req}</label><textarea rows={f.rows || 4} value={v || ""} onChange={(e) => set(f.key, e.target.value)} placeholder={f.placeholder} />{f.hint && <div className="seo-hint">{f.hint}</div>}</div>;
@@ -179,18 +208,45 @@ export default function AdminCrud({
         return <label className="check-row" key={f.key}><input type="checkbox" checked={!!v} onChange={(e) => set(f.key, e.target.checked)} /> {f.label}{f.hint && <span className="seo-hint" style={{ marginLeft: 8 }}>{f.hint}</span>}</label>;
       case "image":
         return <div className="field" key={f.key}><label>{f.label}{req}</label>
-          <input type="file" accept="image/*" onChange={(e) => onFile(e, f.key, false)} />
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <input type="file" accept="image/*" onChange={(e) => onFile(e, f.key, false)} style={{ flex: "1 1 200px" }} />
+            <button type="button" className="btn-sm btn-edit" onClick={() => openPicker(f.key, false, "image")}>📚 Choose from library</button>
+          </div>
           {uploading && <div className="seo-hint">Uploading…</div>}
-          {v && <div className="img-preview"><div className="img-thumb"><img src={v} alt="" /><button type="button" onClick={() => set(f.key, "")}>✕</button></div></div>}
+          {sizeHint}
+          {v && <div className="img-preview"><div className="img-thumb">
+            <img src={v} alt="" onClick={() => setPreview({ url: v, kind: "image" })} style={{ cursor: "zoom-in" }} title="Click to preview" />
+            <button type="button" onClick={() => set(f.key, "")}>✕</button>
+          </div></div>}
         </div>;
       case "images": {
         const arr = Array.isArray(v) ? v : [];
         return <div className="field" key={f.key}><label>{f.label}{req}</label>
-          <input type="file" accept="image/*" multiple onChange={(e) => onFile(e, f.key, true)} />
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <input type="file" accept="image/*" multiple onChange={(e) => onFile(e, f.key, true)} style={{ flex: "1 1 200px" }} />
+            <button type="button" className="btn-sm btn-edit" onClick={() => openPicker(f.key, true, "image")}>📚 Choose from library</button>
+          </div>
           {uploading && <div className="seo-hint">Uploading…</div>}
-          {arr.length > 0 && <div className="img-preview">{arr.map((u, i) => <div className="img-thumb" key={i}><img src={u} alt="" /><button type="button" onClick={() => set(f.key, arr.filter((_, j) => j !== i))}>✕</button></div>)}</div>}
+          {sizeHint}
+          {arr.length > 0 && <div className="img-preview">{arr.map((u, i) => <div className="img-thumb" key={i}>
+            <img src={u} alt="" onClick={() => setPreview({ url: u, kind: "image" })} style={{ cursor: "zoom-in" }} title="Click to preview" />
+            <button type="button" onClick={() => set(f.key, arr.filter((_, j) => j !== i))}>✕</button>
+          </div>)}</div>}
         </div>;
       }
+      case "video":
+        return <div className="field" key={f.key}><label>{f.label}{req}</label>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <input value={v || ""} onChange={(e) => set(f.key, e.target.value)} placeholder="Paste a video URL…" style={{ flex: "1 1 200px" }} />
+            <button type="button" className="btn-sm btn-edit" onClick={() => openPicker(f.key, false, "video")}>📚 Choose from library</button>
+          </div>
+          {sizeHint}
+          {v && <div className="img-preview"><div className="img-thumb">
+            <video src={v} preload="metadata" onClick={() => setPreview({ url: v, kind: "video" })} style={{ cursor: "zoom-in", width: 120, height: 90, objectFit: "cover", borderRadius: 10 }} title="Click to preview" />
+            <button type="button" onClick={() => set(f.key, "")}>✕</button>
+          </div></div>}
+          {f.hint && <div className="seo-hint">{f.hint}</div>}
+        </div>;
       case "list": {
         const arr = Array.isArray(v) ? v : [];
         return <div className="field" key={f.key}><label>{f.label}{req}</label>
@@ -254,7 +310,7 @@ export default function AdminCrud({
           <h2 style={{ marginTop: 0 }}>{editingId ? "Edit" : "Add New"}</h2>
           {fields.map(renderField)}
           <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-            <button className="btn btn-primary" onClick={save}>{editingId ? "Save Changes" : "Add"}</button>
+            <SaveButton onClick={save}>{editingId ? "Save Changes" : "Add"}</SaveButton>
             <button className="btn btn-dark" onClick={() => { setShowForm(false); setEditingId(null); setForm({ ...defaults }); setMsg(""); }}>Cancel</button>
           </div>
         </div>
@@ -300,6 +356,18 @@ export default function AdminCrud({
             })}
           </tbody>
         </table>
+      )}
+
+      {picker && (
+        <MediaPicker
+          open={!!picker}
+          kind={picker.kind}
+          onClose={() => setPicker(null)}
+          onSelect={onPick}
+        />
+      )}
+      {preview && (
+        <PreviewModal url={preview.url} kind={preview.kind} onClose={() => setPreview(null)} />
       )}
     </>
   );

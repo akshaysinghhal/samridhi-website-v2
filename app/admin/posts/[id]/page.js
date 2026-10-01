@@ -5,6 +5,8 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { api, uploadFile } from "../../../../lib/adminApi";
 import { openPreview } from "../../_lib/ui";
+import MediaPicker from "../../_lib/MediaPicker";
+import PreviewModal from "../../_lib/PreviewModal";
 
 const empty = {
   title: "", slug: "", excerpt: "", content: "",
@@ -36,6 +38,8 @@ export default function PostEditor() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState("");
+  const [picker, setPicker] = useState(null); // { kind, multi, target }
+  const [preview, setPreview] = useState(null);
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
@@ -78,6 +82,13 @@ export default function PostEditor() {
     setBusy(false);
   };
 
+  const applyPick = (item) => {
+    if (!picker) return;
+    const t = picker.target;
+    if (t === "gallery") setF((p) => ({ ...p, gallery: [...p.gallery, item.url] }));
+    else if (t === "og") setF((p) => ({ ...p, og_image: item.url }));
+    else setF((p) => ({ ...p, cover_image: item.url }));
+  };
   const ogPreview = f.og_image || f.cover_image;
 
   return (
@@ -105,15 +116,22 @@ export default function PostEditor() {
       <div className="editor" style={{ marginBottom: 20 }}>
         <h2 style={{ marginTop: 0 }}>Photos &amp; Video</h2>
         <div className="field"><label>Cover image</label>
-          <input type="file" accept="image/*" onChange={(e) => e.target.files[0] && doUpload(e.target.files[0], "cover")} />
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <input type="file" accept="image/*" onChange={(e) => e.target.files[0] && doUpload(e.target.files[0], "cover")} style={{ flex: "1 1 200px" }} />
+            <button type="button" className="btn-sm btn-edit" onClick={() => setPicker({ kind: "image", target: "cover" })}>📚 Choose from library</button>
+          </div>
           {uploading === "cover" && <div className="seo-hint">Uploading…</div>}
-          {f.cover_image && <div className="img-preview"><img src={f.cover_image} alt="cover" /></div>}
+          <div className="seo-hint">📐 Suggested: 1600 × 900 px (16:9)</div>
+          {f.cover_image && <div className="img-preview"><div className="img-thumb"><img src={f.cover_image} alt="cover" onClick={() => setPreview({ url: f.cover_image, kind: "image" })} style={{ cursor: "zoom-in" }} title="Click to preview" /><button onClick={() => setF((p) => ({ ...p, cover_image: "" }))}>×</button></div></div>}
         </div>
         <div className="field"><label>Photo gallery</label>
-          <input type="file" accept="image/*" multiple onChange={(e) => { for (const file of e.target.files) doUpload(file, "gallery"); }} />
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <input type="file" accept="image/*" multiple onChange={(e) => { for (const file of e.target.files) doUpload(file, "gallery"); }} style={{ flex: "1 1 200px" }} />
+            <button type="button" className="btn-sm btn-edit" onClick={() => setPicker({ kind: "image", target: "gallery" })}>📚 Choose from library</button>
+          </div>
           {uploading === "gallery" && <div className="seo-hint">Uploading…</div>}
           <div className="img-preview">{f.gallery.map((g) => (
-            <span className="img-thumb" key={g}><img src={g} alt="" /><button onClick={() => setF((p) => ({ ...p, gallery: p.gallery.filter((x) => x !== g) }))}>×</button></span>
+            <span className="img-thumb" key={g}><img src={g} alt="" onClick={() => setPreview({ url: g, kind: "image" })} style={{ cursor: "zoom-in" }} title="Click to preview" /><button onClick={() => setF((p) => ({ ...p, gallery: p.gallery.filter((x) => x !== g) }))}>×</button></span>
           ))}</div>
         </div>
         <div className="field"><label>Video URL (YouTube link)</label><input value={f.video_url} onChange={set("video_url")} placeholder="https://www.youtube.com/watch?v=…" /></div>
@@ -129,7 +147,7 @@ export default function PostEditor() {
         <div className="field"><label>Social share image (OG)</label>
           <input type="file" accept="image/*" onChange={(e) => e.target.files[0] && doUpload(e.target.files[0], "og")} />
           <div className="seo-hint">Leave empty to reuse the cover image. Shown when the post is shared on WhatsApp / Facebook.</div>
-          {f.og_image && <div className="img-preview"><img src={f.og_image} alt="og" /></div>}
+          {f.og_image && <div className="img-preview"><div className="img-thumb"><img src={f.og_image} alt="og" onClick={() => setPreview({ url: f.og_image, kind: "image" })} style={{ cursor: "zoom-in" }} title="Click to preview" /><button onClick={() => setF((p) => ({ ...p, og_image: "" }))}>×</button></div></div>}
         </div>
         <div style={{ background: "#f7f4f8", borderRadius: 12, padding: 18, marginTop: 14 }}>
           <div style={{ fontSize: 12, color: "#5f6b6d", marginBottom: 4 }}>Google preview</div>
@@ -162,6 +180,8 @@ export default function PostEditor() {
         </div>
         {isNew && <div className="seo-hint" style={{ marginTop: 10 }}>Save the post first — preview becomes available after the first save.</div>}
       </div>
+      {picker && <MediaPicker open={!!picker} kind={picker.kind} onClose={() => setPicker(null)} onSelect={applyPick} />}
+      {preview && <PreviewModal url={preview.url} kind={preview.kind} onClose={() => setPreview(null)} />}
     </>
   );
 }
