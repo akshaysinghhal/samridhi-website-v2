@@ -79,10 +79,11 @@ export default async function RootLayout({ children }) {
   const themePrimary = hex(setting(s, "theme_primary", ""));
   const themeDeep = hex(setting(s, "theme_deep", ""));
   const themeGold = hex(setting(s, "theme_gold", ""));
+  const themeBrown = hex(setting(s, "theme_brown", ""));
   const themeFooter = hex(setting(s, "theme_footer", ""));
   const themeCss =
-    themePrimary || themeDeep || themeGold || themeFooter
-      ? `:root{${themePrimary ? `--terracotta:${themePrimary};` : ""}${themeDeep ? `--terracotta-deep:${themeDeep};` : ""}${themeGold ? `--gold:${themeGold};` : ""}${themeFooter ? `--footer-bg:${themeFooter};` : ""}}`
+    themePrimary || themeDeep || themeGold || themeBrown || themeFooter
+      ? `:root{${themePrimary ? `--terracotta:${themePrimary};` : ""}${themeDeep ? `--terracotta-deep:${themeDeep};` : ""}${themeGold ? `--gold:${themeGold};` : ""}${themeBrown ? `--brown:${themeBrown};` : ""}${themeFooter ? `--footer-bg:${themeFooter};` : ""}}`
       : "";
 
   return (

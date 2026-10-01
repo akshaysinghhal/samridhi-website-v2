@@ -82,12 +82,14 @@ export default function SettingsAdmin() {
           <ColorField s={s} set={set} k="theme_primary" label="Primary" hint="Buttons, links, main accents" />
           <ColorField s={s} set={set} k="theme_deep" label="Deep shade" hint="Hover states, dark sections" />
           <ColorField s={s} set={set} k="theme_gold" label="Gold accent" hint="Badges, dividers, highlights" />
-          <ColorField s={s} set={set} k="theme_footer" label="Footer background" hint="Bottom footer band" />
+          <ColorField s={s} set={set} k="theme_brown" label="Brown shade" hint="Dark bands, buttons, bottom bar" />
+          <ColorField s={s} set={set} k="theme_footer" label="Footer background" hint="Bottom footer band (leave same as brown to match)" />
         </div>
         <div className="theme-preview" aria-hidden="true">
           <span className="tp-btn" style={{ background: isHex(s.theme_primary) ? s.theme_primary.trim() : THEME_DEFAULTS.theme_primary }}>Book Now</span>
           <span className="tp-text" style={{ color: isHex(s.theme_deep) ? s.theme_deep.trim() : THEME_DEFAULTS.theme_deep }}>Creating Experiences. Delivering Excellence.</span>
           <span className="tp-badge" style={{ background: isHex(s.theme_gold) ? s.theme_gold.trim() : THEME_DEFAULTS.theme_gold }}>Since 1999</span>
+          <span className="tp-footer" style={{ background: isHex(s.theme_brown) ? s.theme_brown.trim() : THEME_DEFAULTS.theme_brown }}>Brown</span>
           <span className="tp-footer" style={{ background: isHex(s.theme_footer) ? s.theme_footer.trim() : THEME_DEFAULTS.theme_footer }}>Footer</span>
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>

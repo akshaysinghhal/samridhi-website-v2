@@ -329,7 +329,9 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 .wa-float svg { width: 27px; height: 27px; fill: var(--gold-soft); }
 .mobile-bottombar {
   display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
-  background: rgba(42, 27, 22, 0.97); backdrop-filter: blur(8px);
+  background: var(--brown);
+  background: color-mix(in srgb, var(--brown) 97%, transparent);
+  backdrop-filter: blur(8px);
   border-top: 1px solid var(--border-gold);
   padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
 }
