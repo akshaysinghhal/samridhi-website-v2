@@ -301,7 +301,7 @@ function clOverlayUrl(mediaUrl, { text, size, color, opacity, gravity, dx, dy })
   const ext = (noVer.match(/\.([a-z0-9]+)$/i) || [])[1] || "";
   const pub = noVer.replace(/\.[a-z0-9]+$/i, "");
   const enc = encodeURIComponent(text).replace(/!/g, "%21").replace(/'/g, "%27").replace(/\(/g, "%28").replace(/\)/g, "%29").replace(/\*/g, "%2A");
-  const t = `l_text:Arial_${Math.round(size)}_bold:${enc},co_${color.replace("#", "")},o_${opacity},g_${gravity},x_${Math.round(dx)},y_${Math.round(dy)}`;
+  const t = `l_text:Arial_${Math.round(size)}_bold:${enc},co_rgb:${color.replace("#", "")},o_${opacity},g_${gravity},x_${Math.round(dx)},y_${Math.round(dy)}`;
   return `https://res.cloudinary.com/${cloud}/${kind}/upload/${t}/${pub}${ext ? "." + ext : ""}`;
 }
 
@@ -510,7 +510,7 @@ function WatermarkTool() {
               </div>
               {loadErr && (
                 <div className="login-err" style={{ margin: "10px 0" }}>
-                  Couldn't load this file from Cloudinary — it may have been deleted, moved or renamed after appearing in the library.
+                  Couldn't load the watermarked file from Cloudinary — the original may have been deleted, moved or renamed after appearing in the library.
                   Try choosing it again from the library, or re-upload it.
                 </div>
               )}
