@@ -46,6 +46,29 @@ function useScaled() {
   return [ref, scale];
 }
 
+// Fluid template thumbnail: the 1080px artwork scales to whatever width the
+// grid column gives it, so cards fill their column on any screen size.
+function Thumb({ Mini, data }) {
+  const ref = useRef(null);
+  const [scale, setScale] = useState(0.14);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setScale(Math.max(0.05, el.clientWidth / 1080));
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className="creative-thumb">
+      <div style={{ width: 1080, height: 1080, transform: `scale(${scale})`, transformOrigin: "top left", pointerEvents: "none" }}>
+        <Mini d={data} />
+      </div>
+    </div>
+  );
+}
+
 // Parse AI output shaped as labelled lines into the graphic fields.
 // Falls back to using the whole text as the message.
 function fillFromAi(text, apply) {
@@ -151,7 +174,7 @@ export default function CreativesAdmin() {
       {msg && <div className="admin-ok" style={{ marginBottom: 16 }}>{msg}</div>}
 
       <h2 style={{ marginTop: 6 }}>1 · Choose a template</h2>
-      <div className="creative-tpls" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 14, marginBottom: 8 }}>
+      <div className="creative-tpls">
         {TEMPLATES.map((t) => {
           const Mini = t.render;
           const active = t.id === templateId;
@@ -160,52 +183,43 @@ export default function CreativesAdmin() {
               key={t.id}
               type="button"
               onClick={() => setTemplateId(t.id)}
-              style={{
-                border: active ? "3px solid #8F3F2D" : "1.5px solid #ecd9c8",
-                borderRadius: 14, background: "#fff", cursor: "pointer", padding: 10,
-                boxShadow: active ? "0 8px 26px rgba(143,63,45,0.22)" : "none",
-              }}
+              className={"creative-tpl" + (active ? " active" : "")}
+              aria-pressed={active}
             >
-              <div style={{ width: 150, height: 150, overflow: "hidden", borderRadius: 8, margin: "0 auto" }}>
-                <div style={{ width: 1080, height: 1080, transform: "scale(0.1389)", transformOrigin: "top left", pointerEvents: "none" }}>
-                  <Mini d={data} />
-                </div>
-              </div>
-              <div style={{ fontWeight: 800, fontSize: 13.5, marginTop: 8, color: "#5c2c1e" }}>{t.name}</div>
-              <div style={{ fontSize: 11.5, color: "#8a6a5c", marginTop: 2, lineHeight: 1.4 }}>{t.desc}</div>
+              <Thumb Mini={Mini} data={data} />
+              <div className="creative-tpl-name">{t.name}</div>
+              <div className="creative-tpl-desc">{t.desc}</div>
             </button>
           );
         })}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(320px, 430px) 1fr", gap: 26, marginTop: 22, alignItems: "start" }} className="creative-grid">
+      <div className="creative-grid">
         <div>
           <h2 style={{ marginTop: 0 }}>2 · Add your content</h2>
           <button type="button" className="ai-gen" style={{ marginBottom: 16 }} onClick={() => setAiOpen(true)}>✨ Write with AI — auto-fills the fields</button>
-          {tpl.pastel && (
-            <div className="field">
-              <label>Pastel colourway</label>
-              <div style={{ display: "flex", gap: 10 }}>
-                {PASTEL_SWATCHES.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => set("palette", p.id)}
-                    title={p.label}
-                    aria-label={`Pastel colourway: ${p.label}`}
-                    style={{
-                      width: 52, height: 52, borderRadius: "50%", cursor: "pointer",
-                      background: `linear-gradient(135deg, ${p.bg} 50%, ${p.deep} 50%)`,
-                      border: f.palette === p.id ? "3px solid #8F3F2D" : "2px solid #e3d5c0",
-                    }}
-                  />
-                ))}
-                <span className="seo-hint" style={{ margin: 0, alignSelf: "center" }}>
-                  {PASTEL_SWATCHES.find((p) => p.id === f.palette)?.label}
-                </span>
-              </div>
+          <div className="field">
+            <label>Pastel colourway</label>
+            <div style={{ display: "flex", gap: 10 }}>
+              {PASTEL_SWATCHES.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => set("palette", p.id)}
+                  title={p.label}
+                  aria-label={`Pastel colourway: ${p.label}`}
+                  style={{
+                    width: 52, height: 52, borderRadius: "50%", cursor: "pointer",
+                    background: `linear-gradient(135deg, ${p.bg} 50%, ${p.deep} 50%)`,
+                    border: f.palette === p.id ? "3px solid #8F3F2D" : "2px solid #e3d5c0",
+                  }}
+                />
+              ))}
+              <span className="seo-hint" style={{ margin: 0, alignSelf: "center" }}>
+                {PASTEL_SWATCHES.find((p) => p.id === f.palette)?.label}
+              </span>
             </div>
-          )}
+          </div>
           {field("Top line (eyebrow)", "eyebrow", "Samridhi Films & Television Presents")}
           {field("Headline", "title", tpl.id === "greeting" ? "Happy Diwali" : "Govinda")}
           {field("Message", "subtitle", "One warm line for the graphic", true)}
@@ -240,7 +254,7 @@ export default function CreativesAdmin() {
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
+          <div className="creative-actions">
             <button type="button" className="btn btn-primary creative-dl" onClick={download} disabled={downloading} style={{ padding: "13px 30px", fontSize: 15 }}>
               {downloading ? "Preparing PNG…" : "⬇ Download PNG (1080 × 1080)"}
             </button>
@@ -257,7 +271,7 @@ export default function CreativesAdmin() {
       </div>
 
       {/* Hidden natural-size node used only for the PNG export */}
-      <div aria-hidden="true" style={{ position: "fixed", left: -12000, top: 0, pointerEvents: "none" }}>
+      <div aria-hidden="true" className="creative-export-node">
         <div ref={exportRef} style={{ width: 1080, height: 1080 }}>
           <Tpl d={data} />
         </div>
@@ -271,7 +285,6 @@ export default function CreativesAdmin() {
         seedPrompt={aiSeed}
         onInsert={(text) => { fillFromAi(text, (out) => setF((x) => ({ ...x, ...out }))); setAiOpen(false); }}
       />
-      <style>{`@media (max-width: 900px) { .creative-grid { grid-template-columns: 1fr !important; } }`}</style>
     </>
   );
 }
