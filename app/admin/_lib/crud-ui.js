@@ -24,6 +24,7 @@ export const SIZE_HINTS = {
 export default function AdminCrud({
   title, sub, endpoint, listKey, columns, fields,
   defaults = {}, validate, slugFrom, note, addLabel, beforeSave, previewFor, externalRefresh,
+  revalidatePaths,
 }) {
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(true);
@@ -38,6 +39,17 @@ export default function AdminCrud({
   const [bulkStatus, setBulkStatus] = useState("published");
   const [picker, setPicker] = useState(null); // { key, multi, kind }
   const [preview, setPreview] = useState(null); // { url, kind }
+
+  // revalidatePaths: extra public paths to purge on save/delete.
+  // Array of strings, or (savedRow, allRows) => string[].
+  const bust = async (saved) => {
+    let extra = [];
+    try {
+      extra = typeof revalidatePaths === "function" ? (revalidatePaths(saved, rows) || []) : (revalidatePaths || []);
+    } catch { extra = []; }
+    const paths = ["/", ...extra.filter((p) => typeof p === "string" && p.startsWith("/"))].slice(0, 20);
+    await revalidateSite(paths);
+  };
 
   // silent=true refreshes data without flashing the "Loading…" state.
   const load = async (silent) => {
@@ -88,7 +100,7 @@ export default function AdminCrud({
         saved = res.item || res.row || res.post || res.clipping || { ...body, id: res.id };
         setRows((rs) => [saved, ...rs]);
       }
-      await revalidateSite();
+      await bust(saved);
       setOkMsg("Saved — live on the website now.");
       setShowForm(false); setEditingId(null); setForm({ ...defaults });
     } catch (e) { setMsg("Failed: " + e.message); }
@@ -99,7 +111,7 @@ export default function AdminCrud({
     if (!confirm(`Delete "${label}"? This cannot be undone.`)) return;
     try {
       await api(`${endpoint}/${row.id}`, { method: "DELETE" });
-      await revalidateSite();
+      await bust(row);
       // Remove the row in place — no list reload flash.
       setRows((rs) => rs.filter((r) => r.id !== row.id));
       setSelected((s) => { const n = new Set(s); n.delete(row.id); return n; });
@@ -136,7 +148,7 @@ export default function AdminCrud({
     setRows((rs) => rs.map((r) => (selected.has(r.id) ? { ...r, status: bulkStatus } : r)));
     setSelected(new Set());
     setBulkBusy("");
-    await revalidateSite();
+    await bust(null);
     setOkMsg(failed ? `Updated ${done}, failed ${failed}.` : `Updated ${done} item${done > 1 ? "s" : ""} to ${bulkStatus}.`);
   };
 
@@ -155,7 +167,7 @@ export default function AdminCrud({
     setRows((rs) => rs.filter((r) => !gone.has(r.id)));
     setSelected(new Set());
     setBulkBusy("");
-    await revalidateSite();
+    await bust(null);
     setOkMsg(failed ? `Deleted ${done}, failed ${failed}.` : `Deleted ${done} item${done > 1 ? "s" : ""}.`);
   };
 

@@ -8,7 +8,12 @@ export default function InternationalAdmin() {
       sub="Shows and events abroad — these power the interactive world map."
       endpoint="/api/admin/international-shows"
       listKey="shows"
-        previewFor={(row) => (row.id ? `/international-shows/${row.id}` : `/international-shows`)}
+      slugFrom="title"
+        previewFor={(row) => (row.slug || row.id ? `/international-shows/${row.slug || row.id}` : `/international-shows`)}
+      revalidatePaths={(saved) => [
+        "/international-shows",
+        ...(saved && (saved.slug || saved.id) ? [`/international-shows/${saved.slug || saved.id}`] : []),
+      ]}
       addLabel="Add Show"
       columns={[
         { key: "title", label: "Show" },
@@ -20,6 +25,7 @@ export default function InternationalAdmin() {
       ]}
       fields={[
         { key: "title", label: "Show title", required: true },
+        { key: "slug", label: "URL slug", hint: "Auto-created from the title — e.g. /international-shows/china-diwali-festival-2024. Edit only if you need a custom URL." },
         { key: "country", label: "Country", required: true },
         { key: "city", label: "City" },
         { key: "show_date", label: "Show date", type: "date" },

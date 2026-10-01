@@ -13,6 +13,7 @@ export const metadata = {
 
 export default async function InternationalShowsPage() {
   const shows = await getInternationalShows();
+  const href = (s) => `/international-shows/${s.slug || s.id}`;
 
   return (
     <>
@@ -37,20 +38,20 @@ export default async function InternationalShowsPage() {
                 <div className="intl-split" style={{ marginTop: idx === 0 ? 0 : 54 }}>
                   <div className="intl-media">
                     {show.cover_image && (
-                      <Link href={`/international-shows/${show.id}`} aria-label={`View ${show.title}`}>
+                      <Link href={href(show)} aria-label={`View ${show.title}`}>
                         <img src={show.cover_image} alt={show.title} loading={idx === 0 ? undefined : "lazy"} />
                       </Link>
                     )}
                   </div>
                   <div className="intl-panel">
                     <span className="eyebrow">{show.country || "International"}</span>
-                    <h3><Link href={`/international-shows/${show.id}`} style={{ color: "inherit", textDecoration: "none" }}>{show.title}</Link></h3>
+                    <h3><Link href={href(show)} style={{ color: "inherit", textDecoration: "none" }}>{show.title}</Link></h3>
                     <div className="intl-loc">
                       {[show.city, show.country].filter(Boolean).join(", ")}
                       {show.show_date ? ` · ${new Date(show.show_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}` : ""}
                     </div>
                     {show.summary && <p>{show.summary}</p>}
-                    <Link href={`/international-shows/${show.id}`} className="text-link">View show <span className="arr">→</span></Link>
+                    <Link href={href(show)} className="text-link">View show <span className="arr">→</span></Link>
                   </div>
                 </div>
               </Reveal>

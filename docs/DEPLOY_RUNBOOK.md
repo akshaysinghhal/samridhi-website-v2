@@ -23,11 +23,13 @@ Stack: **Next.js 14 (App Router, JavaScript)** · **Supabase** (Postgres + Auth)
 
 1. supabase.com dashboard → **New project** → name `samridhi-website-v2` → set a database
    password (save it somewhere) → region closest to India → Create. Wait ~2 minutes.
-2. **SQL Editor → New query** — run these three files **in order**, once each
+2. **SQL Editor → New query** — run these files **in order**, once each
    (copy the whole file contents, paste, Run):
    1. `supabase/schema.sql` (base tables)
    2. `supabase/migration-002.sql` (artists / gallery / weddings tables)
    3. `supabase/migration-003.sql` (all v3 tables, RLS, seed data)
+   4. `supabase/migration-004.sql` (SEO slugs for international shows — run once;
+      on an **existing** database that already ran 1–3, run only this file)
 3. Verify: `select count(*) from services;` → **8**. `select count(*) from site_settings;` → > 0.
 4. **Project Settings → API** → copy: **Project URL**, **anon public key**, **service_role key**
    (service_role stays secret — only goes into Vercel env vars, never in code or chat).

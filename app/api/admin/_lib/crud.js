@@ -9,12 +9,12 @@ import { verifyAdmin, authedJson, adminDb } from "../../../../lib/adminAuth";
 // Usage in app/api/admin/<name>/[id]/route.js:
 //   export const { PUT, DELETE } = makeItem({ table: "events", map: (b) => pickFields(b, FIELDS) });
 
-function refresh() {
+export function refresh() {
   try { revalidatePath("/", "layout"); } catch { /* ignore */ }
 }
 
 // Best-effort audit/revision logging — never breaks the mutation if it fails.
-async function logWrite({ table, entityId, action, actor, before, after }) {
+export async function logWrite({ table, entityId, action, actor, before, after }) {
   try {
     const db = adminDb();
     const diff = {};
