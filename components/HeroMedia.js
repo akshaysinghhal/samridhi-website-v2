@@ -15,7 +15,11 @@ function mimeFor(src) {
 }
 
 export default function HeroMedia({ video, mobileVideo, poster, alt }) {
-  const [mobile, setMobile] = useState(false);
+  // Initialise from matchMedia on the client so phones pick the mobile
+  // video on the very first render (avoids downloading the desktop file).
+  const [mobile, setMobile] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches
+  );
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 900px)");
@@ -28,8 +32,11 @@ export default function HeroMedia({ video, mobileVideo, poster, alt }) {
   const src = mobile ? mobileVideo || video : video;
 
   if (src) {
+    // key={src}: changing a <source> URL alone does not make the <video>
+    // element reload — remounting on src change guarantees the right file plays.
     return (
       <video
+        key={src}
         className="hero-bg"
         autoPlay
         muted
