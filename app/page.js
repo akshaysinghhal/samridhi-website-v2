@@ -60,6 +60,7 @@ export default async function Home() {
     : FALLBACK_STATS;
 
   const heroVideo = setting(s, "hero_video", "");
+  const heroVideoMobile = setting(s, "hero_video_mobile", "");
   const heroPoster = setting(s, "hero_poster", "/images/hero-concert.jpg");
   const wa = setting(s, "whatsapp", "919602228846");
   const waMsg = encodeURIComponent(setting(s, "whatsapp_msg", "Hi Samridhi Films! I want to plan an event."));
@@ -83,6 +84,7 @@ export default async function Home() {
       <section className="hero">
         <HeroMedia
           video={heroVideo}
+          mobileVideo={heroVideoMobile}
           poster={heroPoster}
           alt="A Samridhi Films & Television celebration — stage, lights and crowd"
         />
@@ -110,27 +112,13 @@ export default async function Home() {
           </Reveal>
           <Reveal delay={3}>
             <div className="hero-meta">
-              <div><b>1999</b><span>Serving Since</span></div>
-              <div><b>1000+</b><span>Events Delivered</span></div>
-              <div><b>20+</b><span>Years in Event Planning</span></div>
+              {stats.slice(0, 3).map((st, i) => (
+                <div key={i}><b>{st.value}</b><span>{st.label}</span></div>
+              ))}
             </div>
           </Reveal>
         </div>
         <div className="scroll-hint" aria-hidden="true">Scroll<i /></div>
-      </section>
-
-      {/* ============ STATS ============ */}
-      <section className="stat-strip" aria-label="Company milestones">
-        <div className="container">
-          <div className="stats-grid">
-            {stats.map((st, i) => (
-              <Reveal key={i} delay={i % 4} className="stat-cell">
-                <div className="num">{st.value}</div>
-                <div className="lbl">{st.label}</div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* ============ SERVICES ============ */}

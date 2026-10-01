@@ -162,6 +162,34 @@ tr.row-selected td { background: #f3eefd; }
 .tp-btn { color: #fff; font-weight: 800; font-size: 14px; padding: 10px 22px; border-radius: 999px; }
 .tp-text { font-family: var(--font-head); font-size: 19px; font-weight: 600; }
 .tp-badge { color: #fff; font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; padding: 6px 14px; border-radius: 999px; }
+.tp-footer { color: #fff; font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; padding: 6px 14px; border-radius: 6px; }
+/* Media Tools — section tabs + crop/fit segmented control */
+.mt-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 26px; }
+.mt-tab {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  padding: 22px 24px; border-radius: 16px; cursor: pointer; text-align: left;
+  border: 1.5px solid #e7dccb; background: #fff; font-family: inherit;
+  box-shadow: 0 2px 10px rgba(60, 30, 10, 0.05);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.mt-tab:hover { border-color: #c9a15a; transform: translateY(-2px); box-shadow: 0 8px 22px rgba(60, 30, 10, 0.10); }
+.mt-tab.active { border-color: #8F3F2D; background: #FDF6EF; box-shadow: 0 8px 22px rgba(143, 63, 45, 0.14); }
+.mt-tab-icon { font-size: 32px; line-height: 1; margin-bottom: 6px; }
+.mt-tab-title { font-size: 18px; font-weight: 800; color: #2b1a12; letter-spacing: -0.2px; }
+.mt-tab-desc { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+@media (max-width: 760px) { .mt-tabs { grid-template-columns: 1fr; } }
+.mt-seg { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
+.mt-seg-btn {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 12px 18px; border-radius: 12px; cursor: pointer; text-align: left;
+  border: 1.5px solid #e7dccb; background: #fff; font-family: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.mt-seg-btn b { font-size: 14.5px; color: #2b1a12; }
+.mt-seg-btn span { font-size: 12.5px; color: var(--muted); }
+.mt-seg-btn.active { border-color: #8F3F2D; background: #FDF6EF; }
+.mt-padcolor { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 12px; border: 1.5px dashed #c9a15a; background: #fffdf8; font-size: 13.5px; font-weight: 600; color: #2b1a12; }
+.mt-padcolor input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; background: #fff; }
 @media (max-width: 640px) { .theme-row { grid-template-columns: 1fr; } }
 /* Toggle switch (Hide spam) */
 .switch { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; user-select: none; position: relative; }
@@ -335,10 +363,60 @@ tr.row-selected td { background: #f3eefd; }
 
   /* creatives: 2 template columns, full-width download */
   .creative-tpls { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .creative-grid { grid-template-columns: 1fr !important; gap: 18px !important; padding-bottom: 84px; }
   .creative-dl { width: 100%; }
 
   /* public mobile bottom-bar padding must not apply inside admin */
   body.is-admin { padding-bottom: 0 !important; }
+}
+
+/* ---------- billing & checklists ---------- */
+.bill-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.bill-stat { background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow); border-left: 4px solid var(--brand); }
+.bill-stat .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #8a6a5c; font-weight: 700; }
+.bill-stat .v { font-size: 20px; font-weight: 800; color: #3d2317; margin-top: 3px; }
+.bill-stat .v.good { color: #1e7a3c; }
+.bill-stat .v.warn { color: #8F3F2D; }
+.bill-card { background: #fff; border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow); border: 1px solid #f0e2d6; }
+.bill-card-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.bill-title { font-size: 16px; font-weight: 800; color: #3d2317; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bill-sub { font-size: 13px; color: #8a6a5c; margin-top: 3px; }
+.bill-amounts { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; font-size: 13.5px; color: #6b5d6e; }
+.bill-amounts b { font-size: 15.5px; color: #3d2317; }
+.bill-amounts .good b { color: #1e7a3c; }
+.bill-amounts .warn b { color: #8F3F2D; }
+.bill-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.bill-form-sec { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; border: 1px solid #f0e2d6; }
+.bill-form-sec > h4 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: #8F3F2D; }
+.check-progress { height: 10px; background: #efe6dc; border-radius: 6px; overflow: hidden; min-width: 140px; flex: 1; }
+.check-progress > div { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--brand), var(--brand-dark)); transition: width 0.3s ease; }
+.check-progress.done > div { background: #1e7a3c; }
+.check-tasks { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
+.check-task { display: flex; gap: 8px; align-items: center; font-size: 13.5px; cursor: pointer; background: #faf6f1; border-radius: 8px; padding: 7px 10px; }
+.check-task input { width: 17px; height: 17px; accent-color: var(--brand); flex: 0 0 auto; }
+@media (max-width: 860px) {
+  .bill-card { padding: 14px; }
+  .bill-actions { width: 100%; margin-top: 6px; }
+  .bill-actions .btn-sm { flex: 1 1 auto; justify-content: center; }
+  .check-tasks { grid-template-columns: 1fr; }
+}
+
+/* ---------- MediaPicker: bottom sheet on phones ---------- */
+.mp-handle { display: none; }
+@keyframes mp-slideup { from { transform: translateY(48px); opacity: 0.5; } to { transform: translateY(0); opacity: 1; } }
+@media (max-width: 640px) {
+  .mp-overlay { align-items: flex-end !important; padding: 0 !important; }
+  .mp-panel {
+    width: 100% !important; max-height: 92dvh !important;
+    border-radius: 18px 18px 0 0 !important;
+    animation: mp-slideup 0.25s ease-out;
+  }
+  .mp-handle {
+    display: flex; justify-content: center; align-items: center;
+    padding: 10px 0 2px; cursor: grab; touch-action: pan-y; flex: 0 0 auto;
+  }
+  .mp-handle span { width: 44px; height: 5px; border-radius: 999px; background: #d8c6bd; }
+  .mp-head { padding-top: 6px !important; }
 }
 
 /* ---------- dashboard quick actions (app-like one-tap tools) ---------- */
