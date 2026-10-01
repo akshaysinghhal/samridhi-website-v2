@@ -8,7 +8,7 @@
 }
 .admin-side::-webkit-scrollbar { width: 8px; }
 .admin-side::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 8px; }
-.admin-side img { height: 44px; width: auto; background: #fff; border-radius: 10px; padding: 4px 10px; margin-bottom: 20px; flex-shrink: 0; }
+.admin-side img { width: 172px; max-width: 100%; height: auto; object-fit: contain; background: #fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 22px; flex-shrink: 0; }
 .admin-side a {
   color: #d9c9ef; text-decoration: none; padding: 11px 14px; border-radius: 10px;
   font-weight: 600; font-size: 14.5px; display: block; flex-shrink: 0;
@@ -98,7 +98,7 @@
     background: linear-gradient(180deg, #2b1454 0%, #1d0e3a 100%);
     color: #fff; padding: 10px 16px;
   }
-  .admin-mobilebar img { height: 34px; width: auto; background: #fff; border-radius: 8px; padding: 3px 8px; }
+  .admin-mobilebar img { height: 38px; width: auto; background: #fff; border-radius: 8px; padding: 4px 10px; }
   .admin-mobilebar .mtitle { font-weight: 800; font-size: 15px; flex: 1; }
   .admin-mobilebar button {
     background: var(--brand); color: #fff; border: 0; border-radius: 10px;
@@ -183,3 +183,63 @@ tr.row-selected td { background: #f3eefd; }
 .spin { display: inline-block; width: 14px; height: 14px; margin-right: 8px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin360 0.7s linear infinite; vertical-align: -2px; }
 .btn-sm .spin { width: 12px; height: 12px; margin-right: 6px; border-top-color: currentColor; border-color: rgba(0,0,0,0.15); border-top-color: currentColor; }
 @keyframes spin360 { to { transform: rotate(360deg); } }
+
+/* ---------- AI writing helper ---------- */
+.ai-float {
+  position: fixed; right: 22px; bottom: 22px; z-index: 200;
+  width: 58px; height: 58px; border-radius: 50%; border: 0; cursor: pointer;
+  font-size: 26px; line-height: 1; color: #fff;
+  background: linear-gradient(135deg, #B9553A 0%, #8F3F2D 100%);
+  box-shadow: 0 10px 28px rgba(143,63,45,0.45);
+  transition: transform 0.18s ease;
+}
+.ai-float:hover { transform: translateY(-3px) scale(1.04); }
+.ai-backdrop {
+  position: fixed; inset: 0; z-index: 300; background: rgba(30,12,8,0.55);
+  display: flex; align-items: center; justify-content: center; padding: 18px;
+  backdrop-filter: blur(3px);
+}
+.ai-modal {
+  background: #fffdf9; border-radius: 18px; width: 560px; max-width: 100%;
+  max-height: 88vh; overflow-y: auto; padding: 22px;
+  border: 1px solid #ecd9c8; box-shadow: 0 24px 70px rgba(30,12,8,0.35);
+}
+.ai-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.ai-head b { font-size: 17px; color: #5c2c1e; }
+.ai-x { background: none; border: 0; font-size: 18px; cursor: pointer; color: #8a6a5c; padding: 4px 8px; }
+.ai-lang { display: flex; gap: 8px; margin-bottom: 12px; }
+.ai-lang button {
+  border: 1.5px solid #e5cfae; background: #fff; border-radius: 999px;
+  padding: 7px 18px; font-weight: 700; font-size: 13px; cursor: pointer; color: #8a5a44;
+}
+.ai-lang button.on { background: #8F3F2D; border-color: #8F3F2D; color: #fff; }
+.ai-label { display: block; font-size: 12.5px; font-weight: 700; color: #8a6a5c; margin-bottom: 6px; letter-spacing: 0.4px; }
+.ai-prompt {
+  width: 100%; border: 1.5px solid #ecd9c8; border-radius: 12px; padding: 12px;
+  font-size: 14px; font-family: inherit; resize: vertical; box-sizing: border-box;
+}
+.ai-prompt:focus { outline: 2px solid #C9A15A; border-color: #C9A15A; }
+.ai-gen {
+  margin-top: 10px; width: 100%; border: 0; border-radius: 12px; cursor: pointer;
+  padding: 12px; font-size: 15px; font-weight: 800; color: #fff;
+  background: linear-gradient(135deg, #B9553A 0%, #8F3F2D 100%);
+}
+.ai-gen:disabled { opacity: 0.55; cursor: default; }
+.ai-result {
+  background: #fff; border: 1px solid #ecd9c8; border-radius: 12px;
+  padding: 14px; font-size: 14px; line-height: 1.65; color: #3d2a22;
+  max-height: 280px; overflow-y: auto;
+}
+.ai-actions { display: flex; gap: 10px; margin-top: 12px; }
+.ai-actions .btn { flex: 1; }
+.ai-mini {
+  border: 1.5px solid #C9A15A; background: #fffaf1; color: #8F3F2D;
+  border-radius: 8px; padding: 5px 11px; font-size: 12.5px; font-weight: 800;
+  cursor: pointer; white-space: nowrap;
+}
+.ai-mini:hover { background: #f7ecd9; }
+.ai-field-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.ai-field-row label { margin: 0; flex: 1; }
+@media (max-width: 640px) {
+  .ai-float { right: 16px; bottom: 16px; width: 52px; height: 52px; }
+}

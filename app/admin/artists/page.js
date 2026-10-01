@@ -4,6 +4,7 @@ import { api } from "../../../lib/adminApi";
 import { revalidateSite, uploadOne, slugify, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter } from "../_lib/ui";
 import MediaPicker from "../_lib/MediaPicker";
 import PreviewModal from "../_lib/PreviewModal";
+import { AiFieldButton } from "../_lib/AiAssist";
 
 const EMPTY = {
   name: "", slug: "", category: "", bio: "", image_url: "", videos: [],
@@ -118,7 +119,7 @@ export default function ArtistsAdmin() {
               <select value={form.status} onChange={(e) => set("status", e.target.value)}>{STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}</select>
             </div>
           </div>
-          <div className="field"><label>Bio</label><textarea rows={5} value={form.bio} onChange={(e) => set("bio", e.target.value)} /></div>
+          <div className="field"><div className="ai-field-row"><label>Bio</label><AiFieldButton onInsert={(t) => set("bio", t)} label="Write artist bio with AI" seedPrompt={`Write a 3-4 line artist bio for ${form.name || "this artist"} (${form.category || "performer"}), bookable for events across India`} /></div><textarea rows={5} value={form.bio} onChange={(e) => set("bio", e.target.value)} /></div>
           <div className="field"><label>Photo</label>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <input type="file" accept="image/*" onChange={async (e) => { const u = await uploadOne(e.target.files[0], setUploading, setMsg); if (u) set("image_url", u); e.target.value = ""; }} style={{ flex: "1 1 200px" }} />

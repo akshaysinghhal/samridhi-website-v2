@@ -30,7 +30,6 @@ export default function AdminLogin() {
         <div className="field"><label>Email</label><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" /></div>
         <div className="field"><label>Password</label><input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" /></div>
         <button className="btn btn-primary" style={{ width: "100%" }} disabled={busy}>{busy ? "Signing in…" : "Sign In"}</button>
-        <p style={{ marginTop: 18 }}>First time? Create this user in Supabase → Authentication → Users.</p>
       </form>
     </div>
   );

@@ -4,6 +4,7 @@ import { api } from "../../../lib/adminApi";
 import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, slugify, SaveButton, StatusFilter } from "./ui";
 import MediaPicker from "./MediaPicker";
 import PreviewModal from "./PreviewModal";
+import { AiFieldButton } from "./AiAssist";
 
 // Recommended dimensions shown as guidance under media fields. These are
 // suggestions, not enforced rules — Akshay asked for them as hints.
@@ -223,9 +224,21 @@ export default function AdminCrud({
     const v = form[f.key];
     const req = f.required ? " *" : null;
     const sizeHint = f.sizeHint ? <div className="seo-hint">📐 {f.sizeHint}</div> : null;
+    // Optional per-field AI writing button (f.ai = true): opens the AI modal
+    // and inserts the generated text into this field.
+    const aiBtn = f.ai ? (
+      <AiFieldButton
+        onInsert={(t) => set(f.key, t)}
+        label={`Write ${f.label} with AI`}
+        seedPrompt={f.aiSeed || `Write ${f.label.toLowerCase()} for "${form.title || form.name || "this entry"}"`}
+      />
+    ) : null;
+    const labelRow = aiBtn ? (
+      <div className="ai-field-row"><label>{f.label}{req}</label>{aiBtn}</div>
+    ) : <label>{f.label}{req}</label>;
     switch (f.type) {
       case "textarea":
-        return <div className="field" key={f.key}><label>{f.label}{req}</label><textarea rows={f.rows || 4} value={v || ""} onChange={(e) => set(f.key, e.target.value)} placeholder={f.placeholder} />{f.hint && <div className="seo-hint">{f.hint}</div>}</div>;
+        return <div className="field" key={f.key}>{labelRow}<textarea rows={f.rows || 4} value={v || ""} onChange={(e) => set(f.key, e.target.value)} placeholder={f.placeholder} />{f.hint && <div className="seo-hint">{f.hint}</div>}</div>;
       case "number":
         return <div className="field" key={f.key}><label>{f.label}{req}</label><input type="number" value={v ?? 0} onChange={(e) => set(f.key, Number(e.target.value))} /></div>;
       case "date":
@@ -304,7 +317,7 @@ export default function AdminCrud({
         </div>;
       }
       default:
-        return <div className="field" key={f.key}><label>{f.label}{req}</label><input value={v ?? ""} onChange={(e) => set(f.key, e.target.value)} placeholder={f.placeholder} />{f.hint && <div className="seo-hint">{f.hint}</div>}</div>;
+        return <div className="field" key={f.key}>{labelRow}<input value={v ?? ""} onChange={(e) => set(f.key, e.target.value)} placeholder={f.placeholder} />{f.hint && <div className="seo-hint">{f.hint}</div>}</div>;
     }
   };
 

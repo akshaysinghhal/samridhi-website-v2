@@ -16,6 +16,7 @@ export default function Footer({ nav, settings }) {
         { label: "Services", href: "/services" },
         { label: "Weddings", href: "/weddings" },
         { label: "Artist Management", href: "/artists" },
+        { label: "Events", href: "/events" },
         { label: "Portfolio", href: "/portfolio" },
         { label: "Contact", href: "/contact" },
       ];

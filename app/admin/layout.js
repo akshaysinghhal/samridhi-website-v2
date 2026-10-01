@@ -4,6 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { supabaseBrowser } from "../../lib/supabaseClient";
 import { ADMIN_NAV } from "../../lib/adminNav";
+import { AiFloatHelper } from "./_lib/AiAssist";
 import "./admin.css";
 
 export default function AdminLayout({ children }) {
@@ -58,6 +59,7 @@ export default function AdminLayout({ children }) {
         <a href="#" className="logout" onClick={(e) => { e.preventDefault(); logout(); }}>🚪 Sign Out</a>
       </aside>
       <main className="admin-main">{children}</main>
+      <AiFloatHelper />
     </div>
   );
 }

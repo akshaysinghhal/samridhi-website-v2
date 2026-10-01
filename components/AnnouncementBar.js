@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 // Slim site-wide announcement strip rendered above the header.
 // Dismissible per visit (X); a new message reappears automatically because the
-// dismissal is keyed on the message text.
+// dismissal is keyed on the message text. Never shown inside /admin.
 export default function AnnouncementBar({ text, linkUrl, linkLabel }) {
   const [open, setOpen] = useState(false);
+  const path = usePathname();
 
   useEffect(() => {
     if (!text) return;
@@ -17,6 +19,7 @@ export default function AnnouncementBar({ text, linkUrl, linkLabel }) {
   }, [text]);
 
   if (!open || !text) return null;
+  if (path && path.startsWith("/admin")) return null;
 
   const close = () => {
     try {

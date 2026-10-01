@@ -18,7 +18,10 @@ const CATEGORIES = [
 ];
 
 export default async function PortfolioPage() {
-  const events = await getEvents({ limit: 200 });
+  const all = await getEvents({ limit: 200 });
+  // Upcoming (future-dated) events live on /events — portfolio shows completed work.
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const events = all.filter((e) => !e.event_date || e.event_date < today);
   const cats = CATEGORIES.filter((c) => events.some((e) => e.category === c));
 
   return (

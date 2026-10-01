@@ -18,6 +18,7 @@ export default function Header({ nav, phone, whatsapp }) {
         { label: "Services", href: "/services" },
         { label: "Weddings", href: "/weddings" },
         { label: "Artists", href: "/artists" },
+        { label: "Events", href: "/events" },
         { label: "Gallery", href: "/gallery" },
         { label: "Contact", href: "/contact" },
       ];

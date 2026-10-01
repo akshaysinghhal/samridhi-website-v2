@@ -7,6 +7,7 @@ import { api, uploadFile } from "../../../../lib/adminApi";
 import { openPreview } from "../../_lib/ui";
 import MediaPicker from "../../_lib/MediaPicker";
 import PreviewModal from "../../_lib/PreviewModal";
+import { AiFieldButton } from "../../_lib/AiAssist";
 
 const empty = {
   title: "", slug: "", excerpt: "", content: "",
@@ -54,6 +55,8 @@ export default function PostEditor() {
       return n;
     });
   };
+  // Fill a field directly from the AI helper (set() expects an event).
+  const fill = (k) => (t) => set(k)({ target: { value: t } });
 
   const doUpload = async (file, kind) => {
     setUploading(kind);
@@ -102,11 +105,11 @@ export default function PostEditor() {
 
       <div className="editor" style={{ marginBottom: 20 }}>
         <h2 style={{ marginTop: 0 }}>Content</h2>
-        <div className="field"><label>Title *</label><input value={f.title} onChange={set("title")} placeholder="e.g. A Royal Wedding in Udaipur" /></div>
+        <div className="field"><div className="ai-field-row"><label>Title *</label><AiFieldButton onInsert={fill("title")} label="Write blog title with AI" seedPrompt="Write a catchy blog post title for an event company blog" /></div><input value={f.title} onChange={set("title")} placeholder="e.g. A Royal Wedding in Udaipur" /></div>
         <div className="field"><label>URL slug *</label><input value={f.slug} onChange={(e) => { setSlugTouched(true); set("slug")(e); }} placeholder="a-royal-wedding-in-udaipur" />
           <div className="seo-hint">Your post will live at /blog/{f.slug || "your-slug"}</div></div>
-        <div className="field"><label>Excerpt</label><textarea rows={2} value={f.excerpt} onChange={set("excerpt")} placeholder="One or two lines shown on the blog listing page." /></div>
-        <div className="field"><label>Body (Markdown supported)</label>
+        <div className="field"><div className="ai-field-row"><label>Excerpt</label><AiFieldButton onInsert={fill("excerpt")} label="Write excerpt with AI" seedPrompt={`Write a one-line blog excerpt for "${f.title || "this post"}"`} /></div><textarea rows={2} value={f.excerpt} onChange={set("excerpt")} placeholder="One or two lines shown on the blog listing page." /></div>
+        <div className="field"><div className="ai-field-row"><label>Body (Markdown supported)</label><AiFieldButton onInsert={fill("content")} label="Write blog body with AI" seedPrompt={`Write a full blog post in Markdown for "${f.title || "this post"}" — headings, short paragraphs, practical tips`} /></div>
           <div className="md-split">
             <textarea value={f.content} onChange={set("content")} placeholder={"# Heading\n\nWrite your story here…\n\n- bullet points\n- **bold** and *italic* work too"} />
             <div className="md-preview"><ReactMarkdown>{f.content || "*Live preview appears here…*"}</ReactMarkdown></div>

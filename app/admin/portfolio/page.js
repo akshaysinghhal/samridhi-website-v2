@@ -7,10 +7,21 @@ export default function PortfolioAdmin() {
   return (
     <AdminCrud
       title="Portfolio / Events"
-      sub="Event portfolio entries. Verify details against the event poster before publishing."
+      sub="Event portfolio entries. Verify details against the event poster before publishing. Events dated in the future appear under Upcoming on the /events page."
       endpoint="/api/admin/events"
       listKey="events"
-        previewFor={(r) => r.slug ? `/portfolio/${r.slug}` : null}
+      previewFor={(r) => {
+        if (!r.slug) return null;
+        const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+        return r.event_date && r.event_date >= today ? `/events/${r.slug}` : `/portfolio/${r.slug}`;
+      }}
+      revalidatePaths={(saved) => [
+        "/events",
+        "/portfolio",
+        ...(saved && saved.slug
+          ? [`/events/${saved.slug}`, `/portfolio/${saved.slug}`]
+          : []),
+      ]}
       slugFrom="title"
       addLabel="Add Event"
       columns={[
@@ -25,10 +36,10 @@ export default function PortfolioAdmin() {
         { key: "slug", label: "URL slug", hint: "Auto-filled from the name." },
         { key: "client", label: "Client" },
         { key: "location", label: "Location" },
-        { key: "event_date", label: "Event date", type: "date" },
+        { key: "event_date", label: "Event date", type: "date", hint: "Future dates show under Upcoming Events on the website." },
         { key: "category", label: "Category", type: "select", options: CATS },
         { key: "services", label: "Services provided", type: "list", placeholder: "e.g. Stage Production" },
-        { key: "description", label: "Description", type: "textarea", rows: 5 },
+        { key: "description", label: "Description", type: "textarea", rows: 5, ai: true, aiSeed: "Write an exciting 2-3 sentence event description for the website" },
         { key: "cover_image", label: "Cover photo", type: "image", sizeHint: SIZE_HINTS.cover },
         { key: "gallery", label: "Photo gallery", type: "images" },
         { key: "video_url", label: "Video URL (YouTube / mp4)" },
