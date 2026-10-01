@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, SaveButton } from "../_lib/ui";
+import { revalidateSite, uploadOne, SaveButton, AdminLoader } from "../_lib/ui";
 
 const SECTION_LABELS = {
   stats: "Stats band",
@@ -71,7 +71,7 @@ export default function HomepageAdmin() {
   const sections = settings.home_sections && typeof settings.home_sections === "object" ? settings.home_sections : {};
   const setSection = (k, v) => setSetting("home_sections", { ...sections, [k]: v });
 
-  if (busy) return (<><h1>Homepage</h1><p>Loading…</p></>);
+  if (busy) return (<><h1>Homepage</h1><AdminLoader /></>);
 
   return (
     <>

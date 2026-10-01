@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabaseBrowser } from "../../lib/supabaseClient";
 import { ADMIN_NAV } from "../../lib/adminNav";
 import { AiFloatHelper } from "./_lib/AiAssist";
+import { AdminLoader } from "./_lib/ui";
 import "./admin.css";
 
 export default function AdminLayout({ children }) {
@@ -33,7 +34,7 @@ export default function AdminLayout({ children }) {
   };
 
   if (isLogin) return <>{children}</>;
-  if (!ready) return <div style={{ padding: 60, textAlign: "center" }}>Loading…</div>;
+  if (!ready) return <AdminLoader />;
 
   return (
     <div className="admin-shell">

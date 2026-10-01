@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, slugify, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter } from "../_lib/ui";
+import { revalidateSite, uploadOne, slugify, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter, AdminLoader } from "../_lib/ui";
 import MediaPicker from "../_lib/MediaPicker";
 import PreviewModal from "../_lib/PreviewModal";
 import { AiFieldButton } from "../_lib/AiAssist";
@@ -191,7 +191,7 @@ export default function ArtistsAdmin() {
           {(q.trim() || statusFilter) && <span className="seo-hint" style={{ margin: 0, whiteSpace: "nowrap" }}>{shown.length} of {rows.length}</span>}
         </div>
       )}
-      {busy ? <p>Loading…</p> : (
+      {busy ? <AdminLoader /> : (
         <table className="admin-table">
           <thead><tr><th style={{ width: 40 }}><CheckCell checked={bulk.allChecked} onChange={bulk.toggleAll} label="Select all artists" /></th><th>Artist</th><th>Category</th><th>Status</th><th>Flag</th><th></th></tr></thead>
           <tbody>

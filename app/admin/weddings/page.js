@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, useBulk, BulkBar, CheckCell } from "../_lib/ui";
+import { revalidateSite, useBulk, BulkBar, CheckCell, AdminLoader } from "../_lib/ui";
 
 export default function WeddingsList() {
   const [rows, setRows] = useState([]);
@@ -53,7 +53,7 @@ export default function WeddingsList() {
           {q.trim() && <span className="seo-hint" style={{ margin: 0, whiteSpace: "nowrap" }}>{shown.length} of {rows.length}</span>}
         </div>
       )}
-      {busy ? <p>Loading…</p> : rows.length === 0 ? (
+      {busy ? <AdminLoader /> : rows.length === 0 ? (
         <div className="editor" style={{ textAlign: "center" }}>
           <p style={{ color: "#7a6a7c" }}>No weddings yet. Add your first celebration!</p>
           <Link className="btn btn-primary" href="/admin/weddings/new">+ New Wedding</Link>

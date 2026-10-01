@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { api, uploadFile } from "../../../lib/adminApi";
 import { ytThumb } from "../../../lib/video";
-import { revalidateSite, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter } from "../_lib/ui";
+import { revalidateSite, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter, AdminLoader } from "../_lib/ui";
 import PreviewModal from "../_lib/PreviewModal";
 
 const CATEGORIES = ["Events", "Weddings", "Corporate", "Celebrity Shows", "Cultural", "Press", "Highlight Videos", "Other"];
@@ -206,7 +206,7 @@ export default function GalleryAdmin() {
             {uploading ? "Uploading…" : "+ Upload Photos"}
             <input type="file" accept="image/*" multiple hidden onChange={addPhotos} />
           </label>
-          {busy ? <p>Loading…</p> : <div className="media-grid">{photos.map(card)}</div>}
+          {busy ? <AdminLoader /> : <div className="media-grid">{photos.map(card)}</div>}
         </>
       )}
 
@@ -228,7 +228,7 @@ export default function GalleryAdmin() {
               <input type="file" accept="video/*" multiple hidden onChange={addVideoFile} />
             </label>
           </div>
-          {busy ? <p>Loading…</p> : <div className="media-grid">{videos.map(card)}</div>}
+          {busy ? <AdminLoader /> : <div className="media-grid">{videos.map(card)}</div>}
         </>
       )}
       {preview && (

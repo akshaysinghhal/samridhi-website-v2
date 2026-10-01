@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../lib/adminApi";
 import { ADMIN_NAV } from "../../lib/adminNav";
+import { AdminLoader } from "./_lib/ui";
 
 const STATUSES = ["New", "Contacted", "Quote Sent", "Negotiation", "Won", "Lost"];
 
@@ -46,7 +47,7 @@ export default function AdminDashboard() {
       <h1>Dashboard</h1>
       <p className="admin-sub">Everything on your website lives here — edit it and it goes live within a minute.</p>
 
-      {busy ? <p>Loading…</p> : (
+      {busy ? <AdminLoader /> : (
         <>
           <div className="dash-cards">
             <Link className="dash-card" href="/admin/leads">

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api, uploadFile } from "../../../lib/adminApi";
+import { AdminLoader } from "../_lib/ui";
 
 export default function ContentEditor() {
   const [blocks, setBlocks] = useState([]);
@@ -26,7 +27,7 @@ export default function ContentEditor() {
     setSaving(false);
   };
 
-  if (busy) return <p>Loading…</p>;
+  if (busy) return <AdminLoader />;
 
   const groups = {};
   for (const b of blocks) {

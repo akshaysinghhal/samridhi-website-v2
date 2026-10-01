@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, SaveButton } from "../_lib/ui";
+import { revalidateSite, SaveButton, AdminLoader } from "../_lib/ui";
 import { TextField, PasswordField } from "../_lib/settingsFields";
 
 const EMPTY_LEGAL = { legal_name: "", trade_name: "Samridhi Films & Television", gstin: "", pan: "", address: "", state: "Rajasthan", email: "", phone: "", grievance_officer: { name: "", email: "", phone: "" } };
@@ -40,7 +40,7 @@ export default function IntegrationsAdmin() {
 
   const indexingOn = s.seo_indexing_enabled === true;
 
-  if (busy) return (<><h1>Integrations &amp; AI</h1><p>Loading…</p></>);
+  if (busy) return (<><h1>Integrations &amp; AI</h1><AdminLoader /></>);
 
   return (
     <>

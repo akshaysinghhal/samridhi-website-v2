@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { SaveButton } from "../_lib/ui";
+import { SaveButton, AdminLoader } from "../_lib/ui";
 
 const STATUSES = ["New", "Contacted", "Quote Sent", "Negotiation", "Won", "Lost"];
 
@@ -122,7 +122,7 @@ export default function LeadsAdmin() {
       </div>
 
       <div className="leads-list">
-        {busy ? <p>Loading…</p> : shown.length === 0 ? <p>No leads match.</p> : (
+        {busy ? <AdminLoader /> : shown.length === 0 ? <p>No leads match.</p> : (
             <table className="admin-table">
               <thead><tr><th>Lead</th><th>Type</th><th>Event</th><th>Status</th><th>Received</th></tr></thead>
               <tbody>

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { api, uploadFile } from "../../../lib/adminApi";
-import { revalidateSite, useBulk, BulkBar, CheckCell } from "../_lib/ui";
+import { revalidateSite, useBulk, BulkBar, CheckCell, AdminLoader } from "../_lib/ui";
 import PreviewModal from "../_lib/PreviewModal";
 
 function fmtMB(bytes) {
@@ -144,7 +144,7 @@ export default function MediaLibrary() {
       {notice && <div className="admin-ok" style={{ marginTop: 16 }}>{notice}</div>}
       {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} scopeCount={filtered.length} />}
 
-      {busy ? <p style={{ marginTop: 20 }}>Loading Cloudinary library…</p> : filtered.length === 0 ? (
+      {busy ? <AdminLoader /> : filtered.length === 0 ? (
         <div className="editor" style={{ textAlign: "center", marginTop: 20 }}>
           <p style={{ color: "#7a6a7c" }}>{media.length === 0 ? "Nothing here yet — upload your first photo or video." : "No files match these filters."}</p>
         </div>

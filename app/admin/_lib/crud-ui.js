@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, slugify, SaveButton, StatusFilter } from "./ui";
+import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, slugify, SaveButton, StatusFilter, AdminLoader } from "./ui";
+import { AiFieldButton } from "./AiAssist";
 import MediaPicker from "./MediaPicker";
 import PreviewModal from "./PreviewModal";
-import { AiFieldButton } from "./AiAssist";
 
 // Recommended dimensions shown as guidance under media fields. These are
 // suggestions, not enforced rules — Akshay asked for them as hints.
@@ -396,7 +396,7 @@ export default function AdminCrud({
         </div>
       )}
 
-      {busy ? <p>Loading…</p> : shown.length === 0 ? (
+      {busy ? <AdminLoader /> : shown.length === 0 ? (
         <p style={{ color: "#7a6a7c" }}>{rows.length === 0 ? "Nothing here yet." : "No items match this filter."}</p>
       ) : (
         <table className="admin-table">

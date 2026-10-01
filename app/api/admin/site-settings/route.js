@@ -22,9 +22,11 @@ export async function PUT(request) {
   if (!key || typeof key !== "string") {
     return Response.json({ error: "Missing key" }, { status: 400 });
   }
+  // The `value` column is NOT NULL — coerce null/undefined to "" so saving
+  // an empty field never violates the constraint.
   const { error } = await adminDb()
     .from("site_settings")
-    .upsert({ key, value: value ?? null, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    .upsert({ key, value: value ?? "", updated_at: new Date().toISOString() }, { onConflict: "key" });
   if (error) return Response.json({ error: error.message }, { status: 500 });
   try { revalidatePath("/", "layout"); } catch { /* ignore */ }
   return Response.json({ ok: true });

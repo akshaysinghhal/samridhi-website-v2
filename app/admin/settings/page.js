@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, SaveButton } from "../_lib/ui";
+import { revalidateSite, SaveButton, AdminLoader } from "../_lib/ui";
 import { TextField, ColorField, AddressListField, THEME_DEFAULTS, isHex } from "../_lib/settingsFields";
 
 // Website theme defaults — the luxury editorial palette. Changing these in
@@ -55,7 +55,7 @@ export default function SettingsAdmin() {
     } catch (e) { setMsg("Failed: " + e.message); }
   };
 
-  if (busy) return (<><h1>Settings</h1><p>Loading…</p></>);
+  if (busy) return (<><h1>Settings</h1><AdminLoader /></>);
 
   return (
     <>

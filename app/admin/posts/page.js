@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/adminApi";
-import { useBulk, BulkBar, CheckCell, revalidateSite, openPreview, StatusFilter } from "../_lib/ui";
+import { useBulk, BulkBar, CheckCell, revalidateSite, openPreview, StatusFilter, AdminLoader } from "../_lib/ui";
 
 // Draft preview goes through the authenticated /api/admin/preview endpoint
 // (sets a short-lived cookie and returns the public URL); published posts
@@ -59,7 +59,7 @@ export default function PostsList() {
           {(q.trim() || statusFilter) && <span className="seo-hint" style={{ margin: 0, whiteSpace: "nowrap" }}>{shown.length} of {posts.length}</span>}
         </div>
       )}
-      {busy ? <p>Loading…</p> : posts.length === 0 ? (
+      {busy ? <AdminLoader /> : posts.length === 0 ? (
         <div className="editor" style={{ textAlign: "center" }}>
           <p style={{ color: "#7a6a7c" }}>No posts yet. Write your first story!</p>
           <Link className="btn btn-primary" href="/admin/posts/new">+ New Post</Link>

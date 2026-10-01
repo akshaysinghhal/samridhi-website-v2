@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
+import { AdminLoader } from "../_lib/ui";
 
 export default function LaunchAdmin() {
   const [areas, setAreas] = useState([]);
@@ -18,7 +19,7 @@ export default function LaunchAdmin() {
     })();
   }, []);
 
-  if (busy) return (<><h1>Launch Checklist</h1><p>Loading…</p></>);
+  if (busy) return (<><h1>Launch Checklist</h1><AdminLoader /></>);
 
   const ready = total === 0;
 

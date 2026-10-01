@@ -195,3 +195,12 @@ export function StatusFilter({ value, onChange, options, label = "All statuses" 
 export function CheckCell({ checked, onChange, label }) {
   return <input type="checkbox" checked={checked} onChange={onChange} aria-label={label || "Select row"} style={{ width: 17, height: 17, accentColor: "var(--brand)" }} />;
 }
+
+// Centered circular loading spinner for admin pages.
+export function AdminLoader() {
+  return (
+    <div className="admin-loader-wrap" role="status" aria-label="Loading">
+      <div className="admin-loader" />
+    </div>
+  );
+}

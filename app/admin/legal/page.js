@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, SaveButton } from "../_lib/ui";
+import { revalidateSite, SaveButton, AdminLoader } from "../_lib/ui";
 
 export default function LegalAdmin() {
   const [pages, setPages] = useState([]);
@@ -40,7 +40,7 @@ export default function LegalAdmin() {
     } catch (e) { setMsg("Failed: " + e.message); }
   };
 
-  if (busy) return (<><h1>Legal Pages</h1><p>Loading…</p></>);
+  if (busy) return (<><h1>Legal Pages</h1><AdminLoader /></>);
 
   return (
     <>

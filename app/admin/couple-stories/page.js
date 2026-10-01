@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter } from "../_lib/ui";
+import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter, AdminLoader } from "../_lib/ui";
 
 const SOURCES = [
   { value: "youtube", label: "YouTube" },
@@ -149,7 +149,7 @@ export default function CoupleStoriesAdmin() {
           {(q.trim() || statusFilter) && <span className="seo-hint" style={{ margin: 0, whiteSpace: "nowrap" }}>{shown.length} of {rows.length}</span>}
         </div>
       )}
-      {busy ? <p>Loading…</p> : (
+      {busy ? <AdminLoader /> : (
         <table className="admin-table">
           <thead><tr><th style={{ width: 40 }}><CheckCell checked={bulk.allChecked} onChange={bulk.toggleAll} label="Select all stories" /></th><th>Story</th><th>Source</th><th>Consent</th><th>Status</th><th>Flag</th><th></th></tr></thead>
           <tbody>
