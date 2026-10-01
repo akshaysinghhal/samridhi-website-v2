@@ -250,19 +250,6 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
   animation: heroDrift 22s ease-in-out infinite alternate;
 }
 /* mobile hero: poster with tap-to-play (no autoplay on phones) */
-.hero-play {
-  position: absolute; right: 18px; bottom: 22px; z-index: 3;
-  width: 60px; height: 60px; border-radius: 50%;
-  background: rgba(143,63,45,0.88); border: 2px solid rgba(255,255,255,0.85);
-  color: #fff; font-size: 22px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-.hero-play span { margin-left: 3px; }
-.hero-play-err {
-  position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 3;
-  background: rgba(42,27,22,0.88); color: #fff; font-size: 13px;
-  padding: 8px 14px; border-radius: 999px; max-width: 86%; text-align: center;
-}
 @keyframes heroDrift { from { transform: scale(1); } to { transform: scale(1.08); } }
 .hero-veil {
   position: absolute; inset: 0;
