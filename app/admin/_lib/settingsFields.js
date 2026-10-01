@@ -7,6 +7,7 @@ export const THEME_DEFAULTS = {
   theme_primary: "#B9553A",
   theme_deep: "#8F3F2D",
   theme_gold: "#C9A15A",
+  theme_footer: "#2A1B16",
 };
 
 export const isHex = (v) => /^#[0-9a-fA-F]{6}$/.test(String(v || "").trim());
