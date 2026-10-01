@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import MediaPicker from "../_lib/MediaPicker";
 import { AiAssistModal } from "../_lib/AiAssist";
 import { toast } from "../_lib/ui";
+import { api } from "../../../lib/adminApi";
 import { waLink } from "../../../lib/billing";
 import { TEMPLATES } from "./templates";
 
@@ -75,10 +76,22 @@ export default function CreativesAdmin() {
   const [msg, setMsg] = useState("");
   const [previewRef, previewScale] = useScaled();
   const exportRef = useRef(null);
+  const [siteLogo, setSiteLogo] = useState("");
+
+  // Website logo (Admin → Settings → Company) for the "Show company logo" pill.
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await api("/api/admin/site-settings");
+        const u = String(r.settings?.logo_url || "").trim();
+        if (u) setSiteLogo(u);
+      } catch { /* default logo */ }
+    })();
+  }, []);
 
   const tpl = TEMPLATES.find((t) => t.id === templateId) || TEMPLATES[0];
   const Tpl = tpl.render;
-  const data = { ...f };
+  const data = { ...f, logoUrl: siteLogo || undefined };
 
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
 

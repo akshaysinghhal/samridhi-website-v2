@@ -15,6 +15,7 @@ export default async function SiteHeader() {
       nav={nav}
       phone={setting(s, "phone1", "+91 96022 28846")}
       whatsapp={setting(s, "whatsapp", "919602228846")}
+      logoUrl={String(setting(s, "logo_url", "") || "").trim() || "/images/logo.png"}
     />
   );
 }

@@ -16,10 +16,16 @@ const sora = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "500", "60
 
 export async function generateMetadata() {
   let indexing = false;
+  let s = {};
   try {
-    const s = await getSettings();
+    s = await getSettings();
     indexing = setting(s, "seo_indexing_enabled", false) === true;
   } catch { /* default stays noindex */ }
+  // Website logo (Admin → Settings → Company) — used for share cards.
+  const customLogo = String(setting(s, "logo_url", "") || "").trim();
+  const ogImages = customLogo
+    ? [{ url: customLogo, alt: "Samridhi Films & Television" }]
+    : [{ url: "/images/logo.png", width: 1200, height: 567, alt: "Samridhi Films & Television" }];
   return {
     metadataBase: new URL(BASE),
     title: {
@@ -44,14 +50,14 @@ export async function generateMetadata() {
       title: "Samridhi Films & Television | Event Management, Weddings & Artist Management",
       description:
         "Samridhi Films & Television — Chittorgarh's complete event management company since 1999. Weddings, celebrity shows, government & corporate events across Rajasthan.",
-      images: [{ url: "/images/logo.png", width: 1200, height: 567, alt: "Samridhi Films & Television" }],
+      images: ogImages,
     },
     twitter: {
       card: "summary_large_image",
       title: "Samridhi Films & Television | Event Management, Weddings & Artist Management",
       description:
         "Weddings, celebrity shows, government & corporate events across Rajasthan since 1999. You Just Think & We Will Manage It!",
-      images: ["/images/logo.png"],
+      images: [customLogo || "/images/logo.png"],
     },
   };
 }

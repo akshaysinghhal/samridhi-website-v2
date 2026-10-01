@@ -23,14 +23,14 @@ function Eyebrow({ d, color, children }) {
   return <div style={{ color, fontSize: 27, letterSpacing: 6, fontWeight: 700 }}>{(children || d.eyebrow || "").toUpperCase()}</div>;
 }
 
-function LogoPill({ dark }) {
+function LogoPill({ dark, src }) {
   return (
     <div style={{
       background: "#fff", borderRadius: 999, padding: "14px 30px",
       display: "inline-flex", alignItems: "center",
       boxShadow: dark ? "0 6px 24px rgba(0,0,0,0.25)" : "0 6px 24px rgba(93,44,30,0.18)",
     }}>
-      <img src="/images/logo.png" alt="Samridhi Films & Television" style={{ height: 54, width: "auto", display: "block" }} />
+      <img src={src || "/images/logo.png"} alt="Samridhi Films & Television" style={{ height: 54, width: "auto", display: "block" }} />
     </div>
   );
 }
@@ -75,7 +75,7 @@ function StarArrival({ d }) {
             {d.venue && <Pill>{d.venue}</Pill>}
           </div>
         )}
-        <div style={{ marginTop: "auto" }}>{d.showLogo !== false && <LogoPill dark />}</div>
+        <div style={{ marginTop: "auto" }}>{d.showLogo !== false && <LogoPill dark src={d.logoUrl} />}</div>
       </div>
     </div>
   );
@@ -110,7 +110,7 @@ function FestivalGreeting({ d }) {
             {[d.date, d.venue].filter(Boolean).join("  •  ")}
           </div>
         )}
-        <div style={{ marginTop: "auto" }}>{d.showLogo !== false && <LogoPill />}</div>
+        <div style={{ marginTop: "auto" }}>{d.showLogo !== false && <LogoPill src={d.logoUrl} />}</div>
       </div>
     </div>
   );
@@ -135,7 +135,7 @@ function PlannerSpotlight({ d }) {
           {d.date && <div style={{ fontSize: 31, fontWeight: 700 }}>📅 <span style={{ fontWeight: 400 }}>{d.date}</span></div>}
           {d.venue && <div style={{ fontSize: 31, fontWeight: 700 }}>📍 <span style={{ fontWeight: 400 }}>{d.venue}</span></div>}
         </div>
-        <div style={{ marginTop: "auto" }}>{d.showLogo !== false && <LogoPill dark />}</div>
+        <div style={{ marginTop: "auto" }}>{d.showLogo !== false && <LogoPill dark src={d.logoUrl} />}</div>
       </div>
     </div>
   );
@@ -164,7 +164,7 @@ function RoyalMinimal({ d }) {
         )}
       </div>
       <div style={{ position: "absolute", bottom: 96, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
-        {d.showLogo !== false && <LogoPill dark />}
+        {d.showLogo !== false && <LogoPill dark src={d.logoUrl} />}
       </div>
     </div>
   );
@@ -176,7 +176,7 @@ function MelaBlast({ d }) {
     <div style={{ width: 1080, height: 1080, position: "relative", overflow: "hidden", background: "linear-gradient(165deg, #c05a35 0%, #8F3F2D 55%, #57200f 100%)", fontFamily: SANS }}>
       <div style={{ position: "absolute", inset: 0, opacity: 0.16, background: "radial-gradient(circle, #ffe9b0 2px, transparent 2.4px)", backgroundSize: "52px 52px" }} />
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", padding: "80px 70px 0", textAlign: "center" }}>
-        {d.showLogo !== false && <LogoPill dark />}
+        {d.showLogo !== false && <LogoPill dark src={d.logoUrl} />}
         {d.showEyebrow !== false && <div style={{ color: GOLD_SOFT, fontSize: 30, letterSpacing: 8, fontWeight: 800, marginTop: 44 }}>{(d.eyebrow || "SAMRIDHI FILMS & TELEVISION PRESENTS").toUpperCase()}</div>}
         <div style={{ fontFamily: SANS, fontWeight: 800, color: "#fff", fontSize: 148, lineHeight: 1.02, marginTop: 26, textTransform: "uppercase", textShadow: "0 8px 30px rgba(0,0,0,0.35)", letterSpacing: 2 }}>{d.title || "Dussehra Mela"}</div>
         <div style={{ color: "#ffe9c4", fontSize: 38, fontWeight: 600, marginTop: 22, maxWidth: 880, lineHeight: 1.45 }}>{d.subtitle || "Rides • Food • Live performances — the biggest festive fair of the season"}</div>
@@ -226,7 +226,7 @@ function ThankYouPastel({ d }) {
             {[d.date, d.venue].filter(Boolean).join("  •  ")}
           </div>
         )}
-        <div style={{ marginTop: "auto" }}>{d.showLogo !== false && <LogoPill />}</div>
+        <div style={{ marginTop: "auto" }}>{d.showLogo !== false && <LogoPill src={d.logoUrl} />}</div>
       </div>
     </div>
   );
@@ -257,7 +257,7 @@ function NewYearPastel({ d }) {
             {[d.date, d.venue].filter(Boolean).join("  •  ")}
           </div>
         )}
-        <div style={{ marginTop: "auto" }}>{d.showLogo !== false && <LogoPill />}</div>
+        <div style={{ marginTop: "auto" }}>{d.showLogo !== false && <LogoPill src={d.logoUrl} />}</div>
       </div>
     </div>
   );
@@ -286,7 +286,7 @@ function PastelInvite({ d }) {
             {d.venue && <span style={{ background: "#fff", color: p.deep, border: `2px solid ${p.deep}`, borderRadius: 999, padding: "14px 36px", fontSize: 30, fontWeight: 700 }}>{d.venue}</span>}
           </div>
         )}
-        <div style={{ marginTop: "auto" }}>{d.showLogo !== false && <LogoPill />}</div>
+        <div style={{ marginTop: "auto" }}>{d.showLogo !== false && <LogoPill src={d.logoUrl} />}</div>
       </div>
     </div>
   );

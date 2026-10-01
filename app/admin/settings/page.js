@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
 import { revalidateSite, SaveButton, AdminLoader, toast } from "../_lib/ui";
+import MediaPicker from "../_lib/MediaPicker";
 import { TextField, ColorField, AddressListField, THEME_DEFAULTS, isHex } from "../_lib/settingsFields";
 
 // Website theme defaults — the luxury editorial palette. Changing these in
@@ -12,6 +13,7 @@ export default function SettingsAdmin() {
   const [busy, setBusy] = useState(true);
   const [msg, setMsg] = useState("");
   const [okMsg, setOkMsg] = useState("");
+  const [logoPicker, setLogoPicker] = useState(false);
 
   const load = async () => {
     setBusy(true);
@@ -72,8 +74,26 @@ export default function SettingsAdmin() {
         <TextField s={s} set={set} k="tagline1" label="Tagline 1" />
         <TextField s={s} set={set} k="tagline2" label="Tagline 2" />
         <TextField s={s} set={set} k="since" label="Serving since (year)" />
-        <SaveButton onClick={() => save(["company_name", "tagline1", "tagline2", "since"], "Company")}>Save</SaveButton>
+        <div className="field">
+          <label>Website logo <span className="seo-hint" style={{ fontWeight: 400 }}>— header, footer, share cards &amp; PDFs use this (leave empty for the default logo)</span></label>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <button type="button" className="btn-sm btn-edit" onClick={() => setLogoPicker(true)}>📚 Choose from library</button>
+            {s.logo_url && <button type="button" className="btn-sm btn-del" onClick={() => set("logo_url", "")}>Remove</button>}
+          </div>
+          {s.logo_url && (
+            <div className="img-preview" style={{ marginTop: 8, background: "#fff" }}>
+              <img src={s.logo_url} alt="Website logo" style={{ maxHeight: 64 }} />
+            </div>
+          )}
+        </div>
+        <SaveButton onClick={() => save(["company_name", "tagline1", "tagline2", "since", "logo_url"], "Company")}>Save</SaveButton>
       </div>
+      <MediaPicker
+        open={logoPicker}
+        kind="image"
+        onClose={() => setLogoPicker(false)}
+        onSelect={(m) => { if (m?.url) set("logo_url", m.url); setLogoPicker(false); }}
+      />
 
       <div className="content-group">
         <div className="sec">Theme</div><h2>Website theme</h2>

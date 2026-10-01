@@ -7,6 +7,7 @@ import { getAddresses, mapLink } from "../lib/addresses";
 export default function Footer({ nav, settings }) {
   const s = settings || {};
   const get = (k, f = "") => (s[k] === undefined || s[k] === null ? f : s[k]);
+  const logo = String(get("logo_url", "") || "").trim() || "/images/logo.png";
   const legal = get("legal_entity", {}) || {};
   const go = legal.grievance_officer || {};
   const explore = Array.isArray(nav) && nav.length
@@ -59,7 +60,7 @@ export default function Footer({ nav, settings }) {
       <div className="container">
         <div className="footer-top">
           <div className="footer-brand">
-            <img src="/images/logo.png" alt="Samridhi Films & Television" />
+            <img src={logo} alt="Samridhi Films & Television" />
             <p>
               {get("tagline2", "Creating Experiences. Delivering Excellence.")} A complete event
               management company since 1999 — weddings, celebrity shows, government &amp; corporate

@@ -3,10 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-// Props: { nav: [{label, href}], phone, whatsapp }
+// Props: { nav: [{label, href}], phone, whatsapp, logoUrl }
 // Luxury navbar: ivory bar, gold hairline, uppercase links,
 // terracotta CTA, full-height mobile drawer. Shrinks softly on scroll.
-export default function Header({ nav, phone, whatsapp }) {
+export default function Header({ nav, phone, whatsapp, logoUrl }) {
+  const logo = logoUrl || "/images/logo.png";
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
@@ -61,7 +62,7 @@ export default function Header({ nav, phone, whatsapp }) {
       <header className={`site-header ${scrolled ? "scrolled" : ""}`}>
         <div className="container nav">
           <Link href="/" className="brand" aria-label="Samridhi Films & Television — home">
-            <img src="/images/logo.png" alt="Samridhi Films & Television logo" />
+            <img src={logo} alt="Samridhi Films & Television logo" />
           </Link>
           <nav className="nav-links" aria-label="Main navigation">
             {links.map((l) => (
@@ -85,7 +86,7 @@ export default function Header({ nav, phone, whatsapp }) {
         <div className="drawer-veil" onClick={() => setOpen(false)} />
         <div className="drawer-panel" role="dialog" aria-label="Menu">
           <div className="drawer-head">
-            <img src="/images/logo.png" alt="Samridhi Films & Television" />
+            <img src={logo} alt="Samridhi Films & Television" />
             <button className="drawer-close" ref={closeRef} onClick={() => setOpen(false)} aria-label="Close menu">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                 <path d="M5 5l14 14M19 5L5 19" />
