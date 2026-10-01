@@ -311,6 +311,7 @@ function WatermarkTool() {
   const [imgUrl, setImgUrl] = useState("");
   const [imgName, setImgName] = useState("");
   const [media, setMedia] = useState(null); // cloudinary asset for overlay mode
+  const [loadErr, setLoadErr] = useState(false); // preview failed to load from Cloudinary
   const [picker, setPicker] = useState(null); // image | any
   const [text, setText] = useState("© Samridhi Films & Television");
   const [size, setSize] = useState(48);
@@ -411,6 +412,8 @@ function WatermarkTool() {
   const clUrl = media ? clOverlayUrl(media.url, { text, size: Math.min(size * 2, 200), color, opacity, gravity: grav, dx: 20, dy: 20 }) : null;
   const isVideo = media && /video|\.mp4|\.mov|\.webm/i.test(media.url || "") && !/\.(jpe?g|png|gif|webp)$/i.test(media.url || "");
 
+  useEffect(() => { setLoadErr(false); }, [clUrl]);
+
   return (
     <div>
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
@@ -502,9 +505,15 @@ function WatermarkTool() {
             <>
               <div style={{ borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,0.15)", maxWidth: 680 }}>
                 {isVideo
-                  ? <video src={clUrl} controls style={{ width: "100%", display: "block" }} />
-                  : <img src={clUrl} alt="Watermarked preview" style={{ width: "100%", display: "block" }} />}
+                  ? <video src={clUrl} controls onError={() => setLoadErr(true)} style={{ width: "100%", display: "block" }} />
+                  : <img src={clUrl} alt="Watermarked preview" onError={() => setLoadErr(true)} style={{ width: "100%", display: "block" }} />}
               </div>
+              {loadErr && (
+                <div className="login-err" style={{ margin: "10px 0" }}>
+                  Couldn't load this file from Cloudinary — it may have been deleted, moved or renamed after appearing in the library.
+                  Try choosing it again from the library, or re-upload it.
+                </div>
+              )}
               <div className="seo-hint" style={{ margin: "10px 0", wordBreak: "break-all" }}>{clUrl}</div>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <button type="button" className="btn btn-dark" onClick={() => { navigator.clipboard.writeText(clUrl).then(() => toast("Watermarked URL copied.")); }}>📋 Copy URL</button>

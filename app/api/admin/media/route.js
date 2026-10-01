@@ -22,6 +22,7 @@ async function listCloudinary() {
           url: r.secure_url,
           kind: resourceType === "video" ? "video" : "image",
           bytes: r.bytes || 0,
+          duration: resourceType === "video" ? (r.duration || 0) : 0,
           format: r.format || "",
           width: r.width || 0,
           height: r.height || 0,

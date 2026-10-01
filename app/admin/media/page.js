@@ -9,6 +9,21 @@ function fmtMB(bytes) {
   return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
 }
 
+function fmtSize(bytes) {
+  if (!bytes) return "";
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${Math.round(kb)} KB`;
+  const mb = kb / 1024;
+  return mb < 1024 ? `${mb.toFixed(1)} MB` : `${(mb / 1024).toFixed(2)} GB`;
+}
+
+function fmtDur(sec) {
+  sec = Math.round(sec || 0);
+  if (!sec) return "";
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 export default function MediaLibrary() {
   const [media, setMedia] = useState([]);
   const [usage, setUsage] = useState(null);
@@ -39,14 +54,15 @@ export default function MediaLibrary() {
   const folders = useMemo(() => {
     const s = new Set();
     for (const m of media) if (m.folder) s.add(m.folder);
-    return ["all", ...[...s].sort()];
+    return ["all", "__root", ...[...s].sort()];
   }, [media]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const list = media.filter((m) => {
       if (type !== "all" && m.kind !== type) return false;
-      if (folder !== "all" && m.folder !== folder) return false;
+      if (folder === "__root") { if (m.folder) return false; }
+      else if (folder !== "all" && m.folder !== folder) return false;
       if (needle && !(m.public_id || "").toLowerCase().includes(needle) && !(m.alt || "").toLowerCase().includes(needle)) return false;
       return true;
     });
@@ -193,7 +209,7 @@ export default function MediaLibrary() {
           <option value="video">Videos only</option>
         </select>
         <select value={folder} onChange={(e) => setFolder(e.target.value)} aria-label="Filter by folder">
-          {folders.map((f) => <option key={f} value={f}>{f === "all" ? "All folders" : f}</option>)}
+          {folders.map((f) => <option key={f} value={f}>{f === "all" ? "All folders" : f === "__root" ? "🏠 Home (root)" : f}</option>)}
         </select>
         <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort media">
           <option value="newest">Latest added first</option>
@@ -230,10 +246,18 @@ export default function MediaLibrary() {
                 {m.kind === "video" && (
                   <span style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 11, fontWeight: 800, padding: "4px 8px", borderRadius: 999 }}>▶ VIDEO</span>
                 )}
+                {m.kind === "video" && m.duration > 0 && (
+                  <span style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.65)", color: "#fff", fontSize: 10.5, fontWeight: 700, padding: "3px 7px", borderRadius: 6 }}>⏱ {fmtDur(m.duration)}</span>
+                )}
               </div>
               <div className="meta" style={{ flexDirection: "column", gap: 6 }}>
                 <div style={{ fontSize: 11, color: "#6b5d6e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={m.public_id}>
                   {(m.public_id || "").split("/").pop()}
+                </div>
+                <div style={{ fontSize: 10.5, color: "#9a8a96" }}>
+                  {[m.bytes > 0 ? fmtSize(m.bytes) : null,
+                    m.kind === "video" && m.duration > 0 ? fmtDur(m.duration) : null,
+                    m.width > 0 ? `${m.width}×${m.height}` : null].filter(Boolean).join("  ·  ")}
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="btn-sm btn-edit" onClick={() => copy(m.url)}>{copied === m.url ? "Copied ✓" : "Copy URL"}</button>
