@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getAddresses, mapLink } from "../lib/addresses";
 
 // Props: { nav: [{label, href}] (footer location), settings }
 // Sophisticated dark-brown footer: 4 columns, champagne-gold divider,
@@ -79,8 +80,12 @@ export default function Footer({ nav, settings }) {
           </div>
           <div className="footer-contact">
             <h4>Contact</h4>
-            <p><strong>Chittorgarh</strong><br />{get("address_chittorgarh", "230/4, Main Collectorate Circle, Gandhi Nagar, Chittorgarh 312001, Rajasthan")}</p>
-            <p style={{ marginTop: 12 }}><strong>Mumbai</strong><br />{get("address_mumbai", "Mumbai, Maharashtra")}</p>
+            {getAddresses(s).map((a, i) => (
+              <p key={i} style={i ? { marginTop: 12 } : undefined}>
+                {a.label ? (<><strong>{a.label}</strong><br /></>) : null}
+                <a href={mapLink(a)} target="_blank" rel="noreferrer" style={{ display: "inline" }}>{a.address}</a>
+              </p>
+            ))}
             <p style={{ marginTop: 12 }}>
               <a href={"tel:" + String(get("phone1", "+91 96022 28846")).replace(/\s/g, "")} style={{ display: "inline" }}>{get("phone1", "+91 96022 28846")}</a>
             </p>

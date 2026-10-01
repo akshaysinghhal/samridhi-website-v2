@@ -16,6 +16,8 @@ export default function MediaLibrary() {
   const [err, setErr] = useState("");
   const [uploading, setUploading] = useState(false);
   const [copied, setCopied] = useState("");
+  const [notice, setNotice] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
   const [q, setQ] = useState("");
   const [type, setType] = useState("all");
   const [folder, setFolder] = useState("all");
@@ -33,13 +35,6 @@ export default function MediaLibrary() {
   };
   useEffect(() => { load(); }, []);
 
-  const bulk = useBulk({
-    rows: media,
-    patchRows: setMedia,
-    endpoint: "/api/admin/media",
-    deleteOne: (id) => api(`/api/admin/media?id=${encodeURIComponent(id)}`, { method: "DELETE" }),
-  });
-
   const folders = useMemo(() => {
     const s = new Set();
     for (const m of media) if (m.folder) s.add(m.folder);
@@ -55,6 +50,15 @@ export default function MediaLibrary() {
       return true;
     });
   }, [media, q, type, folder]);
+
+  // Bulk selection is scoped to the FILTERED list, so "select all" only
+  // touches what you can see — never the whole account behind a filter.
+  const bulk = useBulk({
+    rows: filtered,
+    patchRows: setMedia,
+    endpoint: "/api/admin/media",
+    deleteOne: (id) => api(`/api/admin/media?id=${encodeURIComponent(id)}`, { method: "DELETE" }),
+  });
 
   const onFiles = async (e) => {
     setUploading(true);
@@ -73,10 +77,21 @@ export default function MediaLibrary() {
   };
 
   const remove = async (m) => {
-    if (!confirm(`Delete "${(m.public_id || "").split("/").pop()}" from Cloudinary? This cannot be undone.`)) return;
-    await api(`/api/admin/media?id=${encodeURIComponent(m.id)}`, { method: "DELETE" });
-    await revalidateSite();
-    setMedia((xs) => xs.filter((x) => x.id !== m.id));
+    const name = (m.public_id || "").split("/").pop();
+    if (!confirm(`Delete "${name}" from Cloudinary? This cannot be undone.`)) return;
+    setErr(""); setNotice(""); setDeletingId(m.id);
+    try {
+      await api(`/api/admin/media?id=${encodeURIComponent(m.id)}`, { method: "DELETE" });
+      setMedia((xs) => xs.filter((x) => x.id !== m.id));
+      setNotice(`Deleted "${name}".`);
+      setTimeout(() => setNotice(""), 5000);
+      load(true); // refresh the list + storage usage silently
+      await revalidateSite();
+    } catch (e) {
+      setErr("Delete failed: " + e.message);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const pct = usage && usage.limit_bytes ? Math.min(100, Math.round((usage.used_bytes / usage.limit_bytes) * 100)) : 0;
@@ -99,7 +114,9 @@ export default function MediaLibrary() {
           </div>
           <div style={{ fontSize: 14, color: "#6b5d6e" }}>
             <strong style={{ color: "#3d3140" }}>{fmtMB(usage.used_bytes)}</strong> used
-            {usage.limit_bytes > 0 && <> of <strong style={{ color: "#3d3140" }}>{fmtMB(usage.limit_bytes)}</strong> ({pct}%)</>}
+            {usage.limit_bytes > 0 && (
+              <> · <strong style={{ color: "#2e7d32" }}>{fmtMB(usage.available_bytes)}</strong> available of <strong style={{ color: "#3d3140" }}>{fmtMB(usage.limit_bytes)}</strong> ({pct}%)</>
+            )}
           </div>
         </div>
       )}
@@ -124,7 +141,8 @@ export default function MediaLibrary() {
       </div>
 
       {err && <div className="login-err" style={{ marginTop: 16 }}>{err}</div>}
-      {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
+      {notice && <div className="admin-ok" style={{ marginTop: 16 }}>{notice}</div>}
+      {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} scopeCount={filtered.length} />}
 
       {busy ? <p style={{ marginTop: 20 }}>Loading Cloudinary library…</p> : filtered.length === 0 ? (
         <div className="editor" style={{ textAlign: "center", marginTop: 20 }}>
@@ -153,7 +171,14 @@ export default function MediaLibrary() {
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="btn-sm btn-edit" onClick={() => copy(m.url)}>{copied === m.url ? "Copied ✓" : "Copy URL"}</button>
-                  <button className="btn-sm btn-del" onClick={() => remove(m)}>Delete</button>
+                  <button
+                    className="btn-sm btn-del"
+                    onClick={() => remove(m)}
+                    disabled={deletingId === m.id}
+                    style={deletingId === m.id ? { opacity: 0.6, cursor: "wait" } : undefined}
+                  >
+                    {deletingId === m.id ? "Deleting…" : "Delete"}
+                  </button>
                 </div>
               </div>
             </div>

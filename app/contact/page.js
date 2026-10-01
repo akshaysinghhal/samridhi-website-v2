@@ -3,6 +3,7 @@ import SiteFooter from "../../components/SiteFooter";
 import LeadForm from "../../components/LeadForm";
 import Reveal from "../../components/Reveal";
 import { getSettings, setting } from "../../lib/db";
+import { getAddresses, mapLink } from "../../lib/addresses";
 
 export const revalidate = 60;
 
@@ -16,10 +17,7 @@ export default async function ContactPage() {
   const phone1 = setting(s, "phone1", "+91 96022 28846");
   const phone2 = setting(s, "phone2", "+91 77372 89938");
   const email = setting(s, "email", "samridhifilms@yahoo.co.in");
-  const addrC = setting(s, "address_chittorgarh", "230/4, Main Collectorate Circle, Gandhi Nagar, Chittorgarh 312001, Rajasthan");
-  const addrM = setting(s, "address_mumbai", "Mumbai, Maharashtra");
-  const mapsC = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(addrC);
-  const mapsM = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(addrM + ", India");
+  const addresses = getAddresses(s);
   const wa = setting(s, "whatsapp", "919602228846");
 
   return (
@@ -51,16 +49,13 @@ export default async function ContactPage() {
           <div className="contact-grid">
             <Reveal>
               <div className="contact-lines">
-                <div className="contact-line">
-                  <h4>Chittorgarh Office</h4>
-                  <p>{addrC}</p>
-                  <p style={{ marginTop: 8 }}><a href={mapsC} target="_blank" rel="noreferrer" style={{ fontSize: 14 }}>View on Google Maps →</a></p>
-                </div>
-                <div className="contact-line">
-                  <h4>Mumbai Office</h4>
-                  <p>{addrM}</p>
-                  <p style={{ marginTop: 8 }}><a href={mapsM} target="_blank" rel="noreferrer" style={{ fontSize: 14 }}>View on Google Maps →</a></p>
-                </div>
+                {addresses.map((a, i) => (
+                  <div className="contact-line" key={i}>
+                    <h4>{a.label || "Office"}</h4>
+                    <p>{a.address}</p>
+                    <p style={{ marginTop: 8 }}><a href={mapLink(a)} target="_blank" rel="noreferrer" style={{ fontSize: 14 }}>View on Google Maps →</a></p>
+                  </div>
+                ))}
                 <div className="contact-line">
                   <h4>Call</h4>
                   <p>

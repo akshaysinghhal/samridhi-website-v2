@@ -58,11 +58,21 @@ export async function GET(request) {
 
     let usage = null;
     if (usageRes) {
-      const limit = usageRes.limits?.storage?.limit ?? usageRes.plan?.storage ?? 0;
+      const apiLimit = usageRes.limits?.storage?.limit ?? usageRes.plan?.storage ?? 0;
+      // Plan limit from the API when present; otherwise the admin-configurable
+      // setting (Admin → Settings → Media), defaulting to the 25 GB free plan.
+      let limitGb = 25;
+      try {
+        const { data: srow } = await adminDb().from("site_settings").select("value").eq("key", "cloudinary_storage_limit_gb").single();
+        const v = Number(srow?.value);
+        if (Number.isFinite(v) && v > 0) limitGb = v;
+      } catch { /* keep default */ }
+      const limit = apiLimit > 0 ? apiLimit : Math.round(limitGb * 1073741824);
       const used = usageRes.storage?.usage ?? 0;
       usage = {
         used_bytes: used,
         limit_bytes: limit,
+        available_bytes: Math.max(0, limit - used),
         used_mb: Math.round(used / 1048576),
         limit_mb: limit ? Math.round(limit / 1048576) : 0,
         plan: usageRes.plan || null,

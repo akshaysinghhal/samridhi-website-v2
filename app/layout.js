@@ -2,6 +2,7 @@ import "./globals.css";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import CookieBanner from "../components/CookieBanner";
 import Analytics from "../components/Analytics";
+import AnnouncementBar from "../components/AnnouncementBar";
 import { getSettings, setting } from "../lib/db";
 import { organizationJsonLd, jsonLdScript, siteUrl } from "../lib/seo";
 
@@ -63,6 +64,14 @@ export default async function RootLayout({ children }) {
   const tel = "tel:" + phone1.replace(/\s/g, "");
   const org = organizationJsonLd(s);
 
+  // Announcement bar (Admin → Settings → Announcement bar). Only http(s) or
+  // site-relative links are rendered — anything else is dropped.
+  const annOn = setting(s, "announcement_enabled", false) === true;
+  const annText = String(setting(s, "announcement_text", "")).trim();
+  const annUrlRaw = String(setting(s, "announcement_link_url", "")).trim();
+  const annUrl = /^(\/|https?:\/\/)/i.test(annUrlRaw) ? annUrlRaw : "";
+  const annLabel = String(setting(s, "announcement_link_label", "")).trim();
+
   // Website theme colours — changeable from Admin → Settings → Website theme.
   // Only strict #rrggbb values are accepted, so this can never inject CSS.
   const hex = (v) => (/^#[0-9a-fA-F]{6}$/.test(String(v || "").trim()) ? String(v).trim() : null);
@@ -84,6 +93,9 @@ export default async function RootLayout({ children }) {
         {themeCss && <style dangerouslySetInnerHTML={{ __html: themeCss }} />}
       </head>
       <body>
+        {annOn && annText ? (
+          <AnnouncementBar text={annText} linkUrl={annUrl} linkLabel={annLabel} />
+        ) : null}
         {children}
         <a
           className="wa-float"

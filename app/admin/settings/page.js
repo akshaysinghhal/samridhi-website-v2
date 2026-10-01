@@ -10,6 +10,84 @@ const EMPTY_LEGAL = { legal_name: "", trade_name: "Samridhi Films & Television",
 const THEME_DEFAULTS = { theme_primary: "#B9553A", theme_deep: "#8F3F2D", theme_gold: "#C9A15A" };
 const isHex = (v) => /^#[0-9a-fA-F]{6}$/.test(String(v || "").trim());
 
+// Field components live at module level (not inside the page component) so their
+// identity is stable across renders. Defining them inside would remount every
+// input on each keystroke — losing text-field focus and instantly closing the
+// native colour-picker popup while dragging.
+function TextField({ k, s, set, label, hint }) {
+return (
+  <div className="field"><label>{label}</label>
+    <input value={s[k] || ""} onChange={(e) => set(k, e.target.value)} />
+    {hint && <div className="seo-hint">{hint}</div>}
+  </div>
+);
+}
+
+function ColorField({ k, s, set, label, hint }) {
+const valid = isHex(s[k]) ? String(s[k]).trim() : THEME_DEFAULTS[k];
+const setHex = (raw) => {
+  let h = String(raw || "").trim();
+  if (/^[0-9a-fA-F]{6}$/.test(h)) h = "#" + h;
+  set(k, h);
+};
+return (
+  <div className="field"><label>{label}</label>
+    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+      <input
+        type="color"
+        value={valid}
+        onChange={(e) => set(k, e.target.value)}
+        aria-label={label + " colour picker"}
+        style={{ width: 52, height: 42, padding: 4, border: "1.5px solid #ecd9e4", borderRadius: 10, cursor: "pointer", background: "#fff" }}
+      />
+      <input
+        value={s[k] ?? ""}
+        onChange={(e) => setHex(e.target.value)}
+        placeholder={THEME_DEFAULTS[k]}
+        spellCheck={false}
+        style={{ maxWidth: 130, fontFamily: "ui-monospace, monospace" }}
+        aria-label={label + " hex value"}
+      />
+    </div>
+    {hint && <div className="seo-hint">{hint}</div>}
+  </div>
+);
+}
+
+
+// Dynamic address list: label + address + Google Map URL per row, with
+// add/remove. Stored as a single `addresses` setting (JSON array).
+function AddressListField({ s, set }) {
+  const legacy = [
+    { label: "Chittorgarh Office", address: s.address_chittorgarh || "230/4, Main Collectorate Circle, Gandhi Nagar, Chittorgarh 312001, Rajasthan", map_url: "" },
+    { label: "Mumbai Office", address: s.address_mumbai || "Mumbai, Maharashtra", map_url: "" },
+  ];
+  const list = Array.isArray(s.addresses) ? s.addresses : legacy;
+  const update = (i, k, v) => set("addresses", list.map((a, j) => (j === i ? { ...a, [k]: v } : a)));
+  const add = () => set("addresses", [...list, { label: "", address: "", map_url: "" }]);
+  const remove = (i) => set("addresses", list.filter((_, j) => j !== i));
+  return (
+    <div>
+      {list.map((a, i) => (
+        <div key={i} style={{ border: "1px solid #ecd9e4", borderRadius: 12, padding: 14, marginBottom: 12, background: "#fff" }}>
+          <div className="field"><label>Label</label>
+            <input value={a.label || ""} onChange={(e) => update(i, "label", e.target.value)} placeholder="e.g. Chittorgarh Office" />
+          </div>
+          <div className="field"><label>Address</label>
+            <textarea rows={2} value={a.address || ""} onChange={(e) => update(i, "address", e.target.value)} placeholder="Full office address" />
+          </div>
+          <div className="field"><label>Google Map URL</label>
+            <input value={a.map_url || ""} onChange={(e) => update(i, "map_url", e.target.value)} placeholder="https://maps.google.com/… (optional)" spellCheck={false} />
+            <div className="seo-hint">Paste the Google Maps link for this office. Visitors get a "View on Google Maps" link. Leave empty to auto-search the address.</div>
+          </div>
+          <button type="button" onClick={() => remove(i)} style={{ background: "none", border: "1px solid #e5b8b0", color: "#b3402e", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontWeight: 600 }}>Remove</button>
+        </div>
+      ))}
+      <button type="button" onClick={add} style={{ background: "#fff", border: "1.5px dashed #C9A15A", color: "#8F3F2D", borderRadius: 10, padding: "10px 18px", cursor: "pointer", fontWeight: 700 }}>+ Add new address</button>
+    </div>
+  );
+}
+
 export default function SettingsAdmin() {
   const [s, setS] = useState({});
   const [busy, setBusy] = useState(true);
@@ -41,50 +119,6 @@ export default function SettingsAdmin() {
       setOkMsg((label || "Settings") + " saved.");
     } catch (e) { setMsg("Failed: " + e.message); }
   };
-
-// Field components live at module level (not inside the page component) so their
-// identity is stable across renders. Defining them inside would remount every
-// input on each keystroke — losing text-field focus and instantly closing the
-// native colour-picker popup while dragging.
-function TextField({ k, s, set, label, hint }) {
-  return (
-    <div className="field"><label>{label}</label>
-      <input value={s[k] || ""} onChange={(e) => set(k, e.target.value)} />
-      {hint && <div className="seo-hint">{hint}</div>}
-    </div>
-  );
-}
-
-function ColorField({ k, s, set, label, hint }) {
-  const valid = isHex(s[k]) ? String(s[k]).trim() : THEME_DEFAULTS[k];
-  const setHex = (raw) => {
-    let h = String(raw || "").trim();
-    if (/^[0-9a-fA-F]{6}$/.test(h)) h = "#" + h;
-    set(k, h);
-  };
-  return (
-    <div className="field"><label>{label}</label>
-      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <input
-          type="color"
-          value={valid}
-          onChange={(e) => set(k, e.target.value)}
-          aria-label={label + " colour picker"}
-          style={{ width: 52, height: 42, padding: 4, border: "1.5px solid #ecd9e4", borderRadius: 10, cursor: "pointer", background: "#fff" }}
-        />
-        <input
-          value={s[k] ?? ""}
-          onChange={(e) => setHex(e.target.value)}
-          placeholder={THEME_DEFAULTS[k]}
-          spellCheck={false}
-          style={{ maxWidth: 130, fontFamily: "ui-monospace, monospace" }}
-          aria-label={label + " hex value"}
-        />
-      </div>
-      {hint && <div className="seo-hint">{hint}</div>}
-    </div>
-  );
-}
 
   const saveTheme = async () => {
     setMsg(""); setOkMsg("");
@@ -162,9 +196,21 @@ function ColorField({ k, s, set, label, hint }) {
 
       <div className="content-group">
         <div className="sec">Addresses</div><h2>Addresses</h2>
-        <div className="field"><label>Chittorgarh office</label><textarea rows={2} value={s.address_chittorgarh || ""} onChange={(e) => set("address_chittorgarh", e.target.value)} /></div>
-        <div className="field"><label>Mumbai office</label><textarea rows={2} value={s.address_mumbai || ""} onChange={(e) => set("address_mumbai", e.target.value)} /></div>
-        <SaveButton onClick={() => save(["address_chittorgarh", "address_mumbai"], "Addresses")}>Save</SaveButton>
+        <AddressListField s={s} set={set} />
+        <SaveButton onClick={() => save(["addresses"], "Addresses")}>Save</SaveButton>
+      </div>
+
+      <div className="content-group">
+        <div className="sec">Announcement</div><h2>Announcement bar</h2>
+        <p className="admin-sub" style={{ marginTop: 0 }}>Show a slim announcement strip above the header on every page — for upcoming events, season bookings, or any news.</p>
+        <label className="check-row">
+          <input type="checkbox" checked={s.announcement_enabled === true} onChange={(e) => set("announcement_enabled", e.target.checked)} />
+          <b>Show announcement bar on the website</b>
+        </label>
+        <TextField s={s} set={set} k="announcement_text" label="Announcement text" hint="e.g. Now booking for the 2026–27 wedding season across Rajasthan." />
+        <TextField s={s} set={set} k="announcement_link_label" label="Link label (optional)" hint="e.g. Enquire now" />
+        <TextField s={s} set={set} k="announcement_link_url" label="Link URL (optional)" hint="A page like /contact or a full https:// link." />
+        <SaveButton onClick={() => save(["announcement_enabled", "announcement_text", "announcement_link_label", "announcement_link_url"], "Announcement")}>Save</SaveButton>
       </div>
 
       <div className="content-group">
@@ -189,6 +235,12 @@ function ColorField({ k, s, set, label, hint }) {
         <TextField s={s} set={set} k="ga4_id" label="GA4 Measurement ID" hint="e.g. G-XXXXXXXXXX" />
         <TextField s={s} set={set} k="meta_pixel_id" label="Meta Pixel ID" />
         <SaveButton onClick={() => save(["ga4_id", "meta_pixel_id"], "Analytics")}>Save</SaveButton>
+      </div>
+
+      <div className="content-group">
+        <div className="sec">Media</div><h2>Media storage</h2>
+        <TextField s={s} set={set} k="cloudinary_storage_limit_gb" label="Cloudinary storage limit (GB)" hint="Used to show available space in the Media Library. Free plan = 25 GB — change this only if your plan is different." />
+        <SaveButton onClick={() => save(["cloudinary_storage_limit_gb"], "Media storage")}>Save</SaveButton>
       </div>
 
       <div className="content-group">

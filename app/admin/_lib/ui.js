@@ -138,7 +138,9 @@ export function useBulk({ rows, patchRows, endpoint, statusField = "status", upd
 }
 
 // Sticky bulk-action bar. Render above the table when bulk.selected.size > 0.
-export function BulkBar({ bulk, onDone }) {
+// scopeCount (optional): how many rows the select-all checkbox covers — pass
+// the filtered count so it never claims "all" when a filter is active.
+export function BulkBar({ bulk, onDone, scopeCount }) {
   const [note, setNote] = useState("");
   const finish = async (fn, verb) => {
     setNote("");
@@ -147,9 +149,10 @@ export function BulkBar({ bulk, onDone }) {
     if (onDone) onDone();
     setNote(res.failed ? `${verb}: ${res.done} ok, ${res.failed} failed.` : `${verb}: ${res.done} done.`);
   };
+  const scopeNote = typeof scopeCount === "number" ? ` (of ${scopeCount} shown)` : "";
   return (
     <div className="bulk-bar">
-      <label className="bulk-selectall" title={bulk.allChecked ? "Deselect all" : "Select all"}>
+      <label className="bulk-selectall" title={(bulk.allChecked ? "Deselect all" : "Select all") + scopeNote}>
         <input
           type="checkbox"
           checked={bulk.allChecked}

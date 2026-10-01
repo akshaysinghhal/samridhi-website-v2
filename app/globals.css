@@ -142,6 +142,22 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 }
 
 /* ---------- luxury navbar ---------- */
+/* Announcement bar — slim strip above the header, managed from Admin → Settings. */
+.announce-bar {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  background: var(--terracotta-deep, #8F3F2D); color: #F7F2E8;
+  padding: 9px 48px 9px 16px; position: relative; z-index: 101;
+  font-size: 13.5px; letter-spacing: 0.02em; text-align: center;
+}
+.announce-bar p { margin: 0; }
+.announce-bar a { color: var(--gold-soft, #E8C987); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.announce-bar a:hover { color: #fff; }
+.announce-bar button {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: none; border: 0; color: inherit; opacity: 0.75; cursor: pointer;
+  font-size: 14px; padding: 6px; line-height: 1;
+}
+.announce-bar button:hover { opacity: 1; }
 .site-header {
   position: sticky; top: 0; z-index: 100;
   background: var(--warm-white);
