@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, slugify, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton } from "../_lib/ui";
+import { revalidateSite, uploadOne, slugify, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter } from "../_lib/ui";
 import MediaPicker from "../_lib/MediaPicker";
 import PreviewModal from "../_lib/PreviewModal";
 
@@ -24,6 +24,8 @@ export default function ArtistsAdmin() {
   const [showForm, setShowForm] = useState(false);
   const [picker, setPicker] = useState(null); // { kind, onPick }
   const [preview, setPreview] = useState(null); // { url, kind }
+  const [statusFilter, setStatusFilter] = useState("");
+  const [q, setQ] = useState("");
 
   const load = async () => {
     setBusy(true);
@@ -48,7 +50,14 @@ export default function ArtistsAdmin() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const bulk = useBulk({ rows, patchRows: setRows, endpoint: "/api/admin/artists" });
+  const shown = rows.filter((r) => {
+    if (statusFilter && r.status !== statusFilter) return false;
+    const needle = q.trim().toLowerCase();
+    if (needle && !`${r.name || ""} ${r.category || ""}`.toLowerCase().includes(needle)) return false;
+    return true;
+  });
+
+  const bulk = useBulk({ rows: shown, patchRows: setRows, endpoint: "/api/admin/artists" });
 
   const save = async () => {
     setMsg(""); setOkMsg("");
@@ -174,11 +183,22 @@ export default function ArtistsAdmin() {
       )}
 
       {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
+      {rows.length > 0 && (
+        <div className="list-bar">
+          <input className="list-filter" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or category…" aria-label="Search artists" style={{ flex: 1, minWidth: 180 }} />
+          <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+          {(q.trim() || statusFilter) && <span className="seo-hint" style={{ margin: 0, whiteSpace: "nowrap" }}>{shown.length} of {rows.length}</span>}
+        </div>
+      )}
       {busy ? <p>Loading…</p> : (
         <table className="admin-table">
           <thead><tr><th style={{ width: 40 }}><CheckCell checked={bulk.allChecked} onChange={bulk.toggleAll} label="Select all artists" /></th><th>Artist</th><th>Category</th><th>Status</th><th>Flag</th><th></th></tr></thead>
           <tbody>
-            {rows.map((r) => (
+            {rows.length === 0 ? (
+              <tr><td colSpan={6} style={{ color: "#7a6a7c", textAlign: "center", padding: 24 }}>No artists yet. Add your first artist above.</td></tr>
+            ) : shown.length === 0 ? (
+              <tr><td colSpan={6} style={{ color: "#7a6a7c", textAlign: "center", padding: 24 }}>No artists match this filter.</td></tr>
+            ) : shown.map((r) => (
               <tr key={r.id} className={bulk.selected.has(r.id) ? "row-selected" : ""}>
                 <td><CheckCell checked={bulk.selected.has(r.id)} onChange={() => bulk.toggleOne(r.id)} label={`Select ${r.name}`} /></td>
                 <td><span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>

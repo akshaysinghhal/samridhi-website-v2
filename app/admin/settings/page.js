@@ -5,6 +5,11 @@ import { revalidateSite, SaveButton } from "../_lib/ui";
 
 const EMPTY_LEGAL = { legal_name: "", trade_name: "Samridhi Films & Television", gstin: "", pan: "", address: "", state: "Rajasthan", email: "", phone: "", grievance_officer: { name: "", email: "", phone: "" } };
 
+// Website theme defaults — the luxury editorial palette. Changing these in
+// Admin → Settings → Website theme re-skins the whole public site.
+const THEME_DEFAULTS = { theme_primary: "#B9553A", theme_deep: "#8F3F2D", theme_gold: "#C9A15A" };
+const isHex = (v) => /^#[0-9a-fA-F]{6}$/.test(String(v || "").trim());
+
 export default function SettingsAdmin() {
   const [s, setS] = useState({});
   const [busy, setBusy] = useState(true);
@@ -44,6 +49,57 @@ export default function SettingsAdmin() {
     </div>
   );
 
+  const themeVal = (k) => (isHex(s[k]) ? s[k].trim() : THEME_DEFAULTS[k]);
+  const setThemeHex = (k, raw) => {
+    let h = String(raw || "").trim();
+    if (/^[0-9a-fA-F]{6}$/.test(h)) h = "#" + h;
+    set(k, h);
+  };
+
+  const ColorField = ({ k, label, hint }) => (
+    <div className="field"><label>{label}</label>
+      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <input
+          type="color"
+          value={themeVal(k)}
+          onChange={(e) => set(k, e.target.value)}
+          aria-label={label + " colour picker"}
+          style={{ width: 52, height: 42, padding: 4, border: "1.5px solid #ecd9e4", borderRadius: 10, cursor: "pointer", background: "#fff" }}
+        />
+        <input
+          value={s[k] ?? ""}
+          onChange={(e) => setThemeHex(k, e.target.value)}
+          placeholder={THEME_DEFAULTS[k]}
+          spellCheck={false}
+          style={{ maxWidth: 130, fontFamily: "ui-monospace, monospace" }}
+          aria-label={label + " hex value"}
+        />
+      </div>
+      {hint && <div className="seo-hint">{hint}</div>}
+    </div>
+  );
+
+  const saveTheme = async () => {
+    setMsg(""); setOkMsg("");
+    try {
+      for (const k of Object.keys(THEME_DEFAULTS)) await api("/api/admin/site-settings", { method: "PUT", body: { key: k, value: s[k] ?? null } });
+      // Theme lives in the shared layout — revalidate it, not just one page.
+      await revalidateSite(["/"], "layout");
+      setOkMsg("Theme saved — the whole website now uses your colours.");
+    } catch (e) { setMsg("Failed: " + e.message); }
+  };
+
+  const resetTheme = async () => {
+    setMsg(""); setOkMsg("");
+    try {
+      const next = { ...s, ...THEME_DEFAULTS };
+      setS(next);
+      for (const [k, v] of Object.entries(THEME_DEFAULTS)) await api("/api/admin/site-settings", { method: "PUT", body: { key: k, value: v } });
+      await revalidateSite(["/"], "layout");
+      setOkMsg("Theme reset to the default terracotta palette.");
+    } catch (e) { setMsg("Failed: " + e.message); }
+  };
+
   const indexingOn = s.seo_indexing_enabled === true;
 
   if (busy) return (<><h1>Settings</h1><p>Loading…</p></>);
@@ -62,6 +118,25 @@ export default function SettingsAdmin() {
         <Text k="tagline2" label="Tagline 2" />
         <Text k="since" label="Serving since (year)" />
         <SaveButton onClick={() => save(["company_name", "tagline1", "tagline2", "since"], "Company")}>Save</SaveButton>
+      </div>
+
+      <div className="content-group">
+        <div className="sec">Theme</div><h2>Website theme</h2>
+        <p className="seo-hint" style={{ marginTop: 0 }}>One place to re-skin the whole website — buttons, links, headings, badges and highlights everywhere update to your colours.</p>
+        <div className="theme-row">
+          <ColorField k="theme_primary" label="Primary" hint="Buttons, links, main accents" />
+          <ColorField k="theme_deep" label="Deep shade" hint="Hover states, dark sections" />
+          <ColorField k="theme_gold" label="Gold accent" hint="Badges, dividers, highlights" />
+        </div>
+        <div className="theme-preview" aria-hidden="true">
+          <span className="tp-btn" style={{ background: themeVal("theme_primary") }}>Book Now</span>
+          <span className="tp-text" style={{ color: themeVal("theme_deep") }}>Creating Experiences. Delivering Excellence.</span>
+          <span className="tp-badge" style={{ background: themeVal("theme_gold") }}>Since 1999</span>
+        </div>
+        <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
+          <SaveButton onClick={saveTheme}>Save Theme</SaveButton>
+          <button className="btn btn-dark" onClick={resetTheme}>Reset to defaults</button>
+        </div>
       </div>
 
       <div className="content-group">

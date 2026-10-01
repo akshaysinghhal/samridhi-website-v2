@@ -41,6 +41,17 @@ export default async function RootLayout({ children }) {
   const tel = "tel:" + phone1.replace(/\s/g, "");
   const org = organizationJsonLd(s);
 
+  // Website theme colours — changeable from Admin → Settings → Website theme.
+  // Only strict #rrggbb values are accepted, so this can never inject CSS.
+  const hex = (v) => (/^#[0-9a-fA-F]{6}$/.test(String(v || "").trim()) ? String(v).trim() : null);
+  const themePrimary = hex(setting(s, "theme_primary", ""));
+  const themeDeep = hex(setting(s, "theme_deep", ""));
+  const themeGold = hex(setting(s, "theme_gold", ""));
+  const themeCss =
+    themePrimary || themeDeep || themeGold
+      ? `:root{${themePrimary ? `--terracotta:${themePrimary};` : ""}${themeDeep ? `--terracotta-deep:${themeDeep};` : ""}${themeGold ? `--gold:${themeGold};` : ""}}`
+      : "";
+
   return (
     <html lang="en" className={`${inter.variable} ${sora.variable}`}>
       <head>
@@ -48,6 +59,7 @@ export default async function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdScript(org) }}
         />
+        {themeCss && <style dangerouslySetInnerHTML={{ __html: themeCss }} />}
       </head>
       <body>
         {children}

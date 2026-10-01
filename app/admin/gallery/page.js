@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { api, uploadFile } from "../../../lib/adminApi";
 import { ytThumb } from "../../../lib/video";
-import { revalidateSite, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton } from "../_lib/ui";
+import { revalidateSite, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter } from "../_lib/ui";
 import PreviewModal from "../_lib/PreviewModal";
 
 const CATEGORIES = ["Events", "Weddings", "Corporate", "Celebrity Shows", "Cultural", "Press", "Highlight Videos", "Other"];
@@ -17,6 +17,8 @@ export default function GalleryAdmin() {
   const [msg, setMsg] = useState("");
   const [editing, setEditing] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [q, setQ] = useState("");
 
   const load = async () => {
     setBusy(true);
@@ -25,11 +27,22 @@ export default function GalleryAdmin() {
   };
   useEffect(() => { load(); }, []);
 
-  const photos = items.filter((i) => i.kind === "photo");
-  const videos = items.filter((i) => i.kind === "video");
+  const matchesFilter = (i) => {
+    if (statusFilter && i.status !== statusFilter) return false;
+    const needle = q.trim().toLowerCase();
+    if (needle && !`${i.title || ""} ${i.category || ""}`.toLowerCase().includes(needle)) return false;
+    return true;
+  };
+  const allPhotos = items.filter((i) => i.kind === "photo");
+  const allVideos = items.filter((i) => i.kind === "video");
+  const photos = allPhotos.filter(matchesFilter);
+  const videos = allVideos.filter(matchesFilter);
+  const tabItems = tab === "photos" ? photos : videos;
 
+  // Bulk selection is scoped to the active tab, so "Select all" only
+  // selects the photos (or videos) currently on screen.
   const bulk = useBulk({
-    rows: items,
+    rows: tabItems,
     patchRows: setItems,
     endpoint: "/api/admin/gallery-items",
     updateOne: (id, body) => api("/api/admin/gallery-items", { method: "PUT", body: { id, ...body } }),
@@ -145,7 +158,7 @@ export default function GalleryAdmin() {
             </div>
           </div>
         ) : (
-          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+          <div className="mi-actions">
             <a className="btn-sm btn-view" href="/gallery" target="_blank" rel="noreferrer">Preview</a>
             <button className="btn-sm btn-edit" onClick={() => setEditing(item.id)}>Details</button>
             <button className="btn-sm btn-del" onClick={() => remove(item.id)}>Delete</button>
@@ -161,12 +174,31 @@ export default function GalleryAdmin() {
       <p className="admin-sub">Photos and videos shown in the homepage Gallery tabs. Use <b>Details</b> to set category, caption, status and placeholder flags.</p>
       {msg && <div className="login-err" style={{ marginBottom: 16 }}>{msg}</div>}
 
-      {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
-
       <div className="tabs" style={{ justifyContent: "flex-start", margin: "0 0 20px" }}>
-        <button className={`tab-btn ${tab === "photos" ? "active" : ""}`} onClick={() => setTab("photos")}>📷 Photos ({photos.length})</button>
-        <button className={`tab-btn ${tab === "videos" ? "active" : ""}`} onClick={() => setTab("videos")}>🎬 Videos ({videos.length})</button>
+        <button className={`tab-btn ${tab === "photos" ? "active" : ""}`} onClick={() => setTab("photos")}>📷 Photos ({allPhotos.length})</button>
+        <button className={`tab-btn ${tab === "videos" ? "active" : ""}`} onClick={() => setTab("videos")}>🎬 Videos ({allVideos.length})</button>
       </div>
+
+      <div className="list-bar">
+        <input
+          className="list-filter"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={`Search ${tab === "photos" ? "photos" : "videos"} by title or category…`}
+          aria-label="Search gallery"
+          style={{ flex: 1, minWidth: 180 }}
+        />
+        <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+        {(q.trim() || statusFilter) && (
+          <span className="seo-hint" style={{ margin: 0, whiteSpace: "nowrap" }}>
+            {tabItems.length} of {tab === "photos" ? allPhotos.length : allVideos.length}
+          </span>
+        )}
+      </div>
+
+      {/* The bulk bar sits right above the grid (sticky) so it stays with the
+          selection instead of floating at the top of the page. */}
+      {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
 
       {tab === "photos" && (
         <>

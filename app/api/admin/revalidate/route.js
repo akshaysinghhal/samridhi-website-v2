@@ -11,13 +11,16 @@ export async function POST(req) {
   const denied = authedJson(user);
   if (denied) return denied;
 
-  const { paths } = await req.json().catch(() => ({}));
+  const { paths, type } = await req.json().catch(() => ({}));
   const list = Array.isArray(paths) && paths.length ? paths : ["/", "/blog"];
   const safe = list
     .filter((p) => typeof p === "string" && p.startsWith("/") && !p.includes(".."))
     .slice(0, 20);
+  // type "layout" revalidates the shared layout too (theme colours, header,
+  // footer); otherwise only the pages themselves.
+  const rtype = type === "layout" ? "layout" : "page";
   for (const p of safe) {
-    try { revalidatePath(p, "page"); } catch { /* ignore one bad path */ }
+    try { revalidatePath(p, rtype); } catch { /* ignore one bad path */ }
   }
-  return Response.json({ ok: true, revalidated: safe });
+  return Response.json({ ok: true, revalidated: safe, type: rtype });
 }

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/adminApi";
-import { useBulk, BulkBar, CheckCell, revalidateSite, openPreview } from "../_lib/ui";
+import { useBulk, BulkBar, CheckCell, revalidateSite, openPreview, StatusFilter } from "../_lib/ui";
 
 // Draft preview goes through the authenticated /api/admin/preview endpoint
 // (sets a short-lived cookie and returns the public URL); published posts
@@ -17,6 +17,8 @@ export default function PostsList() {
   const [posts, setPosts] = useState([]);
   const [busy, setBusy] = useState(true);
   const [msg, setMsg] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [q, setQ] = useState("");
 
   const load = async (silent) => {
     if (!silent) setBusy(true);
@@ -25,7 +27,14 @@ export default function PostsList() {
   };
   useEffect(() => { load(); }, []);
 
-  const bulk = useBulk({ rows: posts, patchRows: setPosts, endpoint: "/api/admin/posts" });
+  const shown = posts.filter((p) => {
+    if (statusFilter && p.status !== statusFilter) return false;
+    const needle = q.trim().toLowerCase();
+    if (needle && !`${p.title || ""} ${p.slug || ""}`.toLowerCase().includes(needle)) return false;
+    return true;
+  });
+
+  const bulk = useBulk({ rows: shown, patchRows: setPosts, endpoint: "/api/admin/posts" });
 
   const remove = async (id, title) => {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
@@ -43,16 +52,25 @@ export default function PostsList() {
       </div>
       {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
       {msg && <div className="login-err" style={{ marginBottom: 16 }}>{msg}</div>}
+      {posts.length > 0 && (
+        <div className="list-bar">
+          <input className="list-filter" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title or slug…" aria-label="Search posts" style={{ flex: 1, minWidth: 180 }} />
+          <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+          {(q.trim() || statusFilter) && <span className="seo-hint" style={{ margin: 0, whiteSpace: "nowrap" }}>{shown.length} of {posts.length}</span>}
+        </div>
+      )}
       {busy ? <p>Loading…</p> : posts.length === 0 ? (
         <div className="editor" style={{ textAlign: "center" }}>
           <p style={{ color: "#7a6a7c" }}>No posts yet. Write your first story!</p>
           <Link className="btn btn-primary" href="/admin/posts/new">+ New Post</Link>
         </div>
+      ) : shown.length === 0 ? (
+        <p style={{ color: "#7a6a7c" }}>No posts match this filter.</p>
       ) : (
         <table className="admin-table">
           <thead><tr><th style={{ width: 40 }}><CheckCell checked={bulk.allChecked} onChange={bulk.toggleAll} label="Select all posts" /></th><th>Title</th><th>Status</th><th>Published</th><th></th></tr></thead>
           <tbody>
-            {posts.map((p) => {
+            {shown.map((p) => {
               const onPreview = previewAction(p, setMsg);
               return (
                 <tr key={p.id} className={bulk.selected.has(p.id) ? "row-selected" : ""}>

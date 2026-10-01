@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../../lib/adminApi";
 import { SaveButton } from "../_lib/ui";
 
@@ -121,9 +121,8 @@ export default function LeadsAdmin() {
         <button className="btn-sm btn-new" onClick={exportCsv}>⬇ CSV export</button>
       </div>
 
-      <div className="leads-wrap">
-        <div className="leads-list">
-          {busy ? <p>Loading…</p> : shown.length === 0 ? <p>No leads match.</p> : (
+      <div className="leads-list">
+        {busy ? <p>Loading…</p> : shown.length === 0 ? <p>No leads match.</p> : (
             <table className="admin-table">
               <thead><tr><th>Lead</th><th>Type</th><th>Event</th><th>Status</th><th>Received</th></tr></thead>
               <tbody>
@@ -164,81 +163,116 @@ export default function LeadsAdmin() {
               </tbody>
             </table>
           )}
-        </div>
+      </div>
 
-        {selected && (
-          <div className="leads-detail editor">
-            <div className="lead-head">
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                  <h2 style={{ margin: 0 }}>{selected.name || "Unnamed lead"}</h2>
-                  <span className="type-badge">{prettyType(selected.type)}</span>
-                </div>
-                <div className="seo-hint" style={{ marginTop: 4 }}>
-                  Received {new Date(selected.created_at).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" })}
-                </div>
-              </div>
-              <button className="btn-sm btn-del" onClick={() => setSelected(null)} aria-label="Close lead details">✕</button>
+      {selected && (
+        <LeadModal
+          lead={selected}
+          notes={notes}
+          noteBody={noteBody}
+          setNoteBody={setNoteBody}
+          followUp={followUp}
+          setFollowUp={setFollowUp}
+          assignTo={assignTo}
+          setAssignTo={setAssignTo}
+          patchLead={patchLead}
+          addNote={addNote}
+          onClose={() => setSelected(null)}
+        />
+      )}
+    </>
+  );
+}
+
+// Lead details open in a popup (modal) instead of a side panel.
+function LeadModal({ lead, notes, noteBody, setNoteBody, followUp, setFollowUp, assignTo, setAssignTo, patchLead, addNote, onClose }) {
+  const closeRef = useRef(null);
+  useEffect(() => {
+    const h = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+    return () => { window.removeEventListener("keydown", h); document.body.style.overflow = prev; };
+  }, [onClose]);
+  const st = statusStyle(lead.status);
+  return (
+    <div className="lead-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label={`Lead: ${lead.name || "details"}`}>
+      <div className="lead-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="lead-head">
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <h2 style={{ margin: 0 }}>{lead.name || "Unnamed lead"}</h2>
+              <span className="type-badge">{prettyType(lead.type)}</span>
+              {lead.spam && <span className="badge draft">spam</span>}
             </div>
-
-            <div className="lead-status-row">
-              <label>Status</label>
-              <select
-                value={selected.status}
-                onChange={(e) => patchLead(selected.id, { status: e.target.value })}
-                className="status-pill"
-                style={{ background: statusStyle(selected.status).bg, color: statusStyle(selected.status).fg, borderColor: statusStyle(selected.status).bd }}
-              >
-                {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-
-            <div className="detail-grid">
-              <div className="d-field"><span>Phone</span><b>{selected.phone || "—"}</b></div>
-              <div className="d-field d-full"><span>Email</span><b className="break-all">{selected.email || "—"}</b></div>
-              <div className="d-field"><span>Company</span><b>{selected.company || "—"}</b></div>
-              <div className="d-field"><span>Type</span><b>{prettyType(selected.type)}</b></div>
-              <div className="d-field"><span>Event type</span><b>{selected.event_type || "—"}</b></div>
-              <div className="d-field"><span>Event date</span><b>{selected.event_date || "—"}</b></div>
-              <div className="d-field"><span>Location</span><b>{selected.location || "—"}</b></div>
-              <div className="d-field"><span>Guests</span><b>{selected.guests || "—"}</b></div>
-              <div className="d-field"><span>Budget</span><b>{selected.budget || "—"}</b></div>
-              <div className="d-field d-full"><span>Source page</span><b className="break-all">{selected.source_page || "—"}</b></div>
-            </div>
-            {selected.message && <div className="field" style={{ marginTop: 12 }}><label>Message</label><div className="detail-msg">{selected.message}</div></div>}
-            {selected.utm && Object.keys(selected.utm).length > 0 && (
-              <div className="seo-hint" style={{ marginTop: 8 }}>UTM: {Object.entries(selected.utm).map(([k, v]) => `${k}=${v}`).join(" · ")}</div>
-            )}
-
-            <div className="contact-btns">
-              {selected.phone && <a className="btn-sm btn-new" href={`tel:${digits(selected.phone)}`}>📞 Call</a>}
-              {selected.phone && <a className="btn-sm btn-edit" target="_blank" rel="noreferrer" href={`https://wa.me/${waPhone(selected.phone)}?text=${encodeURIComponent("Hello " + (selected.name || "") + ", this is Samridhi Films & Television following up on your enquiry.")}`}>💬 WhatsApp</a>}
-              {selected.email && <a className="btn-sm btn-edit" href={`mailto:${selected.email}?subject=${encodeURIComponent("Your enquiry — Samridhi Films & Television")}`}>✉️ Email</a>}
-            </div>
-
-            <div className="form-row" style={{ marginTop: 16 }}>
-              <div className="field"><label>Assigned to</label><input value={assignTo} onChange={(e) => setAssignTo(e.target.value)} placeholder="Team member name" onBlur={() => { if (assignTo !== (selected.assigned_to || "")) patchLead(selected.id, { assigned_to: assignTo }); }} /></div>
-              <div className="field" style={{ display: "flex", alignItems: "flex-end" }}>
-                <label className="check-row"><input type="checkbox" checked={!!selected.spam} onChange={(e) => patchLead(selected.id, { spam: e.target.checked })} /> Mark as spam</label>
-              </div>
-            </div>
-
-            <h3 style={{ marginTop: 20 }}>Internal notes</h3>
-            {notes.map((n) => (
-              <div key={n.id} className="note-card">
-                <div className="note-head"><b>{n.author || "Team"}</b><span>{new Date(n.created_at).toLocaleString("en-IN")}</span></div>
-                <div>{n.body}</div>
-                {n.follow_up_at && <div className="seo-hint" style={{ marginTop: 6 }}>⏰ Follow up: {new Date(n.follow_up_at).toLocaleString("en-IN")}</div>}
-              </div>
-            ))}
-            <div className="field"><label>Add note</label><textarea rows={3} value={noteBody} onChange={(e) => setNoteBody(e.target.value)} placeholder="Internal note (never shown publicly)…" /></div>
-            <div className="form-row">
-              <div className="field"><label>Follow-up reminder</label><input type="datetime-local" value={followUp} onChange={(e) => setFollowUp(e.target.value)} /></div>
-              <div className="field" style={{ display: "flex", alignItems: "flex-end" }}><SaveButton onClick={addNote}>Add Note</SaveButton></div>
+            <div className="seo-hint" style={{ marginTop: 4 }}>
+              Received {new Date(lead.created_at).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" })}
             </div>
           </div>
+          <button ref={closeRef} className="btn-sm btn-del" onClick={onClose} aria-label="Close lead details">✕</button>
+        </div>
+
+        <div className="lead-status-row">
+          <label>Status</label>
+          <select
+            value={lead.status}
+            onChange={(e) => patchLead(lead.id, { status: e.target.value })}
+            className="status-pill"
+            style={{ background: st.bg, color: st.fg, borderColor: st.bd }}
+          >
+            {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+
+        <div className="detail-grid">
+          <div className="d-field"><span>Phone</span><b>{lead.phone || "—"}</b></div>
+          <div className="d-field"><span>Email</span><b className="break-all">{lead.email || "—"}</b></div>
+          <div className="d-field"><span>Company</span><b>{lead.company || "—"}</b></div>
+          <div className="d-field"><span>Type</span><b>{prettyType(lead.type)}</b></div>
+          <div className="d-field"><span>Event type</span><b>{lead.event_type || "—"}</b></div>
+          <div className="d-field"><span>Event date</span><b>{lead.event_date || "—"}</b></div>
+          <div className="d-field"><span>Location</span><b>{lead.location || "—"}</b></div>
+          <div className="d-field"><span>Guests</span><b>{lead.guests || "—"}</b></div>
+          <div className="d-field"><span>Budget</span><b>{lead.budget || "—"}</b></div>
+          <div className="d-field d-full"><span>Source page</span>
+            {lead.source_page
+              ? <a href={lead.source_page} target="_blank" rel="noreferrer" className="break-all lead-link">{lead.source_page}</a>
+              : <b>—</b>}
+          </div>
+        </div>
+        {lead.message && <div className="field" style={{ marginTop: 12 }}><label>Message</label><div className="detail-msg">{lead.message}</div></div>}
+        {lead.utm && Object.keys(lead.utm).length > 0 && (
+          <div className="seo-hint" style={{ marginTop: 8 }}>UTM: {Object.entries(lead.utm).map(([k, v]) => `${k}=${v}`).join(" · ")}</div>
         )}
+
+        <div className="contact-btns">
+          {lead.phone && <a className="btn-sm btn-new" href={`tel:${digits(lead.phone)}`}>📞 Call</a>}
+          {lead.phone && <a className="btn-sm btn-edit" target="_blank" rel="noreferrer" href={`https://wa.me/${waPhone(lead.phone)}?text=${encodeURIComponent("Hello " + (lead.name || "") + ", this is Samridhi Films & Television following up on your enquiry.")}`}>💬 WhatsApp</a>}
+          {lead.email && <a className="btn-sm btn-edit" href={`mailto:${lead.email}?subject=${encodeURIComponent("Your enquiry — Samridhi Films & Television")}`}>✉️ Email</a>}
+        </div>
+
+        <div className="form-row" style={{ marginTop: 16 }}>
+          <div className="field"><label>Assigned to</label><input value={assignTo} onChange={(e) => setAssignTo(e.target.value)} placeholder="Team member name" onBlur={() => { if (assignTo !== (lead.assigned_to || "")) patchLead(lead.id, { assigned_to: assignTo }); }} /></div>
+          <div className="field" style={{ display: "flex", alignItems: "flex-end" }}>
+            <label className="check-row"><input type="checkbox" checked={!!lead.spam} onChange={(e) => patchLead(lead.id, { spam: e.target.checked })} /> Mark as spam</label>
+          </div>
+        </div>
+
+        <h3 style={{ marginTop: 20 }}>Internal notes</h3>
+        {notes.map((n) => (
+          <div key={n.id} className="note-card">
+            <div className="note-head"><b>{n.author || "Team"}</b><span>{new Date(n.created_at).toLocaleString("en-IN")}</span></div>
+            <div>{n.body}</div>
+            {n.follow_up_at && <div className="seo-hint" style={{ marginTop: 6 }}>⏰ Follow up: {new Date(n.follow_up_at).toLocaleString("en-IN")}</div>}
+          </div>
+        ))}
+        <div className="field"><label>Add note</label><textarea rows={3} value={noteBody} onChange={(e) => setNoteBody(e.target.value)} placeholder="Internal note (never shown publicly)…" /></div>
+        <div className="form-row">
+          <div className="field"><label>Follow-up reminder</label><input type="datetime-local" value={followUp} onChange={(e) => setFollowUp(e.target.value)} /></div>
+          <div className="field" style={{ display: "flex", alignItems: "flex-end" }}><SaveButton onClick={addNote}>Add Note</SaveButton></div>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

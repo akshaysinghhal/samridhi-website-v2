@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton } from "../_lib/ui";
+import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter } from "../_lib/ui";
 
 const SOURCES = [
   { value: "youtube", label: "YouTube" },
@@ -22,6 +22,8 @@ export default function CoupleStoriesAdmin() {
   const [okMsg, setOkMsg] = useState("");
   const [uploading, setUploading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [q, setQ] = useState("");
 
   const load = async () => {
     setBusy(true);
@@ -33,7 +35,14 @@ export default function CoupleStoriesAdmin() {
   };
   useEffect(() => { load(); }, []);
 
-  const bulk = useBulk({ rows, patchRows: setRows, endpoint: "/api/admin/couple-stories" });
+  const shown = rows.filter((r) => {
+    if (statusFilter && r.status !== statusFilter) return false;
+    const needle = q.trim().toLowerCase();
+    if (needle && !`${r.title || ""} ${r.couple_names || ""}`.toLowerCase().includes(needle)) return false;
+    return true;
+  });
+
+  const bulk = useBulk({ rows: shown, patchRows: setRows, endpoint: "/api/admin/couple-stories" });
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const startAdd = () => { setForm({ ...EMPTY }); setEditingId(null); setMsg(""); setOkMsg(""); setShowForm(true); };
@@ -133,11 +142,22 @@ export default function CoupleStoriesAdmin() {
       )}
 
       {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
+      {rows.length > 0 && (
+        <div className="list-bar">
+          <input className="list-filter" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title or couple names…" aria-label="Search stories" style={{ flex: 1, minWidth: 180 }} />
+          <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+          {(q.trim() || statusFilter) && <span className="seo-hint" style={{ margin: 0, whiteSpace: "nowrap" }}>{shown.length} of {rows.length}</span>}
+        </div>
+      )}
       {busy ? <p>Loading…</p> : (
         <table className="admin-table">
           <thead><tr><th style={{ width: 40 }}><CheckCell checked={bulk.allChecked} onChange={bulk.toggleAll} label="Select all stories" /></th><th>Story</th><th>Source</th><th>Consent</th><th>Status</th><th>Flag</th><th></th></tr></thead>
           <tbody>
-            {rows.map((r) => (
+            {rows.length === 0 ? (
+              <tr><td colSpan={7} style={{ color: "#7a6a7c", textAlign: "center", padding: 24 }}>No stories yet. Add your first story above.</td></tr>
+            ) : shown.length === 0 ? (
+              <tr><td colSpan={7} style={{ color: "#7a6a7c", textAlign: "center", padding: 24 }}>No stories match this filter.</td></tr>
+            ) : shown.map((r) => (
               <tr key={r.id} className={bulk.selected.has(r.id) ? "row-selected" : ""}>
                 <td><CheckCell checked={bulk.selected.has(r.id)} onChange={() => bulk.toggleOne(r.id)} label={`Select ${r.title}`} /></td>
                 <td><b>{r.title}</b>{r.couple_names && <div className="seo-hint">{r.couple_names}</div>}</td>

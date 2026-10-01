@@ -7,6 +7,7 @@ import { revalidateSite, useBulk, BulkBar, CheckCell } from "../_lib/ui";
 export default function WeddingsList() {
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(true);
+  const [q, setQ] = useState("");
 
   const load = async (silent) => {
     if (!silent) setBusy(true);
@@ -15,7 +16,13 @@ export default function WeddingsList() {
   };
   useEffect(() => { load(); }, []);
 
-  const bulk = useBulk({ rows, patchRows: setRows, endpoint: "/api/admin/weddings" });
+  const shown = rows.filter((w) => {
+    const needle = q.trim().toLowerCase();
+    if (needle && !`${w.title || ""} ${w.location || ""}`.toLowerCase().includes(needle)) return false;
+    return true;
+  });
+
+  const bulk = useBulk({ rows: shown, patchRows: setRows, endpoint: "/api/admin/weddings" });
 
   const togglePin = async (w) => {
     await api(`/api/admin/weddings/${w.id}`, { method: "PUT", body: { ...w, pinned: !w.pinned } });
@@ -40,16 +47,24 @@ export default function WeddingsList() {
         <Link className="btn-sm btn-new" href="/admin/weddings/new">+ New Wedding</Link>
       </div>
       {bulk.selected.size > 0 && <BulkBar bulk={bulk} onDone={revalidateSite} />}
+      {rows.length > 0 && (
+        <div className="list-bar">
+          <input className="list-filter" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title or location…" aria-label="Search weddings" style={{ flex: 1, minWidth: 180 }} />
+          {q.trim() && <span className="seo-hint" style={{ margin: 0, whiteSpace: "nowrap" }}>{shown.length} of {rows.length}</span>}
+        </div>
+      )}
       {busy ? <p>Loading…</p> : rows.length === 0 ? (
         <div className="editor" style={{ textAlign: "center" }}>
           <p style={{ color: "#7a6a7c" }}>No weddings yet. Add your first celebration!</p>
           <Link className="btn btn-primary" href="/admin/weddings/new">+ New Wedding</Link>
         </div>
+      ) : shown.length === 0 ? (
+        <p style={{ color: "#7a6a7c" }}>No weddings match this search.</p>
       ) : (
         <table className="admin-table">
           <thead><tr><th style={{ width: 40 }}><CheckCell checked={bulk.allChecked} onChange={bulk.toggleAll} label="Select all weddings" /></th><th>Wedding</th><th>Location</th><th>Pinned</th><th></th></tr></thead>
           <tbody>
-            {rows.map((w) => (
+            {shown.map((w) => (
               <tr key={w.id} className={bulk.selected.has(w.id) ? "row-selected" : ""}>
                 <td><CheckCell checked={bulk.selected.has(w.id)} onChange={() => bulk.toggleOne(w.id)} label={`Select ${w.title}`} /></td>
                 <td>

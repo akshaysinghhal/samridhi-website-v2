@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
-import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, slugify, SaveButton } from "./ui";
+import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, slugify, SaveButton, StatusFilter } from "./ui";
 import MediaPicker from "./MediaPicker";
 import PreviewModal from "./PreviewModal";
 
@@ -39,6 +39,8 @@ export default function AdminCrud({
   const [bulkStatus, setBulkStatus] = useState("published");
   const [picker, setPicker] = useState(null); // { key, multi, kind }
   const [preview, setPreview] = useState(null); // { url, kind }
+  const [statusFilter, setStatusFilter] = useState("");
+  const [q, setQ] = useState("");
 
   // revalidatePaths: extra public paths to purge on save/delete.
   // Array of strings, or (savedRow, allRows) => string[].
@@ -61,6 +63,21 @@ export default function AdminCrud({
   useEffect(() => { if (externalRefresh) load(true); }, [externalRefresh]);
 
   const hasStatus = rows.some((r) => typeof r.status === "string");
+
+  // Client-side search + status filter for the list table.
+  const shown = rows.filter((r) => {
+    if (statusFilter && r.status !== statusFilter) return false;
+    const needle = q.trim().toLowerCase();
+    if (needle) {
+      const hay = Object.values(r)
+        .flatMap((v) => (Array.isArray(v) ? v : [v]))
+        .filter((v) => typeof v === "string" || typeof v === "number")
+        .join(" ")
+        .toLowerCase();
+      if (!hay.includes(needle)) return false;
+    }
+    return true;
+  });
 
   const set = (key, v) => {
     setForm((f) => {
@@ -119,7 +136,8 @@ export default function AdminCrud({
   };
 
   // --- bulk selection -------------------------------------------------------
-  const allIds = rows.map((r) => r.id);
+  // "Select all" applies to the currently filtered view (shown), not hidden rows.
+  const allIds = shown.map((r) => r.id);
   const allChecked = allIds.length > 0 && allIds.every((id) => selected.has(id));
   const toggleAll = () => {
     setSelected(allChecked ? new Set() : new Set(allIds));
@@ -346,14 +364,35 @@ export default function AdminCrud({
         </div>
       )}
 
-      {busy ? <p>Loading…</p> : rows.length === 0 ? <p style={{ color: "#7a6a7c" }}>Nothing here yet.</p> : (
+      {rows.length > 0 && (
+        <div className="list-bar">
+          <input
+            className="list-filter"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search this list…"
+            aria-label="Search list"
+            style={{ flex: 1, minWidth: 180 }}
+          />
+          {hasStatus && <StatusFilter value={statusFilter} onChange={setStatusFilter} />}
+          {(q.trim() || statusFilter) && (
+            <span className="seo-hint" style={{ margin: 0, whiteSpace: "nowrap" }}>
+              {shown.length} of {rows.length}
+            </span>
+          )}
+        </div>
+      )}
+
+      {busy ? <p>Loading…</p> : shown.length === 0 ? (
+        <p style={{ color: "#7a6a7c" }}>{rows.length === 0 ? "Nothing here yet." : "No items match this filter."}</p>
+      ) : (
         <table className="admin-table">
           <thead><tr>
             <th style={{ width: 40 }}><input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label="Select all" style={{ width: 17, height: 17, accentColor: "var(--brand)" }} /></th>
             {columns.map((c) => <th key={c.key}>{c.label}</th>)}<th></th>
           </tr></thead>
           <tbody>
-            {rows.map((row) => {
+            {shown.map((row) => {
               const url = previewUrl(row);
               return (
                 <tr key={row.id} className={selected.has(row.id) ? "row-selected" : ""}>

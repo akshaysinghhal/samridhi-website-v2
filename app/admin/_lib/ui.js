@@ -26,10 +26,11 @@ export function slugify(s) {
 // Best-effort on-demand revalidation after a save. Goes through the
 // authenticated /api/admin/revalidate endpoint, so the browser never sees
 // the REVALIDATE_SECRET. The server API routes also revalidate on write;
-// this is a second trigger from the UI.
-export async function revalidateSite(paths = ["/"]) {
+// this is a second trigger from the UI. Pass type="layout" when the change
+// affects the shared layout (e.g. theme colours) rather than one page.
+export async function revalidateSite(paths = ["/"], type = "page") {
   try {
-    await api("/api/admin/revalidate", { method: "POST", body: { paths } });
+    await api("/api/admin/revalidate", { method: "POST", body: { paths, type } });
   } catch { /* ignore */ }
 }
 
@@ -148,7 +149,16 @@ export function BulkBar({ bulk, onDone }) {
   };
   return (
     <div className="bulk-bar">
-      <strong>{bulk.selected.size} selected</strong>
+      <label className="bulk-selectall" title={bulk.allChecked ? "Deselect all" : "Select all"}>
+        <input
+          type="checkbox"
+          checked={bulk.allChecked}
+          onChange={bulk.toggleAll}
+          aria-label="Select all"
+          style={{ width: 17, height: 17, accentColor: "var(--brand)" }}
+        />
+        <strong>{bulk.selected.size} selected</strong>
+      </label>
       {bulk.hasStatus && (
         <>
           <select value={bulk.bulkStatus} onChange={(e) => bulk.setBulkStatus(e.target.value)} aria-label="Bulk status">
@@ -162,6 +172,19 @@ export function BulkBar({ bulk, onDone }) {
       {bulk.bulkBusy && <span className="seo-hint" style={{ margin: 0 }}>{bulk.bulkBusy}</span>}
       {note && <span className="seo-hint" style={{ margin: 0 }}>{note}</span>}
     </div>
+  );
+}
+
+// Status dropdown filter for list pages. Options default to the shared
+// draft/published/scheduled set; pass custom options (e.g. lead statuses)
+// when the page uses different values.
+export function StatusFilter({ value, onChange, options, label = "All statuses" }) {
+  const opts = options || STATUS_OPTIONS.map((s) => ({ value: s, label: s[0].toUpperCase() + s.slice(1) }));
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value)} aria-label="Filter by status" className="list-filter">
+      <option value="">{label}</option>
+      {opts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
   );
 }
 
