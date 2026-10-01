@@ -45,6 +45,8 @@ function CropTool() {
   const [picker, setPicker] = useState(false);
   const [preset, setPreset] = useState("free");
   const [crop, setCrop] = useState(null); // natural px {x,y,w,h}
+  const [fitMode, setFitMode] = useState(false); // false = cut to shape, true = fit whole image with padded background
+  const [padColor, setPadColor] = useState("#ffffff");
   const [busy, setBusy] = useState(false);
   const canvasRef = useRef(null);
   const dragRef = useRef(null);
@@ -72,6 +74,7 @@ function CropTool() {
   const onPreset = (id) => {
     setPreset(id);
     const r = (CROP_PRESETS.find((p) => p.id === id) || {}).ratio || 0;
+    if (!r) setFitMode(false); // fit needs a fixed target ratio
     if (img) setCrop(centeredCrop(img.naturalWidth, img.naturalHeight, r));
   };
 
@@ -89,8 +92,17 @@ function CropTool() {
       const c = { x: crop.x * s, y: crop.y * s, w: crop.w * s, h: crop.h * s };
       ctx.fillStyle = "rgba(20,8,20,0.55)";
       ctx.fillRect(0, 0, dispW, dispH);
-      ctx.clearRect(c.x, c.y, c.w, c.h);
-      ctx.drawImage(img, crop.x, crop.y, crop.w, crop.h, c.x, c.y, c.w, c.h);
+      if (fitMode && ratio) {
+        // Fit preview: paint the frame with the pad colour, whole image contained inside.
+        ctx.fillStyle = padColor;
+        ctx.fillRect(c.x, c.y, c.w, c.h);
+        const fs = Math.min(c.w / dispW, c.h / dispH);
+        const dw = dispW * fs, dh = dispH * fs;
+        ctx.drawImage(img, c.x + (c.w - dw) / 2, c.y + (c.h - dh) / 2, dw, dh);
+      } else {
+        ctx.clearRect(c.x, c.y, c.w, c.h);
+        ctx.drawImage(img, crop.x, crop.y, crop.w, crop.h, c.x, c.y, c.w, c.h);
+      }
       ctx.strokeStyle = "#C9A15A"; ctx.lineWidth = 2.5;
       ctx.strokeRect(c.x, c.y, c.w, c.h);
       ctx.fillStyle = "#C9A15A";
@@ -99,7 +111,7 @@ function CropTool() {
       }
     }
     cv.dataset.scale = s;
-  }, [img, crop]);
+  }, [img, crop, fitMode, padColor, ratio]);
 
   const pos = (e) => {
     const r = canvasRef.current.getBoundingClientRect();
@@ -181,9 +193,22 @@ function CropTool() {
     try {
       const c = document.createElement("canvas");
       c.width = Math.round(crop.w); c.height = Math.round(crop.h);
-      c.getContext("2d").drawImage(img, crop.x, crop.y, crop.w, crop.h, 0, 0, c.width, c.height);
+      const ctx = c.getContext("2d");
+      let suffix;
+      if (fitMode && ratio) {
+        // Fit: whole image contained in the target frame, padded with the chosen colour.
+        ctx.fillStyle = padColor;
+        ctx.fillRect(0, 0, c.width, c.height);
+        const fs = Math.min(c.width / img.naturalWidth, c.height / img.naturalHeight);
+        const dw = img.naturalWidth * fs, dh = img.naturalHeight * fs;
+        ctx.drawImage(img, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+        suffix = `fit-${preset.replace(":", "x")}`;
+      } else {
+        ctx.drawImage(img, crop.x, crop.y, crop.w, crop.h, 0, 0, c.width, c.height);
+        suffix = `crop-${preset.replace(":", "x")}`;
+      }
       const blob = await new Promise((r) => c.toBlob(r, "image/png"));
-      const name = `${imgName.replace(/\.[a-z]+$/i, "")}-crop-${preset.replace(":", "x")}.png`;
+      const name = `${imgName.replace(/\.[a-z]+$/i, "")}-${suffix}.png`;
       if (saveToLibrary) {
         await uploadFile(new File([blob], name, { type: "image/png" }));
         toast("Cropped image saved to Media Library.");
@@ -216,6 +241,23 @@ function CropTool() {
           </button>
         ))}
       </div>
+      {ratio > 0 && (
+        <div className="mt-seg" style={{ marginBottom: 14 }}>
+          <button type="button" onClick={() => setFitMode(false)} className={"mt-seg-btn" + (!fitMode ? " active" : "")}>
+            <b>✂ Crop</b><span>Cut the image to this shape</span>
+          </button>
+          <button type="button" onClick={() => setFitMode(true)} className={"mt-seg-btn" + (fitMode ? " active" : "")}>
+            <b>🖼 Fit — no cut</b><span>Whole image kept, background filled</span>
+          </button>
+          {fitMode && (
+            <label className="mt-padcolor">
+              <span>Background colour</span>
+              <input type="color" value={padColor} onChange={(e) => setPadColor(e.target.value)} />
+              <input value={padColor} onChange={(e) => setPadColor(e.target.value)} spellCheck={false} style={{ width: 84 }} />
+            </label>
+          )}
+        </div>
+      )}
       {!img && !busy && <p className="admin-sub">Pick an image to start cropping. Drag inside the box to move it, drag the gold corners to resize.</p>}
       {busy && !img && <AdminLoader />}
       {img && (
@@ -227,10 +269,11 @@ function CropTool() {
             onTouchStart={onDown} onTouchMove={onMove} onTouchEnd={() => (dragRef.current = null)}
           />
           <div className="seo-hint" style={{ margin: "8px 0" }}>
-            Crop: {Math.round(crop?.w || 0)} × {Math.round(crop?.h || 0)} px
+            {fitMode && ratio ? "Fit" : "Crop"}: {Math.round(crop?.w || 0)} × {Math.round(crop?.h || 0)} px
+            {fitMode && ratio ? " — whole image kept, padded" : ""}
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button type="button" className="btn btn-primary" disabled={busy} onClick={() => exportCrop(false)}>⬇ Download cropped PNG</button>
+            <button type="button" className="btn btn-primary" disabled={busy} onClick={() => exportCrop(false)}>⬇ Download {fitMode && ratio ? "fitted" : "cropped"} PNG</button>
             <button type="button" className="btn btn-dark" disabled={busy} onClick={() => exportCrop(true)}>💾 Save to Media Library</button>
           </div>
         </>
@@ -713,9 +756,9 @@ function VideoTool() {
 
 // ---------------- page ----------------
 const TABS = [
-  ["crop", "✂ Crop & resize"],
-  ["watermark", "💧 Watermark"],
-  ["video", "🎬 Video studio"],
+  ["crop", "✂", "Crop & resize", "Cut or fit photos to Instagram-ready sizes"],
+  ["watermark", "💧", "Watermark", "Stamp your brand on images & video"],
+  ["video", "🎬", "Video studio", "Text overlays, trim & WebM export"],
 ];
 
 export default function MediaToolsAdmin() {
@@ -724,11 +767,13 @@ export default function MediaToolsAdmin() {
     <>
       <h1>Media Tools</h1>
       <p className="admin-sub">Crop photos for Instagram, stamp watermarks on images &amp; video, and do basic video edits — all right here.</p>
-      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-        {TABS.map(([id, label]) => (
-          <button key={id} type="button" onClick={() => setTab(id)} className="ai-chip"
-            style={tab === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff", fontSize: 14, padding: "10px 18px" } : { fontSize: 14, padding: "10px 18px" }}>
-            {label}
+      <div className="mt-tabs">
+        {TABS.map(([id, icon, title, desc]) => (
+          <button key={id} type="button" onClick={() => setTab(id)}
+            className={"mt-tab" + (tab === id ? " active" : "")} aria-pressed={tab === id}>
+            <span className="mt-tab-icon" aria-hidden="true">{icon}</span>
+            <span className="mt-tab-title">{title}</span>
+            <span className="mt-tab-desc">{desc}</span>
           </button>
         ))}
       </div>
