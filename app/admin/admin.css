@@ -307,6 +307,10 @@ tr.row-selected td { background: #f3eefd; }
 .ai-history-prompt { font-size: 13px; font-weight: 700; color: #5b3a2e; }
 .ai-history-snippet { font-size: 12.5px; color: #8a7a6a; }
 
+/* ---------- Billing: line items + AI draft row ---------- */
+.bill-ai-row { display: flex; gap: 8px; }
+.bill-ai-row input { flex: 1 1 auto; min-width: 0; }
+
 /* ---------- Mobile: app-like admin (phones) ---------- */
 @media (max-width: 860px) {
   .admin-main { padding: 14px 14px 90px; padding-top: 72px; }
@@ -358,13 +362,19 @@ tr.row-selected td { background: #f3eefd; }
   /* billing: line items stack card-style */
   .bill-items-row { grid-template-columns: 1fr 1fr 44px !important; }
   .bill-items-row > *:first-child { grid-column: 1 / -1; }
+  .bill-items-row input { min-width: 0; width: 100%; }
+  .bill-items-row .btn-sm { width: 40px; height: 40px; min-height: 40px; padding: 0; }
+  .bill-ai-row { flex-wrap: wrap; }
+  .bill-ai-row .btn-sm { flex: 1 1 100%; }
   .pay-grid { grid-template-columns: 1fr !important; }
   .pay-grid .btn { width: 100%; }
 
-  /* creatives: 2 template columns, full-width download */
+  /* creatives: 2 template columns, full-width buttons */
   .creative-tpls { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .creative-tpl { padding: 8px; }
   .creative-grid { grid-template-columns: 1fr !important; gap: 18px !important; padding-bottom: 84px; }
   .creative-dl { width: 100%; }
+  .creative-actions .btn { flex: 1 1 100%; }
 
   /* public mobile bottom-bar padding must not apply inside admin */
   body.is-admin { padding-bottom: 0 !important; }
@@ -418,6 +428,21 @@ tr.row-selected td { background: #f3eefd; }
   .mp-handle span { width: 44px; height: 5px; border-radius: 999px; background: #d8c6bd; }
   .mp-head { padding-top: 6px !important; }
 }
+
+/* ---------- Creative Studio ---------- */
+.creative-tpls { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; margin-bottom: 8px; }
+.creative-tpl { border: 1.5px solid #ecd9c8; border-radius: 14px; background: #fff; cursor: pointer; padding: 10px; text-align: center; min-width: 0; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.creative-tpl.active { border-color: #8F3F2D; box-shadow: 0 0 0 2px #8F3F2D, 0 8px 26px rgba(143,63,45,0.22); }
+.creative-thumb { width: 100%; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 8px; position: relative; background: #faf6f1; }
+.creative-tpl-name { font-weight: 800; font-size: 13.5px; margin-top: 8px; color: #5c2c1e; }
+.creative-tpl-desc { font-size: 11.5px; color: #8a6a5c; margin-top: 2px; line-height: 1.4; }
+.creative-grid { display: grid; grid-template-columns: minmax(320px, 430px) 1fr; gap: 26px; margin-top: 22px; align-items: start; }
+.creative-grid > * { min-width: 0; }
+.creative-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+/* Hidden natural-size node for the PNG export. It must stay rendered for
+   html2canvas, but is parked off-screen with a transform (not a huge negative
+   left offset) so it can never widen the page's scrollable area on mobile. */
+.creative-export-node { position: fixed; left: 0; top: 0; transform: translateX(-12000px); pointer-events: none; }
 
 /* ---------- dashboard quick actions (app-like one-tap tools) ---------- */
 .quick-actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
