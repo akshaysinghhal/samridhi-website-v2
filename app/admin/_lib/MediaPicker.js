@@ -71,14 +71,16 @@ function MediaPickerInner({ open, onClose, onSelect, kind = "all", multi = false
     (async () => {
       setBusy(true); setErr(""); setLoadingMore(false);
       try {
-        // Phase 1: first 24 files fast, so the picker opens instantly.
-        const first = await api("/api/admin/media?limit=24&usage=0");
+        // Phase 1: first 24 files of the requested kind, so the picker opens
+        // instantly with the pre-selected tab already populated.
+        const kindParam = kind !== "all" ? `&kind=${encodeURIComponent(kind)}` : "";
+        const first = await api(`/api/admin/media?limit=24&usage=0${kindParam}`);
         if (!live) return;
         setMedia(first.media || []);
         setBusy(false);
         // Phase 2: the rest in the background.
         setLoadingMore(true);
-        const full = await api("/api/admin/media?usage=0");
+        const full = await api(`/api/admin/media?usage=0${kindParam}`);
         if (!live) return;
         setMedia(full.media || []);
       } catch (e) { if (live) setErr("Failed to load library: " + e.message); }

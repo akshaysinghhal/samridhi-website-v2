@@ -5,11 +5,14 @@ import { cloud } from "../../../../lib/cloudinary";
 // file in the account appears here — including bulk imports that never went
 // through the `media` DB table. The DB table is only used for alt text.
 // `limit` stops early once enough items are collected (for a fast first
-// paint); omit it to fetch everything.
-async function listCloudinary(limit) {
+// paint); omit it to fetch everything. `kind` ("image"|"video") restricts the
+// search to one resource type — the picker's first batch must match its
+// pre-selected tab, otherwise a video-only picker briefly shows "no files".
+async function listCloudinary(limit, kind) {
   const items = [];
   const wantAll = !limit || limit <= 0;
-  for (const resourceType of ["image", "video"]) {
+  const types = kind === "video" ? ["video"] : kind === "image" ? ["image"] : ["image", "video"];
+  for (const resourceType of types) {
     let nextCursor;
     do {
       const res = await cloud().search
@@ -52,9 +55,11 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const limit = Math.max(0, parseInt(searchParams.get("limit") || "0", 10) || 0);
   const skipUsage = searchParams.get("usage") === "0";
+  const kindParam = searchParams.get("kind");
+  const kind = kindParam === "video" ? "video" : kindParam === "image" ? "image" : null;
   try {
     const [items, usageRes] = await Promise.all([
-      listCloudinary(limit),
+      listCloudinary(limit, kind),
       skipUsage ? null : cloud().api.usage().catch(() => null),
     ]);
     // Alt text from the DB media table (best effort).
