@@ -5,9 +5,26 @@ import { api } from "../../../lib/adminApi";
 // Shared AI writing helper for the admin panel. Everything goes through the
 // server-side /api/admin/ai proxy (Gemini key stays server-side).
 
-export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seedTick, quickActions, historyEnabled }) {
+// Removes markdown formatting for copy-paste into WhatsApp / social / fields.
+export function stripMarkdown(t) {
+  return String(t || "")
+    .replace(/^#{1,6}\s+/gm, "")            // ## headings
+    .replace(/\*\*(.+?)\*\*/g, "$1")        // **bold**
+    .replace(/__(.+?)__/g, "$1")            // __bold__
+    .replace(/(^|[\s(])\*(.+?)\*/g, "$1$2") // *italics*
+    .replace(/(^|[\s(])_(.+?)_/g, "$1$2")   // _italics_
+    .replace(/`(.+?)`/g, "$1")              // `code`
+    .replace(/^\s*[-*+]\s+/gm, "")          // - bullets
+    .replace(/^\s*\d+[.)]\s+/gm, "")        // 1. numbered lists
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // [links](url)
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seedTick, quickActions, historyEnabled, plainDefault }) {
   const [prompt, setPrompt] = useState("");
   const [lang, setLang] = useState("en");
+  const [plain, setPlain] = useState(plainDefault !== false); // plain text, no markdown
   const [result, setResult] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -39,7 +56,7 @@ export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seed
     if (!p || busy) return;
     setBusy(true); setErr(""); setResult(""); setCopied(false);
     try {
-      const r = await api("/api/admin/ai", { method: "POST", body: { prompt: p, lang } });
+      const r = await api("/api/admin/ai", { method: "POST", body: { prompt: p, lang, plain } });
       setResult(r.text || "");
       if (historyEnabled && r.text) saveAiHistory(p, r.text);
     } catch (e) {
@@ -68,6 +85,7 @@ export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seed
         <div className="ai-lang">
           <button type="button" className={lang === "en" ? "on" : ""} onClick={() => setLang("en")}>English</button>
           <button type="button" className={lang === "hi" ? "on" : ""} onClick={() => setLang("hi")}>हिन्दी</button>
+          <button type="button" className={plain ? "on" : ""} onClick={() => setPlain((v) => !v)} title="Plain text without markdown like **bold**">📝 Plain text</button>
         </div>
         <label className="ai-label">What should the AI write?</label>
         {quickActions && quickActions.length > 0 && (
@@ -96,6 +114,7 @@ export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seed
             <div className="ai-result" style={{ whiteSpace: "pre-wrap" }}>{result}</div>
             <div className="ai-actions">
               <button type="button" className="btn btn-dark" onClick={copy}>{copied ? "Copied ✓" : "Copy"}</button>
+              <button type="button" className="btn btn-dark" onClick={() => setResult(stripMarkdown(result))} title="Remove **bold**, ## headings and bullets">🧹 Plain text</button>
               {onInsert && (
                 <button type="button" className="btn btn-primary" onClick={() => onInsert(result)}>Use this text</button>
               )}
@@ -127,7 +146,7 @@ export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seed
 }
 
 // Small "✨ AI" button that sits next to a form field and inserts the result.
-export function AiFieldButton({ onInsert, seedPrompt, label }) {
+export function AiFieldButton({ onInsert, seedPrompt, label, plainDefault }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -137,6 +156,7 @@ export function AiFieldButton({ onInsert, seedPrompt, label }) {
         onClose={() => setOpen(false)}
         title={label || "Write with AI"}
         seedPrompt={seedPrompt}
+        plainDefault={plainDefault}
         onInsert={(t) => { onInsert(t); setOpen(false); }}
       />
     </>

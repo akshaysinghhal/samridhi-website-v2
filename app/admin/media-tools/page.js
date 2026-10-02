@@ -587,7 +587,7 @@ function VideoTool() {
     try {
       const r = await api("/api/admin/ai", {
         method: "POST",
-        body: { prompt: `Suggest 3 short punchy overlay texts for a video, each under 6 words, one per line, no numbering. The video is about: ${topic.trim()}. Context: Samridhi Films & Television, an event company in Rajasthan.`, lang: "en" },
+        body: { prompt: `Suggest 3 short punchy overlay texts for a video, each under 6 words, one per line, no numbering. The video is about: ${topic.trim()}. Context: Samridhi Films & Television, an event company in Rajasthan.`, lang: "en", plain: true },
       });
       const opts = String(r.text || "").split("\n").map((x) => x.replace(/^[\d.\-•\s]+/, "").trim()).filter(Boolean).slice(0, 3);
       setAiOptions(opts);

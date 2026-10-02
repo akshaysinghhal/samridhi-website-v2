@@ -139,6 +139,7 @@ export function DocForm({ kind, initial, existingNos, onSave, onCancel, company 
         method: "POST",
         body: {
           lang: "en",
+          plain: true,
           prompt: `You are helping an event company in Rajasthan draft a quotation's line items. The event: ${aiDesc.trim()}. Return ONLY a JSON array like [{"desc":"...","qty":1}] — item descriptions and quantities only, NO prices, NO rates, NO commentary, NO markdown fences. 5-10 practical items an event planner would quote for this.`,
         },
       });

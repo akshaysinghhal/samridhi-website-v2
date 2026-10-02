@@ -17,6 +17,7 @@ export async function POST(request) {
   }
   const prompt = String(body.prompt || "").trim();
   const lang = body.lang === "hi" ? "hi" : "en";
+  const plain = body.plain === true;
   if (!prompt) return Response.json({ error: "Tell the AI what to write first." }, { status: 400 });
   if (prompt.length > 4000) return Response.json({ error: "That prompt is too long — keep it under 4000 characters." }, { status: 400 });
 
@@ -39,7 +40,10 @@ export async function POST(request) {
     lang === "hi"
       ? "Reply in Hindi (Devanagari script). Warm, professional tone for an Indian event & wedding company's website and social media."
       : "Reply in clear English. Warm, professional tone for an Indian event & wedding company's website and social media.";
-  const fullPrompt = `${voice}\n\n${prompt}`;
+  const plainRule = plain
+    ? " Write in plain text only: no markdown formatting, no **bold**, no ## headings, no leading - or * bullets and no numbered lists — use simple line breaks between ideas."
+    : "";
+  const fullPrompt = `${voice}${plainRule}\n\n${prompt}`;
 
   let res;
   try {
