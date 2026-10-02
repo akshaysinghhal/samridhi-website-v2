@@ -71,8 +71,8 @@ function MediaPickerInner({ open, onClose, onSelect, kind = "all", multi = false
     (async () => {
       setBusy(true); setErr(""); setLoadingMore(false);
       try {
-        // Phase 1: first 15 files fast, so the picker opens instantly.
-        const first = await api("/api/admin/media?limit=15&usage=0");
+        // Phase 1: first 24 files fast, so the picker opens instantly.
+        const first = await api("/api/admin/media?limit=24&usage=0");
         if (!live) return;
         setMedia(first.media || []);
         setBusy(false);

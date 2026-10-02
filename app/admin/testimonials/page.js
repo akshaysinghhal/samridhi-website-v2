@@ -26,7 +26,7 @@ export default function TestimonialsAdmin() {
         { key: "sort", label: "Display order", type: "number" },
         { key: "status", label: "Status", type: "select", options: STATUS_OPTIONS },
       ]}
-      defaults={{ status: "draft", sort: 0, permission_granted: false }}
+      defaults={{ status: "draft", sort: 0, permission_granted: true }}
       aiFillHint="Paste or describe the testimonial — AI extracts the quote, name and company."
       aiFillFields={[
         { key: "quote", label: "Testimonial quote" },
