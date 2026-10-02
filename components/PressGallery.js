@@ -49,19 +49,20 @@ export default function PressGallery({ items, publications, years }) {
         </span>
       </div>
 
-      <div className="masonry">
+      <div className="press-wall">
         {filtered.map((p, i) => (
           <figure key={p.id} onClick={() => setOpen(i)} style={{ cursor: "zoom-in" }} tabIndex={0}
             onKeyDown={(e) => { if (e.key === "Enter") setOpen(i); }}>
             {p.publication && <span className="press-pub-badge">{p.publication}</span>}
             <img src={p.image_url} alt={altFor(p)} loading="lazy" />
-            <figcaption>
-              
-              {[p.headline].filter(Boolean).join(" — ")}{" "}
-              <span style={{ opacity: 0.6 }}>
-                ({p.type === "page_collage" ? "Page collage" : "Clipping"}{p.year ? `, ${p.year}` : ""})
-              </span>
-            </figcaption>
+            {(p.headline || p.year) && (
+              <figcaption>
+                {[p.headline].filter(Boolean).join(" — ")}{" "}
+                <span style={{ opacity: 0.6 }}>
+                  ({p.type === "page_collage" ? "Page collage" : "Clipping"}{p.year ? `, ${p.year}` : ""})
+                </span>
+              </figcaption>
+            )}
           </figure>
         ))}
       </div>
