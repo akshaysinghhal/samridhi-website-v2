@@ -34,6 +34,7 @@ export default async function GalleryPage() {
       id: g.id,
       kind: isVideo ? "video" : "photo",
       title: g.title || "",
+      caption: g.caption || "",
       image_url: g.image_url || "",
       category: g.category || "Other",
       // video fields
