@@ -5,7 +5,6 @@ import { verifyAdmin, authedJson, adminDb } from "../../../../lib/adminAuth";
 // Body: { videoUrl, instructions? }
 // The API key lives in site_settings (Admin → Integrations & AI) and never
 // reaches the browser; this route is admin-authenticated.
-export const maxDuration = 60;
 
 const MAX_BYTES = 18 * 1024 * 1024; // Gemini inline video limit
 
