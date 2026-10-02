@@ -324,29 +324,37 @@ function CropTool() {
 // ---------------- Watermark tool ----------------
 const WM_SHORTCUTS_KEY = "samridhi-wm-shortcuts";
 const WM_DEFAULT_SHORTCUTS = ["© Samridhi Films & Television", "Samridhi Films & Television", "+91 96022 28846"];
-const GRAVITIES = [
-  ["north_west", "north", "north_east"],
-  ["west", "center", "east"],
-  ["south_west", "south", "south_east"],
-];
 const SITE_LOGO = "/images/logo.png";
 
-function clTextOverlayUrl(mediaUrl, { text, size, color, opacity, pos, bold, italic }) {
+function clParse(mediaUrl) {
   const m = String(mediaUrl).match(/res\.cloudinary\.com\/([^/]+)\/(image|video)\/upload\/(.+)$/);
   if (!m) return null;
   const [, cloud, kind, rest] = m;
   const noVer = rest.replace(/^v\d+\//, "");
   const ext = (noVer.match(/\.([a-z0-9]+)$/i) || [])[1] || "";
   const pub = noVer.replace(/\.[a-z0-9]+$/i, "");
+  return { cloud, kind, pub, ext };
+}
+
+// Center-based overlays: g_center anchors the overlay by its middle, so x_/y_
+// shift it by fractions of the base image (fl_relative). Verified live on
+// Cloudinary's demo cloud for both text and logo overlays.
+function clTextOverlayT({ text, size, color, opacity, pos, bold, italic }) {
   const enc = encodeURIComponent(text).replace(/!/g, "%21").replace(/'/g, "%27").replace(/\(/g, "%28").replace(/\)/g, "%29").replace(/\*/g, "%2A");
   const style = [bold ? "bold" : "", italic ? "italic" : ""].filter(Boolean).join("_");
   const fontSpec = style ? `Arial_${Math.round(size)}_${style}` : `Arial_${Math.round(size)}`;
-  // fl_relative: x/y are fractions of the base image, anchored at north_west.
-  // Clamped to 0.9 so long text doesn't run far off the edge.
-  const fx = ((pos.cx / 4) * 0.9).toFixed(3);
-  const fy = ((pos.cy / 4) * 0.9).toFixed(3);
-  const t = `l_text:${fontSpec}:${enc},fl_relative,g_north_west,x_${fx},y_${fy},co_rgb:${color.replace("#", "")},o_${opacity}`;
-  return `https://res.cloudinary.com/${cloud}/${kind}/upload/${t}/${pub}${ext ? "." + ext : ""}`;
+  const dx = (pos.x - 0.5).toFixed(3);
+  const dy = (pos.y - 0.5).toFixed(3);
+  return `l_text:${fontSpec}:${enc},fl_relative,g_center,x_${dx},y_${dy},co_rgb:${color.replace("#", "")},o_${opacity}`;
+}
+
+function clLogoOverlayT({ logoUrl, widthPct, opacity, pos }) {
+  const logoPub = clPublicId(logoUrl);
+  if (!logoPub) return null;
+  const w = Math.min(0.9, Math.max(0.05, widthPct / 100));
+  const dx = (pos.x - 0.5).toFixed(3);
+  const dy = (pos.y - 0.5).toFixed(3);
+  return `l_${logoPub},fl_relative,w_${w.toFixed(2)},g_center,x_${dx},y_${dy},o_${opacity}`;
 }
 
 function clPublicId(url) {
@@ -355,37 +363,11 @@ function clPublicId(url) {
   return m[1].replace(/^v\d+\//, "").replace(/\.[a-z0-9]+$/i, "");
 }
 
-// Logo overlay sized relative to the base image: fl_relative makes w_/x_/y_
-// fractions of the base image, anchored at north_west. When the base and logo
-// dimensions are known the logo is kept fully on-screen; otherwise it falls
-// back to a simple fractional placement.
-function clLogoOverlayUrl(mediaUrl, { logoUrl, widthPct, opacity, pos, baseW, baseH, logoAr }) {
-  const m = String(mediaUrl).match(/res\.cloudinary\.com\/([^/]+)\/(image|video)\/upload\/(.+)$/);
-  if (!m) return null;
-  const [, cloud, kind, rest] = m;
-  const noVer = rest.replace(/^v\d+\//, "");
-  const ext = (noVer.match(/\.([a-z0-9]+)$/i) || [])[1] || "";
-  const pub = noVer.replace(/\.[a-z0-9]+$/i, "");
-  const logoPub = clPublicId(logoUrl);
-  if (!logoPub) return null;
-  const w = Math.min(0.9, Math.max(0.05, widthPct / 100));
-  let fx, fy;
-  if (baseW > 0 && baseH > 0 && logoAr > 0) {
-    const hFrac = (w * baseW / logoAr) / baseH;
-    const pad = 0.035;
-    fx = pad + (pos.cx / 4) * Math.max(0, 1 - w - pad * 2);
-    fy = pad + (pos.cy / 4) * Math.max(0, 1 - hFrac - pad * 2);
-  } else {
-    fx = (pos.cx / 4) * (1 - w);
-    fy = (pos.cy / 4) * (1 - w);
-  }
-  const t = `l_${logoPub},fl_relative,w_${w.toFixed(2)},g_north_west,x_${fx.toFixed(3)},y_${fy.toFixed(3)},o_${opacity}`;
-  return `https://res.cloudinary.com/${cloud}/${kind}/upload/${t}/${pub}${ext ? "." + ext : ""}`;
-}
-
 function WatermarkTool() {
   const [mode, setMode] = useState("image"); // image | cloudinary
-  const [content, setContent] = useState("text"); // text | logo
+  // Two independent watermark layers that can be used together.
+  const [textOn, setTextOn] = useState(true);
+  const [logoOn, setLogoOn] = useState(false);
   const [img, setImg] = useState(null);
   const [imgUrl, setImgUrl] = useState("");
   const [imgName, setImgName] = useState("");
@@ -403,17 +385,26 @@ function WatermarkTool() {
   const [logoUrl, setLogoUrl] = useState(SITE_LOGO);
   const [logoImg, setLogoImg] = useState(null);
   const [logoSize, setLogoSize] = useState(18); // % of image width
+  const [logoOpacity, setLogoOpacity] = useState(90);
   // shared
   const [size, setSize] = useState(48);
   const [color, setColor] = useState("#ffffff");
   const [opacity, setOpacity] = useState(70);
-  const [pos, setPos] = useState({ cx: 4, cy: 4 }); // 5×5 grid cell (0-4)
+  // Position = center of the watermark as a fraction (0..1) of the image.
+  // Drag the watermark on the live preview to move it — no grid needed.
+  const [pos, setPos] = useState({ x: 0.5, y: 0.9 }); // text layer
+  const [logoPos, setLogoPos] = useState({ x: 0.85, y: 0.15 }); // logo layer
+  const [dragLayer, setDragLayer] = useState("text"); // which layer a tap/drag on the preview moves
   const [layout, setLayout] = useState("single"); // single | tiled (image mode)
   const [mediaW, setMediaW] = useState(0); // picked cloudinary asset dims
   const [mediaH, setMediaH] = useState(0);
   const [shortcuts, setShortcuts] = useState(WM_DEFAULT_SHORTCUTS);
   const [busy, setBusy] = useState(false);
   const canvasRef = useRef(null);
+  const cloudWrapRef = useRef(null);
+  const dragRef = useRef(null); // active preview drag {layer, dx, dy, moved}
+  const wmRects = useRef({ text: null, logo: null }); // drawn rects in preview pixels, for hit-testing
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
   useEffect(() => {
     try {
@@ -448,17 +439,17 @@ function WatermarkTool() {
     setBusy(false);
   };
 
-  // Draw the watermark (text or logo) onto ctx for a W×H image that is
-  // already drawn. Shared by the live preview and the full-res export.
-  // Position comes from the 5×5 grid (pos.cx/cy 0-4 → fractions of the
-  // available area); layout "tiled" repeats diagonally across the image.
+  // Draw the watermark layers (text and/or logo) onto ctx for a W×H image
+  // that is already drawn. Shared by the live preview and the full-res export.
+  // Each layer's position is the watermark CENTER as a fraction (0..1) of the
+  // image — set by dragging the watermark on the preview. layout "tiled"
+  // repeats the layer diagonally across the image (position then doesn't apply).
+  // Drawn rects are recorded for drag hit-testing.
   const drawWm = (ctx, W, H) => {
     if (!img) return;
     const k = W / img.naturalWidth;
     const pad = Math.max(6, Math.round(W * 0.035));
-    const fx = pos.cx / 4, fy = pos.cy / 4;
-    ctx.save();
-    ctx.globalAlpha = opacity / 100;
+    const rects = { text: null, logo: null };
 
     const paintText = (x, y, fs, tw) => {
       if (outline) {
@@ -478,25 +469,9 @@ function WatermarkTool() {
       }
     };
 
-    if (content === "logo" && logoImg) {
-      const lw = W * (logoSize / 100);
-      const lh = lw * (logoImg.naturalHeight / logoImg.naturalWidth);
-      if (shadow) { ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = Math.max(2, 8 * k); }
-      if (layout === "tiled") {
-        ctx.save();
-        ctx.translate(W / 2, H / 2); ctx.rotate(-0.35); ctx.translate(-W / 2, -H / 2);
-        for (let yy = -H; yy < H * 2; yy += lh * 2.6) {
-          for (let xx = -W; xx < W * 2; xx += lw * 1.7) {
-            ctx.drawImage(logoImg, xx, yy, lw, lh);
-          }
-        }
-        ctx.restore();
-      } else {
-        const x = pad + fx * (W - lw - 2 * pad);
-        const y = pad + fy * (H - lh - 2 * pad);
-        ctx.drawImage(logoImg, x, y, lw, lh);
-      }
-    } else if (content === "text" && text.trim()) {
+    if (textOn && text.trim()) {
+      ctx.save();
+      ctx.globalAlpha = opacity / 100;
       const fs = Math.max(8, size * k);
       ctx.font = `${italic ? "italic " : ""}${bold ? "700" : "400"} ${fs}px Manrope, sans-serif`;
       ctx.fillStyle = color;
@@ -512,12 +487,112 @@ function WatermarkTool() {
         }
         ctx.restore();
       } else {
-        const x = pad + fx * (W - tw - 2 * pad);
-        const y = pad + fs + fy * (H - fs - 2 * pad);
+        // center-based: the baseline sits ~0.35*fs below the visual center
+        const x = Math.max(pad, Math.min(W - tw - pad, pos.x * W - tw / 2));
+        const y = Math.max(pad + fs * 0.8, Math.min(H - pad, pos.y * H + fs * 0.35));
         paintText(x, y, fs, tw);
+        rects.text = { x, y: y - fs * 0.8, w: tw, h: fs };
       }
+      ctx.restore();
     }
-    ctx.restore();
+
+    if (logoOn && logoImg) {
+      ctx.save();
+      ctx.globalAlpha = logoOpacity / 100;
+      const lw = W * (logoSize / 100);
+      const lh = lw * (logoImg.naturalHeight / logoImg.naturalWidth);
+      if (shadow) { ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = Math.max(2, 8 * k); }
+      if (layout === "tiled") {
+        ctx.save();
+        ctx.translate(W / 2, H / 2); ctx.rotate(-0.35); ctx.translate(-W / 2, -H / 2);
+        for (let yy = -H; yy < H * 2; yy += lh * 2.6) {
+          for (let xx = -W; xx < W * 2; xx += lw * 1.7) {
+            ctx.drawImage(logoImg, xx, yy, lw, lh);
+          }
+        }
+        ctx.restore();
+      } else {
+        const x = Math.max(pad, Math.min(W - lw - pad, logoPos.x * W - lw / 2));
+        const y = Math.max(pad, Math.min(H - lh - pad, logoPos.y * H - lh / 2));
+        ctx.drawImage(logoImg, x, y, lw, lh);
+        rects.logo = { x, y, w: lw, h: lh };
+      }
+      ctx.restore();
+    }
+    wmRects.current = rects;
+  };
+
+  // --- Drag the watermark directly on the image-mode preview ---
+  const wmPoint = (e) => {
+    const cv = canvasRef.current;
+    const r = cv.getBoundingClientRect();
+    const t = e.touches && e.touches[0] ? e.touches[0] : e;
+    return {
+      x: ((t.clientX - r.left) / r.width) * cv.width,
+      y: ((t.clientY - r.top) / r.height) * cv.height,
+    };
+  };
+  const inRect = (p, rc) => rc && p.x >= rc.x - 8 && p.x <= rc.x + rc.w + 8 && p.y >= rc.y - 8 && p.y <= rc.y + rc.h + 8;
+  const onWmDown = (e) => {
+    if (!img || layout === "tiled") return;
+    const p = wmPoint(e);
+    const rects = wmRects.current;
+    // Grab whichever enabled layer is under the finger (logo draws on top);
+    // a tap on empty space moves the currently selected layer there.
+    let layer = null;
+    if (logoOn && inRect(p, rects.logo)) layer = "logo";
+    else if (textOn && inRect(p, rects.text)) layer = "text";
+    else layer = dragLayer;
+    if ((layer === "text" && !textOn) || (layer === "logo" && !logoOn)) {
+      layer = textOn ? "text" : logoOn ? "logo" : null;
+    }
+    if (!layer) return;
+    const rc = rects[layer];
+    dragRef.current = {
+      layer,
+      dx: rc ? p.x - (rc.x + rc.w / 2) : 0,
+      dy: rc ? p.y - (rc.y + rc.h / 2) : 0,
+      sx: p.x, sy: p.y, moved: false,
+    };
+    setDragLayer(layer);
+  };
+  const onWmMove = (e) => {
+    const d = dragRef.current;
+    if (!d || d.cloud) return;
+    const cv = canvasRef.current;
+    const p = wmPoint(e);
+    if (!d.moved && Math.hypot(p.x - d.sx, p.y - d.sy) < 6) return; // tap threshold
+    d.moved = true;
+    if (e.cancelable) e.preventDefault();
+    const c = { x: clamp01((p.x - d.dx) / cv.width), y: clamp01((p.y - d.dy) / cv.height) };
+    if (d.layer === "logo") setLogoPos(c); else setPos(c);
+  };
+  const onWmUp = () => { dragRef.current = null; };
+
+  // --- Drag on the Cloudinary preview (image or video) ---
+  // Center-based: the pointer fraction IS the new watermark center.
+  const onCloudDown = (e) => {
+    if (!media || !clUrl) return;
+    let layer = dragLayer;
+    if ((layer === "text" && !textOn) || (layer === "logo" && !logoOn)) {
+      layer = textOn ? "text" : logoOn ? "logo" : null;
+    }
+    if (!layer) return;
+    const r = cloudWrapRef.current.getBoundingClientRect();
+    dragRef.current = {
+      layer, cloud: true, sx: e.clientX, sy: e.clientY, moved: false,
+      left: r.left, top: r.top, width: r.width, height: r.height,
+    };
+    setDragLayer(layer);
+  };
+  const onCloudMove = (e) => {
+    const d = dragRef.current;
+    if (!d || !d.cloud) return;
+    if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 8) return; // tap threshold — keeps video controls usable
+    d.moved = true;
+    if (e.cancelable) e.preventDefault();
+    const c = { x: clamp01((e.clientX - d.left) / d.width), y: clamp01((e.clientY - d.top) / d.height) };
+    if (d.layer === "logo") setLogoPos(c); else setPos(c);
   };
 
   // live preview
@@ -530,7 +605,7 @@ function WatermarkTool() {
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
     drawWm(ctx, cv.width, cv.height);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [img, mode, content, text, size, color, opacity, pos, layout, bold, italic, underline, shadow, outline, logoImg, logoSize]);
+  }, [img, mode, textOn, logoOn, text, size, color, opacity, pos, logoPos, logoOpacity, layout, bold, italic, underline, shadow, outline, logoImg, logoSize]);
 
   const renderFullWm = async () => {
     if (!img) return null;
@@ -599,12 +674,22 @@ function WatermarkTool() {
     setBusy(false);
   };
 
-  const logoAr = logoImg ? logoImg.naturalWidth / logoImg.naturalHeight : 0;
-  const clUrl = media ? (
-    content === "logo"
-      ? clLogoOverlayUrl(media.url, { logoUrl, widthPct: logoSize, opacity, pos, baseW: mediaW, baseH: mediaH, logoAr })
-      : clTextOverlayUrl(media.url, { text, size: Math.min(size * 2, 200), color, opacity, pos, bold, italic })
-  ) : null;
+  // Cloudinary overlay URL — text and logo layers are combined into one
+  // transformation chain, so both watermarks can be applied at the same time.
+  const clParts = media ? clParse(media.url) : null;
+  const clOverlays = [];
+  if (clParts) {
+    if (textOn && text.trim()) {
+      clOverlays.push(clTextOverlayT({ text, size: Math.min(size * 2, 200), color, opacity, pos, bold, italic }));
+    }
+    if (logoOn) {
+      const lt = clLogoOverlayT({ logoUrl, widthPct: logoSize, opacity: logoOpacity, pos: logoPos });
+      if (lt) clOverlays.push(lt);
+    }
+  }
+  const clUrl = clParts && clOverlays.length
+    ? `https://res.cloudinary.com/${clParts.cloud}/${clParts.kind}/upload/${clOverlays.join("/")}/${clParts.pub}${clParts.ext ? "." + clParts.ext : ""}`
+    : null;
   const logoOnCloudinary = !!clPublicId(logoUrl);
   const isVideo = media && /video|\.mp4|\.mov|\.webm/i.test(media.url || "") && !/\.(jpe?g|png|gif|webp)$/i.test(media.url || "");
 
@@ -628,10 +713,14 @@ function WatermarkTool() {
         ))}
       </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-        {[["text", "📝 Text watermark"], ["logo", "🖼 Logo watermark"]].map(([id, label]) => (
-          <button key={id} type="button" onClick={() => setContent(id)} className="ai-chip"
-            style={content === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
+        {[
+          ["text", "📝 Text watermark", textOn, () => setTextOn((v) => !v)],
+          ["logo", "🖼 Logo watermark", logoOn, () => setLogoOn((v) => !v)],
+        ].map(([id, label, on, toggle]) => (
+          <button key={id} type="button" onClick={toggle} className="ai-chip" title={on ? "Switch off" : "Switch on"}
+            style={on ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}{on ? " ✓" : ""}</button>
         ))}
+        <span className="seo-hint" style={{ alignSelf: "center" }}>Both can be on together.</span>
       </div>
 
       {mode === "image" ? (
@@ -658,7 +747,10 @@ function WatermarkTool() {
       )}
 
       <div className="editor" style={{ marginBottom: 16 }}>
-        {content === "text" ? (
+        {!textOn && !logoOn && (
+          <p className="admin-sub" style={{ margin: 0 }}>Switch on the text or logo watermark above to begin — both can be used together.</p>
+        )}
+        {textOn && (
           <>
             <div className="field">
               <label>Watermark text</label>
@@ -683,8 +775,23 @@ function WatermarkTool() {
                 <span className="seo-hint">Underline, shadow &amp; outline render in Image watermark mode — the Cloudinary overlay supports bold &amp; italic.</span>
               )}
             </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14, alignItems: "end", marginBottom: 4 }}>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Size: {size}px</label>
+                <input type="range" min={16} max={160} value={size} onChange={(e) => setSize(+e.target.value)} style={{ width: "100%" }} />
+              </div>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Colour</label>
+                <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 60, height: 38, padding: 2 }} />
+              </div>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Opacity: {opacity}%</label>
+                <input type="range" min={10} max={100} value={opacity} onChange={(e) => setOpacity(+e.target.value)} style={{ width: "100%" }} />
+              </div>
+            </div>
           </>
-        ) : (
+        )}
+        {logoOn && (
           <>
             <div className="field">
               <label>Logo</label>
@@ -703,66 +810,62 @@ function WatermarkTool() {
                 <span className="seo-hint">The site logo isn&apos;t on Cloudinary — choose a logo from the library or upload one to watermark videos / cloud images.</span>
               )}
             </div>
-            <div className="field" style={{ maxWidth: 320 }}>
-              <label>Logo size: {logoSize}% of image width</label>
-              <input type="range" min={5} max={60} value={logoSize} onChange={(e) => setLogoSize(+e.target.value)} style={{ width: "100%" }} />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14, alignItems: "end", marginBottom: 4 }}>
+              <div className="field" style={{ margin: 0, maxWidth: 320 }}>
+                <label>Logo size: {logoSize}% of image width</label>
+                <input type="range" min={5} max={60} value={logoSize} onChange={(e) => setLogoSize(+e.target.value)} style={{ width: "100%" }} />
+              </div>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Logo opacity: {logoOpacity}%</label>
+                <input type="range" min={10} max={100} value={logoOpacity} onChange={(e) => setLogoOpacity(+e.target.value)} style={{ width: "100%" }} />
+              </div>
             </div>
           </>
         )}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14, alignItems: "end" }}>
-          {content === "text" && (
-            <>
-              <div className="field" style={{ margin: 0 }}>
-                <label>Size: {size}px</label>
-                <input type="range" min={16} max={160} value={size} onChange={(e) => setSize(+e.target.value)} style={{ width: "100%" }} />
-              </div>
-              <div className="field" style={{ margin: 0 }}>
-                <label>Colour</label>
-                <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 60, height: 38, padding: 2 }} />
-              </div>
-            </>
-          )}
-          <div className="field" style={{ margin: 0 }}>
-            <label>Opacity: {opacity}%</label>
-            <input type="range" min={10} max={100} value={opacity} onChange={(e) => setOpacity(+e.target.value)} style={{ width: "100%" }} />
+        {mode === "image" && (textOn || logoOn) && (
+          <div className="field" style={{ margin: "12px 0 0" }}>
+            <label>Layout</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[["single", "Single"], ["tiled", "Tiled repeat"]].map(([id, label]) => (
+                <button key={id} type="button" onClick={() => setLayout(id)} className="ai-chip"
+                  style={layout === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
+              ))}
+            </div>
+            {layout === "tiled" && (
+              <span className="seo-hint">Tiled repeats the watermark diagonally across the photo — position is set by the layout.</span>
+            )}
           </div>
-          {mode === "image" && (
-            <div className="field" style={{ margin: 0 }}>
-              <label>Layout</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                {[["single", "Single"], ["tiled", "Tiled repeat"]].map(([id, label]) => (
-                  <button key={id} type="button" onClick={() => setLayout(id)} className="ai-chip"
-                    style={layout === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
-                ))}
-              </div>
-            </div>
-          )}
-          {!(mode === "image" && layout === "tiled") && (
-            <div className="field" style={{ margin: 0 }}>
-              <label>Position</label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 28px)", gap: 4 }}>
-                {[0, 1, 2, 3, 4].map((cy) => [0, 1, 2, 3, 4].map((cx) => {
-                  const active = pos.cx === cx && pos.cy === cy;
-                  return (
-                    <button key={`${cx}-${cy}`} type="button" onClick={() => setPos({ cx, cy })} title={`Position ${cx + 1} of 5 across, ${cy + 1} of 5 down`}
-                      style={{ width: 28, height: 28, borderRadius: 6, border: active ? "2px solid #8F3F2D" : "1px solid #ddd", background: active ? "#FDEFE4" : "#fff", cursor: "pointer" }} />
-                  );
-                }))}
-              </div>
-            </div>
-          )}
-          {mode === "image" && layout === "tiled" && (
-            <span className="seo-hint">Tiled repeats the watermark diagonally across the photo.</span>
-          )}
-        </div>
+        )}
       </div>
 
       {mode === "image" && (
         <>
           {!img && <p className="admin-sub">Pick an image above, set your watermark and style, then export.</p>}
-          {img && (
+          {img && (textOn || logoOn) && (
             <>
-              <canvas ref={canvasRef} style={{ maxWidth: "100%", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)" }} />
+              {layout === "single" && (
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 10 }}>
+                  <span className="seo-hint" style={{ margin: 0 }}>👆 Drag the watermark on the photo to place it anywhere.</span>
+                  {textOn && logoOn && (
+                    <>
+                      <span className="seo-hint" style={{ margin: 0 }}>Moving:</span>
+                      {[["text", "Text"], ["logo", "Logo"]].map(([id, label]) => (
+                        <button key={id} type="button" onClick={() => setDragLayer(id)} className="ai-chip"
+                          style={dragLayer === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+              <canvas
+                ref={canvasRef}
+                onPointerDown={onWmDown}
+                onPointerMove={onWmMove}
+                onPointerUp={onWmUp}
+                onPointerCancel={onWmUp}
+                onPointerLeave={onWmUp}
+                style={{ maxWidth: "100%", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", touchAction: "none", cursor: layout === "single" ? "grab" : "default" }}
+              />
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
                 <button type="button" className="btn btn-primary" disabled={busy} onClick={() => exportWm(false)}>⬇ Download watermarked PNG</button>
                 <button type="button" className="btn btn-dark" disabled={busy} onClick={() => exportWm(true)}>💾 Save to Media Library</button>
@@ -778,18 +881,36 @@ function WatermarkTool() {
           {!media && <p className="admin-sub">Choose a Cloudinary image or video — the watermark is applied on delivery, so it works on video too, with zero re-encoding.</p>}
           {media && !clUrl && (
             <div className="login-err">
-              {content === "logo"
-                ? "The current logo isn't hosted on Cloudinary — choose a logo from the library or upload one."
-                : "That asset is not a Cloudinary URL — overlays only work on Cloudinary-hosted media."}
+              {!clParts
+                ? "That asset is not a Cloudinary URL — overlays only work on Cloudinary-hosted media."
+                : logoOn && !logoOnCloudinary
+                  ? "The current logo isn't hosted on Cloudinary — choose a logo from the library or upload one."
+                  : "Switch on the text or logo watermark above to generate the overlay URL."}
             </div>
           )}
           {media && clUrl && (
             <>
-              <div style={{ borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,0.15)", maxWidth: 680 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 10 }}>
+                <span className="seo-hint" style={{ margin: 0 }}>👆 Drag on the preview to place the watermark anywhere.</span>
+                {textOn && logoOn && (
+                  <>
+                    <span className="seo-hint" style={{ margin: 0 }}>Moving:</span>
+                    {[["text", "Text"], ["logo", "Logo"]].map(([id, label]) => (
+                      <button key={id} type="button" onClick={() => setDragLayer(id)} className="ai-chip"
+                        style={dragLayer === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
+                    ))}
+                  </>
+                )}
+              </div>
+              <div ref={cloudWrapRef} onPointerDown={onCloudDown} onPointerMove={onCloudMove} onPointerUp={onWmUp} onPointerCancel={onWmUp}
+                style={{ borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,0.15)", maxWidth: 680, touchAction: isVideo ? "pan-y" : "none", cursor: "grab" }}>
                 {isVideo
                   ? <video src={clUrl} controls onError={() => setLoadErr(true)} style={{ width: "100%", display: "block" }} />
-                  : <img src={clUrl} alt="Watermarked preview" onError={() => setLoadErr(true)} style={{ width: "100%", display: "block" }} />}
+                  : <img src={clUrl} alt="Watermarked preview" onError={() => setLoadErr(true)} style={{ width: "100%", display: "block", userSelect: "none", WebkitUserDrag: "none" }} draggable={false} />}
               </div>
+              {logoOn && !logoOnCloudinary && (
+                <div className="seo-hint" style={{ margin: "10px 0" }}>The logo layer is skipped — the current logo isn&apos;t on Cloudinary. Choose a logo from the library or upload one to include it.</div>
+              )}
               {loadErr && (
                 <div className="login-err" style={{ margin: "10px 0" }}>
                   Couldn&apos;t load the watermarked file from Cloudinary — the original may have been deleted, moved or renamed after appearing in the library.
@@ -832,7 +953,7 @@ function VideoTool() {
   const [size, setSize] = useState(56);
   const [color, setColor] = useState("#ffffff");
   const [opacity, setOpacity] = useState(90);
-  const [grav, setGrav] = useState("south");
+  const [vpos, setVpos] = useState({ x: 0.5, y: 0.88 }); // text center as fraction of the video — drag on the preview to move
   const [startT, setStartT] = useState(0);
   const [endT, setEndT] = useState(0);
   const [dur, setDur] = useState(0);
@@ -848,17 +969,35 @@ function VideoTool() {
     if (v && isFinite(v.duration)) { setDur(v.duration); setEndT((e) => (e > 0 ? e : Math.round(v.duration))); }
   };
 
+  // Drag the text overlay directly on the video preview (tap threshold
+  // keeps the video controls usable).
+  const vtWrapRef = useRef(null);
+  const vtDragRef = useRef(null);
+  const onVtDown = (e) => {
+    if (!videoUrl) return;
+    const r = vtWrapRef.current.getBoundingClientRect();
+    vtDragRef.current = { sx: e.clientX, sy: e.clientY, moved: false, left: r.left, top: r.top, width: r.width, height: r.height };
+  };
+  const onVtMove = (e) => {
+    const d = vtDragRef.current;
+    if (!d) return;
+    if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 8) return;
+    d.moved = true;
+    if (e.cancelable) e.preventDefault();
+    setVpos({
+      x: Math.max(0, Math.min(1, (e.clientX - d.left) / d.width)),
+      y: Math.max(0, Math.min(1, (e.clientY - d.top) / d.height)),
+    });
+  };
+  const onVtUp = () => { vtDragRef.current = null; };
+
   const overlayStyle = () => {
-    const map = {
-      north_west: { top: "6%", left: "5%", textAlign: "left" }, north: { top: "6%", left: "50%", transform: "translateX(-50%)", textAlign: "center" },
-      north_east: { top: "6%", right: "5%", textAlign: "right" },
-      west: { top: "50%", left: "5%", transform: "translateY(-50%)", textAlign: "left" }, center: { top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center" },
-      east: { top: "50%", right: "5%", transform: "translateY(-50%)", textAlign: "right" },
-      south_west: { bottom: "8%", left: "5%", textAlign: "left" }, south: { bottom: "8%", left: "50%", transform: "translateX(-50%)", textAlign: "center" },
-      south_east: { bottom: "8%", right: "5%", textAlign: "right" },
-    };
     return {
-      position: "absolute", ...(map[grav] || map.south),
+      position: "absolute",
+      left: `${vpos.x * 100}%`,
+      top: `${vpos.y * 100}%`,
+      transform: "translate(-50%, -50%)",
+      textAlign: "center",
       color, opacity: opacity / 100, fontSize: size, fontWeight: 800,
       fontFamily: "Manrope, sans-serif", textShadow: "0 2px 12px rgba(0,0,0,0.7)",
       maxWidth: "86%", pointerEvents: "none", lineHeight: 1.25,
@@ -944,19 +1083,9 @@ function VideoTool() {
           ctx.globalAlpha = opacity / 100; ctx.fillStyle = color;
           ctx.shadowColor = "rgba(0,0,0,0.7)"; ctx.shadowBlur = 10;
           ctx.textBaseline = "middle";
-          const pad = canvas.width * 0.05;
           const tw = Math.min(ctx.measureText(text).width, canvas.width * 0.86);
-          const cx = canvas.width / 2, cy = canvas.height / 2;
-          const px = {
-            north_west: pad, north: cx - tw / 2, north_east: canvas.width - pad - tw,
-            west: pad, center: cx - tw / 2, east: canvas.width - pad - tw,
-            south_west: pad, south: cx - tw / 2, south_east: canvas.width - pad - tw,
-          }[grav];
-          const py = {
-            north_west: canvas.height * 0.1, north: canvas.height * 0.1, north_east: canvas.height * 0.1,
-            west: cy, center: cy, east: cy,
-            south_west: canvas.height * 0.88, south: canvas.height * 0.88, south_east: canvas.height * 0.88,
-          }[grav];
+          const px = vpos.x * canvas.width - tw / 2;
+          const py = vpos.y * canvas.height;
           ctx.fillText(text, px, py, canvas.width * 0.86);
           ctx.globalAlpha = 1; ctx.shadowBlur = 0;
         }
@@ -1020,11 +1149,13 @@ function VideoTool() {
       {videoUrl && (
         <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 1fr) minmax(320px, 420px)", gap: 22, alignItems: "start" }} className="vt-grid">
           <div>
-            <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", background: "#000", boxShadow: "0 8px 30px rgba(0,0,0,0.2)" }}>
+            <div ref={vtWrapRef} onPointerDown={onVtDown} onPointerMove={onVtMove} onPointerUp={onVtUp} onPointerCancel={onVtUp}
+              style={{ position: "relative", borderRadius: 12, overflow: "hidden", background: "#000", boxShadow: "0 8px 30px rgba(0,0,0,0.2)", touchAction: "pan-y", cursor: "grab" }}>
               <video ref={videoRef} src={videoUrl} controls crossOrigin="anonymous" playsInline
                 onLoadedMetadata={onLoaded} style={{ width: "100%", display: "block", maxHeight: 480 }} />
               {text.trim() && <div style={overlayStyle()}>{text}</div>}
             </div>
+            <div className="seo-hint" style={{ marginTop: 8 }}>👆 Drag the text on the video to place it anywhere.</div>
             <div className="seo-hint" style={{ marginTop: 8 }}>
               {dur ? `Duration: ${dur.toFixed(1)}s — exporting ${Math.max(0, (+startT || 0)).toFixed(1)}s → ${(+endT || dur).toFixed(1)}s` : "Loading video…"}
               {progress && <b> · {progress}</b>}
@@ -1063,12 +1194,7 @@ function VideoTool() {
               <div className="field" style={{ margin: 0 }}><label>Colour</label>
                 <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 60, height: 38, padding: 2 }} /></div>
               <div className="field" style={{ margin: 0 }}><label>Position</label>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 30px)", gap: 4 }}>
-                  {GRAVITIES.flat().map((g) => (
-                    <button key={g} type="button" onClick={() => setGrav(g)} title={g.replace("_", " ")}
-                      style={{ width: 30, height: 30, borderRadius: 6, border: grav === g ? "2px solid #8F3F2D" : "1px solid #ddd", background: grav === g ? "#FDEFE4" : "#fff", cursor: "pointer" }} />
-                  ))}
-                </div></div>
+                <span className="seo-hint" style={{ margin: 0 }}>Drag the text on the video preview to place it anywhere.</span></div>
               <div className="field" style={{ margin: 0 }}><label>Trim start (sec)</label>
                 <input type="number" min={0} step={0.5} value={startT} onChange={(e) => setStartT(e.target.value)} /></div>
               <div className="field" style={{ margin: 0 }}><label>Trim end (sec)</label>
