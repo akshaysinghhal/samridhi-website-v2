@@ -6,7 +6,7 @@ import CoupleStories from "../components/CoupleStories";
 import Reveal from "../components/Reveal";
 import HeroMedia from "../components/HeroMedia";
 import TestimonialCard from "../components/TestimonialCard";
-import { getContentMap, c } from "../lib/content";
+import { getContentMap, c, ci } from "../lib/content";
 import {
   getSettings, setting, getServices, getArtists, getEvents,
   getClients, getInternationalShows, getPressClippings, getTestimonials,
