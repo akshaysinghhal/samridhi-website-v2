@@ -613,27 +613,41 @@ function VideoTool() {
     if (e <= s) { toast("End time must be after start time.", "error"); return; }
     setExporting(true); setProgress("Preparing…");
     try {
-      // Feature-detect the recording pipeline. iPhone Safari has neither
-      // video.captureStream nor mozCaptureStream, so export is impossible
-      // there — say so plainly instead of throwing a cryptic error.
+      // Feature-detect the recording pipeline. The video element's own
+      // captureStream (used only for the audio track) is missing on iPhone
+      // Safari — but canvas.captureStream + MediaRecorder are usually
+      // present, so export the picture without sound rather than refusing.
       const grabVideoStream = v.captureStream ? () => v.captureStream()
         : (v.mozCaptureStream ? () => v.mozCaptureStream() : null);
       const probeCanvas = document.createElement("canvas");
-      if (!grabVideoStream || !probeCanvas.captureStream || !window.MediaRecorder) {
-        toast("Video export isn't supported in this browser — iPhone Safari can't record video. Please export from Chrome on a desktop; your original video is untouched.", "error");
+      const canCanvasStream = !!probeCanvas.captureStream;
+      const canRecord = !!window.MediaRecorder;
+      if (!canCanvasStream || !canRecord) {
+        toast("Video export isn't supported in this browser — please export from Chrome on a desktop; your original video is untouched.", "error");
         setExporting(false); setProgress("");
         return;
       }
+      const withAudio = !!grabVideoStream;
+      if (!withAudio) toast("This browser can't capture audio — exporting the video with your text overlay, without sound.", "info");
       const canvas = document.createElement("canvas");
       canvas.width = v.videoWidth || 1280; canvas.height = v.videoHeight || 720;
       const ctx = canvas.getContext("2d");
-      // video + audio tracks combined
-      const vStream = grabVideoStream();
       const cStream = canvas.captureStream(30);
-      (vStream.getAudioTracks() || []).forEach((t) => cStream.addTrack(t));
-      const mime = ["video/webm;codecs=vp9", "video/webm", "video/mp4"].find((m) => MediaRecorder.isTypeSupported(m)) || "";
-      const ext = mime.includes("mp4") ? "mp4" : "webm"; // Safari records MP4, not WebM
-      const rec = new MediaRecorder(cStream, mime ? { mimeType: mime, videoBitsPerSecond: 8_000_000 } : undefined);
+      if (withAudio) {
+        try {
+          const vStream = grabVideoStream();
+          (vStream.getAudioTracks() || []).forEach((t) => cStream.addTrack(t));
+        } catch { /* audio is a bonus — never fail the export for it */ }
+      }
+      const mime = ["video/webm;codecs=vp9", "video/webm", "video/mp4"].find((m) => { try { return MediaRecorder.isTypeSupported(m); } catch { return false; } }) || "";
+      let rec;
+      try {
+        rec = new MediaRecorder(cStream, mime ? { mimeType: mime, videoBitsPerSecond: 8_000_000 } : undefined);
+      } catch {
+        rec = new MediaRecorder(cStream); // some browsers lie in isTypeSupported — fall back to default
+      }
+      const actualMime = rec.mimeType || mime || "video/webm";
+      const ext = actualMime.includes("mp4") ? "mp4" : "webm";
       const chunks = [];
       rec.ondataavailable = (ev) => ev.data.size && chunks.push(ev.data);
       const done = new Promise((res) => (rec.onstop = res));
@@ -673,7 +687,12 @@ function VideoTool() {
         else v.addEventListener("seeked", res, { once: true });
       });
       rec.start(250);
-      await v.play();
+      // iOS only allows programmatic playback when muted — and on the no-audio
+      // path there's no sound to lose anyway.
+      const wasMuted = v.muted;
+      if (!withAudio) v.muted = true;
+      try { await v.play(); }
+      catch (playErr) { v.muted = wasMuted; throw playErr; }
       await new Promise((res) => {
         const tick = () => {
           drawFrame();
@@ -684,12 +703,13 @@ function VideoTool() {
         tick();
       });
       v.pause();
+      v.muted = wasMuted;
       rec.stop();
       await done;
-      const blob = new Blob(chunks, { type: mime || "video/webm" });
+      const blob = new Blob(chunks, { type: actualMime });
       const name = `${(videoName || "video").replace(/\.[a-z0-9]+$/i, "")}${text ? "-text" : ""}-edited.${ext}`;
       if (saveToLibrary) {
-        await uploadFile(new File([blob], name, { type: mime || "video/webm" }));
+        await uploadFile(new File([blob], name, { type: actualMime }));
         toast("Edited video saved to Media Library.");
       } else {
         downloadBlob(blob, name);
@@ -712,7 +732,7 @@ function VideoTool() {
           }} />
         </label>
       </div>
-      {!videoUrl && <p className="admin-sub">Pick a video — add overlay text, trim the length, then export. The edited file downloads as WebM.</p>}
+      {!videoUrl && <p className="admin-sub">Pick a video — add overlay text, trim the length, then export.</p>}
       {videoUrl && (
         <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 1fr) minmax(320px, 420px)", gap: 22, alignItems: "start" }} className="vt-grid">
           <div>
