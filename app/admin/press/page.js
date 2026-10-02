@@ -55,6 +55,7 @@ export default function PressAdmin() {
           { key: "type", label: "Type" },
           { key: "status", label: "Status" },
           { key: "is_placeholder", label: "Flag" },
+          { key: "pinned_to_home", label: "Pinned", render: (r) => (r.pinned_to_home ? "📌" : "—") },
         ]}
         fields={[
           { key: "image_url", label: "Clipping image", type: "image", required: true, sizeHint: SIZE_HINTS.cover,
@@ -68,6 +69,7 @@ export default function PressAdmin() {
           { key: "sort", label: "Display order", type: "number" },
           { key: "status", label: "Status", type: "select", options: STATUS_OPTIONS },
           { key: "is_placeholder", label: "Mark as placeholder", type: "check" },
+          { key: "pinned_to_home", label: "📌 Pin to homepage (As Seen In)", type: "check" },
         ]}
         defaults={{ type: "single_clipping", status: "published", sort: 0, is_placeholder: false }}
         validate={(f) => (!f.image_url ? "Please upload a clipping image." : null)}
