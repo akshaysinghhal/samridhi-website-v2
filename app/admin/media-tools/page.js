@@ -391,10 +391,16 @@ function WatermarkTool() {
   const [color, setColor] = useState("#ffffff");
   const [opacity, setOpacity] = useState(70);
   // Position = center of the watermark as a fraction (0..1) of the image.
-  // Drag the watermark on the live preview to move it — no grid needed.
+  // Grid mode (default): pick a cell in the 5×5 grid. Drag mode (opt-in):
+  // drag the watermark directly on the preview.
+  const [posMode, setPosMode] = useState("grid"); // grid | drag
   const [pos, setPos] = useState({ x: 0.5, y: 0.9 }); // text layer
   const [logoPos, setLogoPos] = useState({ x: 0.85, y: 0.15 }); // logo layer
-  const [dragLayer, setDragLayer] = useState("text"); // which layer a tap/drag on the preview moves
+  const [dragLayer, setDragLayer] = useState("text"); // which layer the position tools move
+  // The layer the position controls act on: the selected one when both are on.
+  const activeLayer = textOn && logoOn ? dragLayer : textOn ? "text" : "logo";
+  const setLayerPos = (c) => { if (activeLayer === "logo") setLogoPos(c); else setPos(c); };
+  const layerPos = activeLayer === "logo" ? logoPos : pos;
   const [layout, setLayout] = useState("single"); // single | tiled (image mode)
   const [mediaW, setMediaW] = useState(0); // picked cloudinary asset dims
   const [mediaH, setMediaH] = useState(0);
@@ -534,7 +540,7 @@ function WatermarkTool() {
   };
   const inRect = (p, rc) => rc && p.x >= rc.x - 8 && p.x <= rc.x + rc.w + 8 && p.y >= rc.y - 8 && p.y <= rc.y + rc.h + 8;
   const onWmDown = (e) => {
-    if (!img || layout === "tiled") return;
+    if (!img || layout === "tiled" || posMode !== "drag") return;
     const p = wmPoint(e);
     const rects = wmRects.current;
     // Grab whichever enabled layer is under the finger (logo draws on top);
@@ -572,7 +578,7 @@ function WatermarkTool() {
   // --- Drag on the Cloudinary preview (image or video) ---
   // Center-based: the pointer fraction IS the new watermark center.
   const onCloudDown = (e) => {
-    if (!media || !clUrl) return;
+    if (!media || !clUrl || posMode !== "drag") return;
     let layer = dragLayer;
     if ((layer === "text" && !textOn) || (layer === "logo" && !logoOn)) {
       layer = textOn ? "text" : logoOn ? "logo" : null;
@@ -836,6 +842,42 @@ function WatermarkTool() {
             )}
           </div>
         )}
+        {!(mode === "image" && layout === "tiled") && (textOn || logoOn) && (
+          <div className="field" style={{ margin: "12px 0 0" }}>
+            <label>Position{activeLayer === "logo" ? " — logo" : textOn && logoOn ? " — text" : ""}</label>
+            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap", alignItems: "center" }}>
+              {[["grid", "⊞ Grid"], ["drag", "✋ Drag"]].map(([id, label]) => (
+                <button key={id} type="button" onClick={() => setPosMode(id)} className="ai-chip"
+                  title={id === "drag" ? "Drag the watermark directly on the preview" : "Pick a position from the grid"}
+                  style={posMode === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
+              ))}
+              {textOn && logoOn && (
+                <>
+                  <span className="seo-hint" style={{ margin: 0 }}>Moving:</span>
+                  {[["text", "Text"], ["logo", "Logo"]].map(([id, label]) => (
+                    <button key={id} type="button" onClick={() => setDragLayer(id)} className="ai-chip"
+                      style={dragLayer === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
+                  ))}
+                </>
+              )}
+            </div>
+            {posMode === "grid" ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 32px)", gap: 6 }}>
+                {[0, 1, 2, 3, 4].map((cy) => [0, 1, 2, 3, 4].map((cx) => {
+                  const fx = (cx + 0.5) / 5, fy = (cy + 0.5) / 5;
+                  const active = Math.abs(layerPos.x - fx) < 0.11 && Math.abs(layerPos.y - fy) < 0.11;
+                  return (
+                    <button key={`${cx}-${cy}`} type="button" onClick={() => setLayerPos({ x: fx, y: fy })}
+                      title={activeLayer === "logo" ? "Move logo here" : "Move text here"}
+                      style={{ width: 32, height: 32, borderRadius: 8, border: active ? "2px solid #8F3F2D" : "1px solid #ddd", background: active ? "#FDEFE4" : "#fff", cursor: "pointer" }} />
+                  );
+                }))}
+              </div>
+            ) : (
+              <span className="seo-hint">Drag the watermark directly on the preview below to place it anywhere.</span>
+            )}
+          </div>
+        )}
       </div>
 
       {mode === "image" && (
@@ -843,28 +885,17 @@ function WatermarkTool() {
           {!img && <p className="admin-sub">Pick an image above, set your watermark and style, then export.</p>}
           {img && (textOn || logoOn) && (
             <>
-              {layout === "single" && (
-                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 10 }}>
-                  <span className="seo-hint" style={{ margin: 0 }}>👆 Drag the watermark on the photo to place it anywhere.</span>
-                  {textOn && logoOn && (
-                    <>
-                      <span className="seo-hint" style={{ margin: 0 }}>Moving:</span>
-                      {[["text", "Text"], ["logo", "Logo"]].map(([id, label]) => (
-                        <button key={id} type="button" onClick={() => setDragLayer(id)} className="ai-chip"
-                          style={dragLayer === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
-                      ))}
-                    </>
-                  )}
-                </div>
+              {layout === "single" && posMode === "drag" && (
+                <div className="seo-hint" style={{ margin: "0 0 10px" }}>👆 Drag the watermark on the photo to place it anywhere.</div>
               )}
               <canvas
                 ref={canvasRef}
-                onPointerDown={onWmDown}
-                onPointerMove={onWmMove}
+                onPointerDown={posMode === "drag" ? onWmDown : undefined}
+                onPointerMove={posMode === "drag" ? onWmMove : undefined}
                 onPointerUp={onWmUp}
                 onPointerCancel={onWmUp}
                 onPointerLeave={onWmUp}
-                style={{ maxWidth: "100%", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", touchAction: "none", cursor: layout === "single" ? "grab" : "default" }}
+                style={{ maxWidth: "100%", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", touchAction: posMode === "drag" ? "none" : "auto", cursor: posMode === "drag" && layout === "single" ? "grab" : "default" }}
               />
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
                 <button type="button" className="btn btn-primary" disabled={busy} onClick={() => exportWm(false)}>⬇ Download watermarked PNG</button>
@@ -890,20 +921,11 @@ function WatermarkTool() {
           )}
           {media && clUrl && (
             <>
-              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 10 }}>
-                <span className="seo-hint" style={{ margin: 0 }}>👆 Drag on the preview to place the watermark anywhere.</span>
-                {textOn && logoOn && (
-                  <>
-                    <span className="seo-hint" style={{ margin: 0 }}>Moving:</span>
-                    {[["text", "Text"], ["logo", "Logo"]].map(([id, label]) => (
-                      <button key={id} type="button" onClick={() => setDragLayer(id)} className="ai-chip"
-                        style={dragLayer === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
-                    ))}
-                  </>
-                )}
-              </div>
-              <div ref={cloudWrapRef} onPointerDown={onCloudDown} onPointerMove={onCloudMove} onPointerUp={onWmUp} onPointerCancel={onWmUp}
-                style={{ borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,0.15)", maxWidth: 680, touchAction: isVideo ? "pan-y" : "none", cursor: "grab" }}>
+              {posMode === "drag" && (
+                <div className="seo-hint" style={{ margin: "0 0 10px" }}>👆 Drag on the preview to place the watermark anywhere.</div>
+              )}
+              <div ref={cloudWrapRef} onPointerDown={posMode === "drag" ? onCloudDown : undefined} onPointerMove={posMode === "drag" ? onCloudMove : undefined} onPointerUp={onWmUp} onPointerCancel={onWmUp}
+                style={{ borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,0.15)", maxWidth: 680, touchAction: posMode === "drag" ? (isVideo ? "pan-y" : "none") : "auto", cursor: posMode === "drag" ? "grab" : "default" }}>
                 {isVideo
                   ? <video src={clUrl} controls onError={() => setLoadErr(true)} style={{ width: "100%", display: "block" }} />
                   : <img src={clUrl} alt="Watermarked preview" onError={() => setLoadErr(true)} style={{ width: "100%", display: "block", userSelect: "none", WebkitUserDrag: "none" }} draggable={false} />}
@@ -953,7 +975,8 @@ function VideoTool() {
   const [size, setSize] = useState(56);
   const [color, setColor] = useState("#ffffff");
   const [opacity, setOpacity] = useState(90);
-  const [vpos, setVpos] = useState({ x: 0.5, y: 0.88 }); // text center as fraction of the video — drag on the preview to move
+  const [vpos, setVpos] = useState({ x: 0.5, y: 0.88 }); // text center as fraction of the video
+  const [vposMode, setVposMode] = useState("grid"); // grid | drag (drag is opt-in)
   const [startT, setStartT] = useState(0);
   const [endT, setEndT] = useState(0);
   const [dur, setDur] = useState(0);
@@ -974,7 +997,7 @@ function VideoTool() {
   const vtWrapRef = useRef(null);
   const vtDragRef = useRef(null);
   const onVtDown = (e) => {
-    if (!videoUrl) return;
+    if (!videoUrl || vposMode !== "drag") return;
     const r = vtWrapRef.current.getBoundingClientRect();
     vtDragRef.current = { sx: e.clientX, sy: e.clientY, moved: false, left: r.left, top: r.top, width: r.width, height: r.height };
   };
@@ -1149,13 +1172,15 @@ function VideoTool() {
       {videoUrl && (
         <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 1fr) minmax(320px, 420px)", gap: 22, alignItems: "start" }} className="vt-grid">
           <div>
-            <div ref={vtWrapRef} onPointerDown={onVtDown} onPointerMove={onVtMove} onPointerUp={onVtUp} onPointerCancel={onVtUp}
-              style={{ position: "relative", borderRadius: 12, overflow: "hidden", background: "#000", boxShadow: "0 8px 30px rgba(0,0,0,0.2)", touchAction: "pan-y", cursor: "grab" }}>
+            <div ref={vtWrapRef} onPointerDown={vposMode === "drag" ? onVtDown : undefined} onPointerMove={vposMode === "drag" ? onVtMove : undefined} onPointerUp={onVtUp} onPointerCancel={onVtUp}
+              style={{ position: "relative", borderRadius: 12, overflow: "hidden", background: "#000", boxShadow: "0 8px 30px rgba(0,0,0,0.2)", touchAction: vposMode === "drag" ? "pan-y" : "auto", cursor: vposMode === "drag" ? "grab" : "default" }}>
               <video ref={videoRef} src={videoUrl} controls crossOrigin="anonymous" playsInline
                 onLoadedMetadata={onLoaded} style={{ width: "100%", display: "block", maxHeight: 480 }} />
               {text.trim() && <div style={overlayStyle()}>{text}</div>}
             </div>
-            <div className="seo-hint" style={{ marginTop: 8 }}>👆 Drag the text on the video to place it anywhere.</div>
+            {vposMode === "drag" && (
+              <div className="seo-hint" style={{ marginTop: 8 }}>👆 Drag the text on the video to place it anywhere.</div>
+            )}
             <div className="seo-hint" style={{ marginTop: 8 }}>
               {dur ? `Duration: ${dur.toFixed(1)}s — exporting ${Math.max(0, (+startT || 0)).toFixed(1)}s → ${(+endT || dur).toFixed(1)}s` : "Loading video…"}
               {progress && <b> · {progress}</b>}
@@ -1194,7 +1219,28 @@ function VideoTool() {
               <div className="field" style={{ margin: 0 }}><label>Colour</label>
                 <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 60, height: 38, padding: 2 }} /></div>
               <div className="field" style={{ margin: 0 }}><label>Position</label>
-                <span className="seo-hint" style={{ margin: 0 }}>Drag the text on the video preview to place it anywhere.</span></div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                  {[["grid", "⊞ Grid"], ["drag", "✋ Drag"]].map(([id, label]) => (
+                    <button key={id} type="button" onClick={() => setVposMode(id)} className="ai-chip"
+                      title={id === "drag" ? "Drag the text directly on the video" : "Pick a position from the grid"}
+                      style={vposMode === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
+                  ))}
+                </div>
+                {vposMode === "grid" ? (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 30px)", gap: 5 }}>
+                    {[0, 1, 2, 3, 4].map((cy) => [0, 1, 2, 3, 4].map((cx) => {
+                      const fx = (cx + 0.5) / 5, fy = (cy + 0.5) / 5;
+                      const active = Math.abs(vpos.x - fx) < 0.11 && Math.abs(vpos.y - fy) < 0.11;
+                      return (
+                        <button key={`${cx}-${cy}`} type="button" onClick={() => setVpos({ x: fx, y: fy })}
+                          style={{ width: 30, height: 30, borderRadius: 7, border: active ? "2px solid #8F3F2D" : "1px solid #ddd", background: active ? "#FDEFE4" : "#fff", cursor: "pointer" }} />
+                      );
+                    }))}
+                  </div>
+                ) : (
+                  <span className="seo-hint" style={{ margin: 0 }}>Drag the text on the video preview to place it anywhere.</span>
+                )}
+              </div>
               <div className="field" style={{ margin: 0 }}><label>Trim start (sec)</label>
                 <input type="number" min={0} step={0.5} value={startT} onChange={(e) => setStartT(e.target.value)} /></div>
               <div className="field" style={{ margin: 0 }}><label>Trim end (sec)</label>
