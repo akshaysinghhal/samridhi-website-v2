@@ -1,7 +1,7 @@
 import { verifyAdmin, authedJson, adminDb } from "../../../../lib/adminAuth";
 
 // POST /api/admin/ai — server-side Gemini proxy for the admin AI writing tools.
-// Body: { prompt, lang: "en" | "hi" }
+// Body: { prompt, lang: "en" | "hinglish" | "hi" }
 // The API key lives in site_settings (Admin → Integrations & AI) and never
 // reaches the browser; this route is admin-authenticated.
 export async function POST(request) {
@@ -16,7 +16,7 @@ export async function POST(request) {
     return Response.json({ error: "Invalid request." }, { status: 400 });
   }
   const prompt = String(body.prompt || "").trim();
-  const lang = body.lang === "hi" ? "hi" : "en";
+  const lang = ["hi", "hinglish"].includes(body.lang) ? body.lang : "en";
   const plain = body.plain === true;
   if (!prompt) return Response.json({ error: "Tell the AI what to write first." }, { status: 400 });
   if (prompt.length > 4000) return Response.json({ error: "That prompt is too long — keep it under 4000 characters." }, { status: 400 });
@@ -39,7 +39,9 @@ export async function POST(request) {
   const voice =
     lang === "hi"
       ? "Reply in Hindi (Devanagari script). Warm, professional tone for an Indian event & wedding company's website and social media."
-      : "Reply in clear English. Warm, professional tone for an Indian event & wedding company's website and social media.";
+      : lang === "hinglish"
+        ? "Reply in Hinglish — Hindi written in the Roman/Latin script (NOT Devanagari), the way Indians naturally type on WhatsApp (e.g. \"Dussehra Mela ki dhamakedaar taiyaariyan\"). Warm, professional tone for an Indian event & wedding company's website and social media."
+        : "Reply in clear English. Warm, professional tone for an Indian event & wedding company's website and social media.";
   const plainRule = plain
     ? " Write in plain text only: no markdown formatting, no **bold**, no ## headings, no leading - or * bullets and no numbered lists — use simple line breaks between ideas."
     : "";

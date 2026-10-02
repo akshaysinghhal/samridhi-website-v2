@@ -124,7 +124,7 @@ export default function PostEditor() {
         <div className="field"><label>URL slug *</label><input value={f.slug} onChange={(e) => { setSlugTouched(true); set("slug")(e); }} placeholder="a-royal-wedding-in-udaipur" />
           <div className="seo-hint">Your post will live at /blog/{f.slug || "your-slug"}</div></div>
         <div className="field"><div className="ai-field-row"><label>Excerpt</label><AiFieldButton onInsert={fill("excerpt")} label="Write excerpt with AI" seedPrompt={`Write a one-line blog excerpt for "${f.title || "this post"}"`} /></div><textarea rows={2} value={f.excerpt} onChange={set("excerpt")} placeholder="One or two lines shown on the blog listing page." /></div>
-        <div className="field"><div className="ai-field-row"><label>Body (Markdown supported)</label><AiFieldButton onInsert={fill("content")} label="Write blog body with AI" plainDefault={false} seedPrompt={`Write a full blog post in Markdown for "${f.title || "this post"}" — headings, short paragraphs, practical tips`} /></div>
+        <div className="field"><div className="ai-field-row"><label>Body (Markdown supported)</label><AiFieldButton onInsert={fill("content")} label="Write blog body with AI" seedPrompt={`Write a full blog post in Markdown for "${f.title || "this post"}" — headings, short paragraphs, practical tips`} /></div>
           <div className="md-split">
             <textarea value={f.content} onChange={set("content")} placeholder={"# Heading\n\nWrite your story here…\n\n- bullet points\n- **bold** and *italic* work too"} />
             <div className="md-preview"><ReactMarkdown>{f.content || "*Live preview appears here…*"}</ReactMarkdown></div>

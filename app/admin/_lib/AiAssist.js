@@ -43,10 +43,9 @@ export function stripMarkdown(t) {
     .trim();
 }
 
-export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seedTick, quickActions, historyEnabled, plainDefault }) {
+export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seedTick, quickActions, historyEnabled }) {
   const [prompt, setPrompt] = useState("");
-  const [lang, setLang] = useState("en");
-  const [plain, setPlain] = useState(plainDefault === true); // plain text, no markdown — off by default
+  const [lang, setLang] = useState("en"); // en | hinglish | hi
   const [preview, setPreview] = useState(false); // formatted preview of the result (bold etc.)
   const [result, setResult] = useState("");
   const [busy, setBusy] = useState(false);
@@ -62,7 +61,6 @@ export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seed
       setErr("");
       setCopied(false);
       setPreview(false);
-      setPlain(plainDefault === true);
       if (historyEnabled) setHistory(loadAiHistory());
       document.body.style.overflow = "hidden";
       const onKey = (e) => { if (e.key === "Escape") onClose(); };
@@ -81,7 +79,7 @@ export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seed
     if (!p || busy) return;
     setBusy(true); setErr(""); setResult(""); setCopied(false);
     try {
-      const r = await api("/api/admin/ai", { method: "POST", body: { prompt: p, lang, plain } });
+      const r = await api("/api/admin/ai", { method: "POST", body: { prompt: p, lang, plain: false } });
       setResult(r.text || "");
       if (historyEnabled && r.text) saveAiHistory(p, r.text);
     } catch (e) {
@@ -109,8 +107,8 @@ export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seed
         </div>
         <div className="ai-lang">
           <button type="button" className={lang === "en" ? "on" : ""} onClick={() => setLang("en")}>English</button>
+          <button type="button" className={lang === "hinglish" ? "on" : ""} onClick={() => setLang("hinglish")}>Hinglish</button>
           <button type="button" className={lang === "hi" ? "on" : ""} onClick={() => setLang("hi")}>हिन्दी</button>
-          <button type="button" className={plain ? "on" : ""} onClick={() => setPlain((v) => !v)} title="Plain text without markdown like **bold**">📝 Plain text</button>
         </div>
         <label className="ai-label">What should the AI write?</label>
         {quickActions && quickActions.length > 0 && (
@@ -127,7 +125,7 @@ export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seed
           rows={3}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder={lang === "hi" ? "जैसे: गोविंदा के इवेंट के लिए एक धमाकेदार घोषणा लिखो" : "e.g. Write a punchy announcement for Govinda's live event in Bhilwara"}
+          placeholder={lang === "hi" ? "जैसे: गोविंदा के इवेंट के लिए एक धमाकेदार घोषणा लिखो" : lang === "hinglish" ? "e.g. Govinda ke live event ke liye ek dhamakedaar announcement likho" : "e.g. Write a punchy announcement for Govinda's live event in Bhilwara"}
         />
         <button type="button" className="ai-gen" onClick={generate} disabled={busy || !prompt.trim()}>
           {busy ? "✨ Writing…" : "✨ Generate"}
@@ -146,6 +144,8 @@ export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seed
               <button type="button" className="btn btn-dark" onClick={() => setResult(stripMarkdown(result))} title="Remove **bold**, ## headings and bullets">🧹 Plain text</button>
               <button type="button" className="btn btn-dark" onClick={() => setPreview((v) => !v)} title="See the text formatted — bold, italics, lists"
                 style={preview ? { background: "#8F3F2D", borderColor: "#8F3F2D" } : undefined}>{preview ? "📝 Raw text" : "👁 Preview"}</button>
+              <button type="button" className="btn btn-dark" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(result)}`, "_blank")}
+                title="Share this text on WhatsApp" style={{ background: "#1fa855", borderColor: "#1fa855" }}>💬 WhatsApp</button>
               {onInsert && (
                 <button type="button" className="btn btn-primary" onClick={() => onInsert(result)}>Use this text</button>
               )}
@@ -177,7 +177,7 @@ export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seed
 }
 
 // Small "✨ AI" button that sits next to a form field and inserts the result.
-export function AiFieldButton({ onInsert, seedPrompt, label, plainDefault }) {
+export function AiFieldButton({ onInsert, seedPrompt, label }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -187,7 +187,6 @@ export function AiFieldButton({ onInsert, seedPrompt, label, plainDefault }) {
         onClose={() => setOpen(false)}
         title={label || "Write with AI"}
         seedPrompt={seedPrompt}
-        plainDefault={plainDefault}
         onInsert={(t) => { onInsert(t); setOpen(false); }}
       />
     </>
