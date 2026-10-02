@@ -517,19 +517,20 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 .process-band .eyebrow::before, .center .eyebrow::after { background: var(--gold-soft); }
 .process-band .h2 { color: var(--warm-white); }
 .process-band .lead { color: rgba(247,242,232,0.7); }
-.tl { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-top: 60px; position: relative; }
+.tl { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-top: 64px; position: relative; }
 .tl::before {
-  content: ""; position: absolute; top: 34px; left: 4%; right: 4%; height: 1px;
-  background: rgba(201,161,90,0.35);
+  content: ""; position: absolute; top: 8px; left: 5%; right: 5%; height: 1px;
+  background: linear-gradient(to right, rgba(201,161,90,0), rgba(201,161,90,.55) 14%, rgba(201,161,90,.55) 86%, rgba(201,161,90,0));
 }
 .tl-step { padding: 0 26px; position: relative; }
-.tl-step .tl-num {
-  font-family: var(--font-display); font-size: 56px; color: var(--gold);
-  line-height: 1; margin-bottom: 18px; position: relative; background: var(--brown);
-  display: inline-block; padding-right: 14px;
+.tl-dot {
+  display: block; width: 17px; height: 17px; border-radius: 50%;
+  background: var(--brown); border: 2px solid var(--gold);
+  margin-bottom: 24px; position: relative; z-index: 1;
+  box-shadow: 0 0 0 7px rgba(201,161,90,.10);
 }
 .tl-step h3 { color: var(--warm-white); font-size: 16px; letter-spacing: 1.6px; text-transform: uppercase; font-family: var(--font); font-weight: 700; margin: 0 0 10px; }
-.tl-step p { color: rgba(247,242,232,0.62); font-size: 14px; margin: 0; }
+.tl-step p { color: rgba(247,242,232,0.62); font-size: 14px; line-height: 1.7; margin: 0; }
 
 /* ---------- clients — refined logo wall ---------- */
 .logo-wall {
@@ -662,6 +663,13 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
   letter-spacing: 1.4px; text-transform: uppercase; padding: 9px 16px; border-radius: 3px;
   border: 1px solid rgba(201,161,90,0.5);
 }
+
+/* ---------- homepage video testimonials (above press) ---------- */
+.testi-band { background: var(--brown); }
+.testi-band .eyebrow { color: var(--gold-soft); }
+.testi-band .h2 { color: var(--warm-white); }
+.testi-video-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 26px; margin-top: 50px; }
+.couple-card video.tcard-vid { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
 /* ---------- contact — dark premium + ivory form ---------- */
 .contact-band { background: var(--brown); color: var(--warm-white); }
@@ -1037,6 +1045,7 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
   .intl-media { min-height: 320px; }
   .contact-grid { grid-template-columns: 1fr; gap: 50px; }
   .story-grid, .couple-grid { grid-template-columns: 1fr 1fr; }
+  .testi-video-grid { grid-template-columns: 1fr 1fr; }
   .testi-grid { grid-template-columns: 1fr 1fr; }
   .footer-top { grid-template-columns: 1fr 1fr; }
 }
@@ -1061,8 +1070,8 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
   .pf-grid { grid-template-columns: 1fr; }
   .pf-card:nth-child(n) { grid-column: span 1; aspect-ratio: 16/10; }
   .tl { grid-template-columns: 1fr; }
-  .story-grid, .couple-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 14px; scrollbar-width: none; margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; }
-  .story-grid::-webkit-scrollbar, .couple-grid::-webkit-scrollbar { display: none; }
+  .story-grid, .couple-grid, .testi-video-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 14px; scrollbar-width: none; margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; }
+  .story-grid::-webkit-scrollbar, .couple-grid::-webkit-scrollbar, .testi-video-grid::-webkit-scrollbar { display: none; }
   .story-card, .couple-card { flex: 0 0 250px; scroll-snap-align: start; }
   .testi-grid { grid-template-columns: 1fr; }
   .wed-list { grid-template-columns: 1fr; }

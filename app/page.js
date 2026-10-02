@@ -5,6 +5,7 @@ import LeadForm from "../components/LeadForm";
 import CoupleStories from "../components/CoupleStories";
 import Reveal from "../components/Reveal";
 import HeroMedia from "../components/HeroMedia";
+import TestimonialCard from "../components/TestimonialCard";
 import { getContentMap, c } from "../lib/content";
 import {
   getSettings, setting, getServices, getArtists, getEvents,
@@ -67,6 +68,7 @@ export default async function Home() {
   const show = intl[0];
   const pressStrip = press.filter((p) => !p.is_placeholder).slice(0, 6);
   const pressFallback = pressStrip.length ? pressStrip : press.slice(0, 4);
+  const videoTestimonials = (testimonials || []).filter((t) => t.video_url && String(t.video_url).trim()).slice(0, 4);
 
   const steps = [1, 2, 3, 4, 5].map((n, i) => ({
     title: c(map, "home", "steps", `step${n}_title`) || STEP_FALLBACKS[i][0],
@@ -303,6 +305,7 @@ export default async function Home() {
           <div className="tl">
             {steps.map((st, i) => (
               <Reveal key={i} delay={i} className="tl-step">
+                <span className="tl-dot" aria-hidden="true" />
                 <h3>{st.title}</h3>
                 <p>{st.desc}</p>
               </Reveal>
@@ -365,6 +368,32 @@ export default async function Home() {
                     <Link className="btn btn-luxury" href="/international-shows">Explore International Shows <span className="arr">→</span></Link>
                   </div>
                 </div>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+      )}
+
+      {/* ============ VIDEO TESTIMONIALS ============ */}
+      {videoTestimonials.length > 0 && (
+        <section className="section testi-band">
+          <div className="container">
+            <Reveal>
+              <div className="center">
+                <span className="eyebrow">Testimonials</span>
+                <h2 className="h2">Hear It Straight From Our Clients</h2>
+              </div>
+            </Reveal>
+            <div className="testi-video-grid">
+              {videoTestimonials.map((t, i) => (
+                <Reveal key={t.id} delay={i % 4}>
+                  <TestimonialCard t={t} />
+                </Reveal>
+              ))}
+            </div>
+            <Reveal>
+              <div className="center" style={{ marginTop: 40 }}>
+                <Link className="btn btn-luxury" href="/testimonials">All Testimonials</Link>
               </div>
             </Reveal>
           </div>
