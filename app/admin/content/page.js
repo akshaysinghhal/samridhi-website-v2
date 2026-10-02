@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { api, uploadFile } from "../../../lib/adminApi";
 import { AdminLoader, toast } from "../_lib/ui";
+import MediaPicker from "../_lib/MediaPicker";
 
 const PAGE_LABELS = {
   home: "Home",
@@ -9,6 +10,14 @@ const PAGE_LABELS = {
   artists: "Artists",
   contact: "Contact",
   weddings: "Weddings",
+  gallery: "Gallery",
+  portfolio: "Portfolio",
+  clients: "Clients",
+  press: "Press",
+  services: "Services",
+  testimonials: "Testimonials",
+  "couple-stories": "Couple Stories",
+  "international-shows": "International Shows",
 };
 const pageLabel = (p) => PAGE_LABELS[p] || (p ? p.charAt(0).toUpperCase() + p.slice(1) : p);
 
@@ -19,8 +28,16 @@ const SECTION_ORDER = {
   home: ["hero", "steps", "cta", "about", "stats"],
   about: ["hero", "story", "vision", "team", "approach", "why", "brands"],
   artists: ["hero", "list", "cta", "process"],
-  contact: ["info"],
+  contact: ["info", "hero"],
   weddings: ["hero"],
+  gallery: ["hero"],
+  portfolio: ["hero"],
+  clients: ["hero"],
+  press: ["hero"],
+  services: ["hero"],
+  testimonials: ["hero"],
+  "couple-stories": ["hero"],
+  "international-shows": ["hero"],
 };
 const sectionRank = (page, section) => {
   const order = SECTION_ORDER[page];
@@ -34,6 +51,7 @@ export default function ContentEditor() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [tab, setTab] = useState(null);
+  const [pickerFor, setPickerFor] = useState(null); // block id whose image is being chosen
 
   useEffect(() => {
     (async () => {
@@ -43,6 +61,7 @@ export default function ContentEditor() {
   }, []);
 
   const setVal = (id, v) => setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, value: v } : b)));
+  const setImg = (id, url) => setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, image_url: url } : b)));
 
   const save = async () => {
     setSaving(true); setMsg("");
@@ -81,7 +100,7 @@ export default function ContentEditor() {
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div><h1>Page Content</h1><p className="admin-sub">Edit headlines, text and contact details across the website.</p></div>
+        <div><h1>Page Content</h1><p className="admin-sub">Edit headlines, text, contact details and page banner images across the website.</p></div>
         <button className="btn btn-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save All"}</button>
       </div>
       {msg && <div className="login-err" style={{ background: "#e8f5e9", color: "#2e7d32", marginBottom: 20 }}>{msg}</div>}
@@ -107,14 +126,45 @@ export default function ContentEditor() {
           <div className="sec">{g.split("·")[0].trim()}</div>
           <h2>{g.split("·")[1]?.trim()}</h2>
           {bs.map((b) => (
-            <div className="field" key={b.id}>
-              <label>{b.label || b.key}</label>
-              {b.value.length > 120 ? (
-                <textarea rows={4} value={b.value} onChange={(e) => setVal(b.id, e.target.value)} />
-              ) : (
-                <input value={b.value} onChange={(e) => setVal(b.id, e.target.value)} />
-              )}
-            </div>
+            b.key === "image" ? (
+              <div className="field" key={b.id}>
+                <label>{b.label || b.key}</label>
+                {b.image_url ? (
+                  <img src={b.image_url} alt="" style={{ width: "100%", maxWidth: 420, borderRadius: 12, display: "block", marginBottom: 10 }} />
+                ) : (
+                  <p className="admin-sub" style={{ margin: "0 0 10px" }}>No banner set — the page falls back to its default image.</p>
+                )}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button type="button" className="ai-chip" onClick={() => setPickerFor(b.id)}>🖼 Choose from library</button>
+                  <label className="ai-chip" style={{ cursor: "pointer" }}>
+                    ⬆ Upload
+                    <input type="file" accept="image/*" hidden onChange={async (e) => {
+                      const fl = e.target.files?.[0];
+                      e.target.value = "";
+                      if (!fl) return;
+                      try {
+                        const m = await uploadFile(fl);
+                        setImg(b.id, m.url);
+                        toast("Banner image uploaded.");
+                      } catch (err) { toast("Upload failed: " + err.message, "error"); }
+                    }} />
+                  </label>
+                  {b.image_url && (
+                    <button type="button" className="ai-chip" onClick={() => setImg(b.id, "")}>✕ Remove</button>
+                  )}
+                </div>
+                <span className="seo-hint">This banner shows at the top of the {pageLabel(b.page)} page.</span>
+              </div>
+            ) : (
+              <div className="field" key={b.id}>
+                <label>{b.label || b.key}</label>
+                {b.value.length > 120 ? (
+                  <textarea rows={4} value={b.value} onChange={(e) => setVal(b.id, e.target.value)} />
+                ) : (
+                  <input value={b.value} onChange={(e) => setVal(b.id, e.target.value)} />
+                )}
+              </div>
+            )
           ))}
         </div>
       ))}
@@ -122,6 +172,12 @@ export default function ContentEditor() {
         <div className="content-group"><p className="admin-sub" style={{ margin: 0 }}>No content blocks found yet.</p></div>
       )}
       <button className="btn btn-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save All"}</button>
+      <MediaPicker open={!!pickerFor} kind="image" onClose={() => setPickerFor(null)}
+        onSelect={(items) => {
+          const a = Array.isArray(items) ? items : [items];
+          if (a[0] && pickerFor) setImg(pickerFor, a[0].url);
+          setPickerFor(null);
+        }} />
     </>
   );
 }
