@@ -5,6 +5,7 @@ import LeadForm from "../components/LeadForm";
 import CoupleStories from "../components/CoupleStories";
 import Reveal from "../components/Reveal";
 import HeroMedia from "../components/HeroMedia";
+import PressMosaic from "../components/PressMosaic";
 import { getContentMap, c } from "../lib/content";
 import {
   getSettings, setting, getServices, getArtists, getEvents,
@@ -65,8 +66,8 @@ export default async function Home() {
   const wa = setting(s, "whatsapp", "919602228846");
   const waMsg = encodeURIComponent(setting(s, "whatsapp_msg", "Hi Samridhi Films! I want to plan an event."));
   const show = intl[0];
-  const pressStrip = press.filter((p) => !p.is_placeholder).slice(0, 6);
-  const pressFallback = pressStrip.length ? pressStrip : press.slice(0, 4);
+  const pressStrip = press.filter((p) => !p.is_placeholder).slice(0, 8);
+  const pressFallback = pressStrip.length ? pressStrip : press.slice(0, 8);
 
   const steps = [1, 2, 3, 4, 5].map((n, i) => ({
     title: c(map, "home", "steps", `step${n}_title`) || STEP_FALLBACKS[i][0],
@@ -361,34 +362,15 @@ export default async function Home() {
 
       {/* ============ PRESS ============ */}
       {pressFallback.length > 0 && (
-        <section className="section" style={{ background: "var(--warm-white)" }}>
+        <section className="press-mosaic-sec">
           <div className="container">
             <Reveal>
-              <div className="center">
+              <div className="pm-kicker">
                 <span className="eyebrow">Press</span>
                 <h2 className="h2">As Seen In</h2>
               </div>
             </Reveal>
-            <div className="press-grid">
-              {pressFallback.map((p, i) => (
-                <Reveal key={p.id} delay={i % 3} className="press-clip">
-                  <Link href="/press" style={{ textDecoration: "none" }} aria-label={p.headline || p.publication || "Press coverage"}>
-                    <span className="pc-img">
-                      <img src={p.image_url} alt={p.headline ? `${p.headline} — ${p.publication || "press"}` : `${p.publication || "Press"} clipping`} loading="lazy" />
-                      <span className="pc-cap">
-                        {p.publication && <span className="pc-pub">{p.publication}</span>}
-                        <span className="pc-head">{p.headline || "Press coverage"}</span>
-                      </span>
-                    </span>
-                  </Link>
-                </Reveal>
-              ))}
-            </div>
-            <Reveal>
-              <div className="center" style={{ marginTop: 40 }}>
-                <Link className="btn btn-dark" href="/press">All Press Coverage</Link>
-              </div>
-            </Reveal>
+            <PressMosaic items={pressFallback} />
           </div>
         </section>
       )}
