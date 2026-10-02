@@ -16,13 +16,10 @@ export default function GalleryAdmin() {
   const [ytTitle, setYtTitle] = useState("");
   const [ytUrl, setYtUrl] = useState("");
   const [msg, setMsg] = useState("");
-  const [editing, setEditing] = useState(null);
   const [preview, setPreview] = useState(null);
   const [statusFilter, setStatusFilter] = useState("");
   const [catFilter, setCatFilter] = useState("");
   const [q, setQ] = useState("");
-  const [aiBusyId, setAiBusyId] = useState(null); // gallery item currently being AI-described
-  const [renameBusyId, setRenameBusyId] = useState(null);
 
   const load = async () => {
     setBusy(true);
@@ -59,8 +56,6 @@ export default function GalleryAdmin() {
     try { setItems((await api("/api/admin/gallery-items")).items); } catch { /* ignore */ }
     if (!silent) setBusy(false);
   };
-
-  const update = (id, patch) => setItems((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)));
 
   // Shared upload runner with circular progress. `makeItem(m, file)` builds the
   // gallery-item body from the uploaded Cloudinary file.
@@ -140,54 +135,8 @@ export default function GalleryAdmin() {
     } catch (err) { toast("Upload failed: " + (err.message || err), "error"); }
   };
 
-  // AI looks at the photo and suggests title, caption and category.
-  const aiFillItem = async (item) => {
-    const src = item.image_url || "";
-    if (!src || aiBusyId) return;
-    setAiBusyId(item.id); setMsg("");
-    try {
-      const r = await api("/api/admin/ai-image", { method: "POST", body: { imageUrl: src, categories: CATEGORIES } });
-      const patch = {};
-      if (r.title) patch.title = r.title;
-      if (r.caption) patch.caption = r.caption;
-      if (r.category) patch.category = r.category;
-      if (Object.keys(patch).length) {
-        update(item.id, patch);
-        toast("AI filled title, caption & category — review, then Save.");
-      } else {
-        setMsg("AI could not describe that photo.");
-      }
-    } catch (e) { setMsg("AI fill failed: " + (e.message || "try again")); toast("AI fill failed: " + (e.message || "try again"), "error"); }
-    setAiBusyId(null);
-  };
 
-  // Rename the Cloudinary file from the item's title (slugified, ≤80 chars).
-  const renameItemFile = async (item) => {
-    if (!item.title || !item.title.trim() || renameBusyId) return;
-    setRenameBusyId(item.id); setMsg("");
-    try {
-      const r = await api("/api/admin/gallery-items/rename", { method: "POST", body: { id: item.id } });
-      if (r.renamed) {
-        update(item.id, { image_url: r.image_url });
-        toast(`File renamed to “${r.file_name}”.`);
-      } else {
-        toast("File name already matches the title.");
-      }
-    } catch (e) { setMsg("Rename failed: " + (e.message || "try again")); toast("Rename failed: " + (e.message || "try again"), "error"); }
-    setRenameBusyId(null);
-  };
 
-  const saveItem = async (item) => {
-    try {
-      await api("/api/admin/gallery-items", {
-        method: "PUT",
-        body: { id: item.id, title: item.title, caption: item.caption || "", category: item.category || "Events", status: item.status || "published", is_placeholder: !!item.is_placeholder, sort: item.sort || 0 },
-      });
-      // The card already holds the edited values — just close the editor, no reload flash.
-      setEditing(null); await revalidateSite();
-      toast("Gallery item saved.");
-    } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
-  };
 
   const remove = async (id) => {
     if (!confirm("Delete this item from the gallery?")) return;
@@ -198,10 +147,8 @@ export default function GalleryAdmin() {
   };
 
   const card = (item) => (
-    <div className={`media-item${editing === item.id ? " editing" : ""}`} key={item.id} style={{
+    <div className="media-item" key={item.id} style={{
       ...(bulk.selected.has(item.id) ? { outline: "3px solid var(--brand)" } : undefined),
-      // The open details editor needs room — span the full grid width while editing.
-      ...(editing === item.id ? { gridColumn: "1 / -1" } : undefined),
     }}>
       <div style={{ position: "absolute", top: 8, right: 8, zIndex: 2, background: "rgba(255,255,255,0.92)", borderRadius: 8, padding: 4 }}>
         <CheckCell checked={bulk.selected.has(item.id)} onChange={() => bulk.toggleOne(item.id)} label={`Select ${item.title}`} />
@@ -216,7 +163,6 @@ export default function GalleryAdmin() {
       </div>
       {item.is_placeholder && <div style={{ position: "absolute", top: 8, left: item.kind === "video" ? 62 : 8 }}><PhBadge /></div>}
       <div className="meta" style={{ flexDirection: "column" }}>
-        {/* Title shows as text on the card; editing happens inside Details below. */}
         <div style={{ fontSize: 13.5, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={item.title}>
           {item.title || "Untitled"}
         </div>
@@ -229,51 +175,11 @@ export default function GalleryAdmin() {
           <StatusBadge status={item.status} />
           <span className="seo-hint" style={{ margin: 0 }}>{item.category || "Events"}</span>
         </div>
-        {editing === item.id ? (
-          <div className="g-details">
-            <div className="g-details-head">Edit details</div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-              <button type="button" className="btn-sm btn-edit" disabled={aiBusyId === item.id} onClick={() => aiFillItem(item)}>
-                {aiBusyId === item.id ? "✨ AI is looking…" : "✨ Fill with AI"}
-              </button>
-              <button type="button" className="btn-sm btn-edit" disabled={renameBusyId === item.id || !item.title?.trim()} onClick={() => renameItemFile(item)} title="Rename the image file on Cloudinary from the title (max 80 characters)">
-                {renameBusyId === item.id ? "Renaming…" : "✏️ Rename file from title"}
-              </button>
-            </div>
-            <div className="field"><label>Title</label>
-              <input value={item.title || ""} onChange={(e) => update(item.id, { title: e.target.value })} placeholder="e.g. Sangeet night highlights" />
-            </div>
-            <div className="g-details-row">
-              <div className="field"><label>Category</label>
-                <select value={item.category || "Events"} onChange={(e) => update(item.id, { category: e.target.value })}>
-                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="field"><label>Status</label>
-                <select value={item.status || "published"} onChange={(e) => update(item.id, { status: e.target.value })}>
-                  {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="field"><label>Caption</label>
-              <textarea value={item.caption || ""} onChange={(e) => update(item.id, { caption: e.target.value })} placeholder="Shown under the photo on the website" rows={2} />
-              <span className="seo-hint">Shows under the title on the website gallery.</span>
-            </div>
-            <label className="check-row">
-              <input type="checkbox" checked={!!item.is_placeholder} onChange={(e) => update(item.id, { is_placeholder: e.target.checked })} /> Placeholder
-            </label>
-            <div className="g-details-actions">
-              <SaveButton onClick={() => saveItem(item)} className="btn-sm btn-new">Save</SaveButton>
-              <button className="btn-sm btn-edit" onClick={() => { setEditing(null); refresh(); }}>Cancel</button>
-            </div>
-          </div>
-        ) : (
-          <div className="mi-actions">
-            <a className="btn-sm btn-view" href="/gallery" target="_blank" rel="noreferrer">Preview</a>
-            <button className="btn-sm btn-edit" onClick={() => setEditing(item.id)}>Details</button>
-            <button className="btn-sm btn-del" onClick={() => remove(item.id)}>Delete</button>
-          </div>
-        )}
+        <div className="mi-actions">
+          <a className="btn-sm btn-view" href="/gallery" target="_blank" rel="noreferrer">Preview</a>
+          <a className="btn-sm btn-edit" href={`/admin/gallery/${item.id}`}>Details</a>
+          <button className="btn-sm btn-del" onClick={() => remove(item.id)}>Delete</button>
+        </div>
       </div>
     </div>
   );

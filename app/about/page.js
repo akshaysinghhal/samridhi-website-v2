@@ -7,6 +7,9 @@ import { getTeam } from "../../lib/db";
 
 export const revalidate = 60;
 
+const ISO_CERT_URL = "https://res.cloudinary.com/gtu4qtut/image/upload/v1790950551/site/iso-certificate.jpg";
+const ISO_CERT_THUMB = "https://res.cloudinary.com/gtu4qtut/image/upload/w_440/v1790950551/site/iso-certificate.jpg";
+
 export const metadata = {
   title: "About Us",
   description: "Samridhi Films & Television — founded 1999 in Chittorgarh by Navratan Jain, transformed into a full-service event management company by Sunil Jain. 1000+ events across India.",
@@ -160,6 +163,12 @@ export default async function AboutPage() {
                   <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 60, height: 60, borderRadius: 6, background: "var(--brown)", color: "var(--gold-soft)", fontWeight: 800, fontSize: 20 }}>GeM</span>
                   <span style={{ fontWeight: 800, color: "var(--brown)", fontSize: 15, letterSpacing: 1 }}>GeM Registered<br />Govt. e-Marketplace</span>
                 </div>
+              </div>
+              <div style={{ marginTop: 28 }}>
+                <a href={ISO_CERT_URL} target="_blank" rel="noreferrer" title="View our ISO 9001:2015 certificate" style={{ display: "inline-block" }}>
+                  <img src={ISO_CERT_THUMB} alt="ISO 9001:2015 Certificate of Registration — Samridhi Films & Television" loading="lazy" style={{ width: 200, height: "auto", borderRadius: 8, border: "1px solid var(--border-gold)", boxShadow: "var(--shadow)" }} />
+                </a>
+                <div style={{ marginTop: 10, fontSize: 13, color: "var(--text-muted)" }}>Our ISO 9001:2015 certificate — tap to view</div>
               </div>
             </div>
           </Reveal>

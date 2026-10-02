@@ -17,6 +17,13 @@ function refresh() {
 export async function GET(request) {
   const user = await verifyAdmin(request);
   const denied = authedJson(user); if (denied) return denied;
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+  if (id) {
+    const { data, error } = await adminDb().from("gallery_items").select("*").eq("id", id).single();
+    if (error) return Response.json({ error: error.message }, { status: 404 });
+    return Response.json({ item: data });
+  }
   const { data, error } = await adminDb().from("gallery_items").select("*").order("sort").order("created_at", { ascending: false });
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ items: data });
