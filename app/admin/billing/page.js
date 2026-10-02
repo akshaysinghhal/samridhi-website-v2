@@ -11,6 +11,19 @@ import { buildQuotePdf, buildInvoicePdf, buildReceiptPdf, logoDataUrl, fetchData
 const QUOTE_STATUS = ["draft", "sent", "approved", "rejected", "converted"];
 const PAY_MODES = ["Cash", "UPI", "Bank transfer", "Cheque", "Card"];
 
+// Translate raw Postgres errors into plain language (last resort — the form
+// already guards against duplicate numbers before saving).
+function friendlyDbError(msg) {
+  const m = String(msg || "");
+  if (/duplicate key value violates unique constraint/i.test(m)) {
+    if (m.includes("invoice_no")) return "That invoice number is already used — please use a different number.";
+    if (m.includes("quote_no")) return "That quotation number is already used — please use a different number.";
+    if (m.includes("receipt_no")) return "That receipt number is already used — please use a different number.";
+    return "That number is already used — please use a different one.";
+  }
+  return m;
+}
+
 function useCompany() {
   const [company, setCompany] = useState({ name: "Samridhi Films & Television" });
   useEffect(() => {
@@ -112,7 +125,15 @@ function DocForm({ kind, initial, existingNos, onSave, onCancel, company }) {
   const [aiBusy, setAiBusy] = useState(false);
   const [aiDesc, setAiDesc] = useState("");
   const [saving, setSaving] = useState(false);
+  const [numTouched, setNumTouched] = useState(false); // user edited the doc number manually
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
+  // If the form opened before the list finished loading, the suggested number
+  // may already be taken — refresh it until the user types their own.
+  const nosKey = (existingNos || []).join("|");
+  useEffect(() => {
+    if (!initial?.id && !numTouched) set(noKey, nextDocNo(prefix, existingNos));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nosKey]);
 
   const aiDraft = async () => {
     if (!aiDesc.trim()) { toast("Describe the event first — e.g. 'sangeet night for 300 guests in Udaipur'.", "info"); return; }
@@ -151,7 +172,7 @@ function DocForm({ kind, initial, existingNos, onSave, onCancel, company }) {
         <h4>Document</h4>
         <div className="field" style={{ margin: 0, maxWidth: 320 }}>
           <label>{kind === "quote" ? "Quote no." : "Invoice no."}</label>
-          <input value={f[noKey]} onChange={(e) => set(noKey, e.target.value)} />
+          <input value={f[noKey]} onChange={(e) => { set(noKey, e.target.value); setNumTouched(true); }} />
         </div>
       </div>
 
@@ -225,12 +246,19 @@ function QuotesTab({ company, onConvert }) {
   useEffect(() => { load(); }, []);
 
   const save = async (f) => {
+    let body = f;
+    const no = String(f.quote_no || "").trim();
+    if (quotes.some((x) => x.id !== f.id && String(x.quote_no).trim() === no)) {
+      const free = nextDocNo(company.quotePrefix || "", quotes.map((x) => x.quote_no));
+      body = { ...f, quote_no: free };
+      toast(`Quote no. ${no} already exists — saved as ${free}.`, "info");
+    }
     try {
-      if (f.id) await api(`/api/admin/quotations/${f.id}`, { method: "PUT", body: f });
-      else await api("/api/admin/quotations", { method: "POST", body: f });
-      toast(f.id ? "Quotation updated." : "Quotation saved.");
+      if (body.id) await api(`/api/admin/quotations/${body.id}`, { method: "PUT", body });
+      else await api("/api/admin/quotations", { method: "POST", body });
+      toast(body.id ? "Quotation updated." : "Quotation saved.");
       setEditing(null); load();
-    } catch (e) { toast("Save failed: " + e.message, "error"); }
+    } catch (e) { toast("Save failed: " + friendlyDbError(e.message), "error"); }
   };
   const del = async (id) => {
     if (!confirm("Delete this quotation?")) return;
@@ -354,17 +382,24 @@ function InvoicesTab({ company, convertQuote, clearConvert }) {
   const paidFor = (invId) => payments.filter((p) => p.invoice_id === invId).reduce((a, p) => a + (+p.amount || 0), 0);
 
   const save = async (f) => {
+    let body = f;
+    const no = String(f.invoice_no || "").trim();
+    if (invoices.some((x) => x.id !== f.id && String(x.invoice_no).trim() === no)) {
+      const free = nextDocNo(company.invoicePrefix || "", invoices.map((x) => x.invoice_no));
+      body = { ...f, invoice_no: free };
+      toast(`Invoice no. ${no} already exists — saved as ${free}.`, "info");
+    }
     try {
-      if (f.id) await api(`/api/admin/invoices/${f.id}`, { method: "PUT", body: f });
+      if (body.id) await api(`/api/admin/invoices/${body.id}`, { method: "PUT", body });
       else {
-        await api("/api/admin/invoices", { method: "POST", body: f });
-        if (f.quotation_id) {
-          try { await api(`/api/admin/quotations/${f.quotation_id}`, { method: "PUT", body: { status: "converted" } }); } catch { /* ignore */ }
+        await api("/api/admin/invoices", { method: "POST", body });
+        if (body.quotation_id) {
+          try { await api(`/api/admin/quotations/${body.quotation_id}`, { method: "PUT", body: { status: "converted" } }); } catch { /* ignore */ }
         }
       }
-      toast(f.id ? "Invoice updated." : "Invoice saved.");
+      toast(body.id ? "Invoice updated." : "Invoice saved.");
       setEditing(null); load();
-    } catch (e) { toast("Save failed: " + e.message, "error"); }
+    } catch (e) { toast("Save failed: " + friendlyDbError(e.message), "error"); }
   };
   const del = async (inv) => {
     if (!confirm(`Delete invoice ${inv.invoice_no}? Its payment records will also be deleted.`)) return;
@@ -540,6 +575,75 @@ const CHECKLIST_TEMPLATES = {
   "Mela / fair": ["Ground booking + permissions", "Rides / jhula vendors", "Food stall allotments", "Celebrity appearances", "Ticketing & entry gates", "Security plan", "Power & water", "Sanitation", "First aid", "Promotions", "Post-event cleanup"],
 };
 
+// Editor for the checklist templates above — stored in site_settings under
+// "checklist_templates" (no migration needed). Editing a template only affects
+// checklists created afterwards; existing checklists keep their own tasks.
+function TemplateEditor({ templates, onSaved }) {
+  const toRows = (t) => Object.entries(t || {}).map(([name, tasks]) => ({ name, tasks: (tasks || []).join("\n") }));
+  const [rows, setRows] = useState(() => toRows(templates));
+  const [busy, setBusy] = useState(false);
+  const setRow = (i, patch) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+
+  const collect = () => {
+    const obj = {};
+    for (const r of rows) {
+      const name = r.name.trim();
+      if (!name) continue;
+      if (obj[name]) { toast(`Duplicate template name: ${name}`, "error"); return null; }
+      obj[name] = r.tasks.split("\n").map((t) => t.trim()).filter(Boolean);
+    }
+    if (!Object.keys(obj).length) { toast("Add at least one template.", "error"); return null; }
+    return obj;
+  };
+
+  const save = async () => {
+    const obj = collect();
+    if (!obj) return;
+    setBusy(true);
+    try {
+      await api("/api/admin/site-settings", { method: "PUT", body: { key: "checklist_templates", value: obj } });
+      onSaved(obj);
+      toast("Templates saved — new checklists will use them.");
+    } catch (e) { toast("Save failed: " + e.message, "error"); }
+    setBusy(false);
+  };
+
+  const resetAll = async () => {
+    if (!confirm("Reset all checklist templates to the defaults? Your customizations will be lost.")) return;
+    setBusy(true);
+    try {
+      await api("/api/admin/site-settings", { method: "PUT", body: { key: "checklist_templates", value: null } });
+      onSaved({});
+      setRows(toRows(CHECKLIST_TEMPLATES));
+      toast("Templates reset to defaults.");
+    } catch (e) { toast("Reset failed: " + e.message, "error"); }
+    setBusy(false);
+  };
+
+  return (
+    <div className="editor" style={{ marginBottom: 22, border: "2px solid #8F3F2D" }}>
+      <h3 style={{ marginTop: 0 }}>Edit checklist templates</h3>
+      <p className="admin-sub" style={{ marginTop: -6 }}>One task per line. Changes apply to checklists you create afterwards — existing checklists are untouched.</p>
+      {rows.map((r, i) => (
+        <div key={i} className="bill-form-sec">
+          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            <input value={r.name} onChange={(e) => setRow(i, { name: e.target.value })} placeholder="Template name" style={{ flex: 1, fontWeight: 700, minWidth: 0 }} aria-label="Template name" />
+            <button type="button" className="btn-sm btn-del" onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}>Delete</button>
+          </div>
+          <textarea value={r.tasks} onChange={(e) => setRow(i, { tasks: e.target.value })} rows={5}
+            style={{ width: "100%", boxSizing: "border-box", fontSize: 16 }} aria-label={`Tasks for ${r.name || "template"}`} />
+        </div>
+      ))}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <button type="button" className="btn-sm btn-edit" onClick={() => setRows((rs) => [...rs, { name: "", tasks: "" }])}>＋ New template</button>
+        <span style={{ flex: 1 }} />
+        <button type="button" className="btn btn-dark" disabled={busy} onClick={resetAll}>Reset to defaults</button>
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={save}>{busy ? "Saving…" : "💾 Save templates"}</button>
+      </div>
+    </div>
+  );
+}
+
 function ChecklistsTab() {
   const [lists, setLists] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -547,6 +651,16 @@ function ChecklistsTab() {
   const [q, setQ] = useState("");
   const [statusF, setStatusF] = useState("all"); // all | active | complete
   const [expanded, setExpanded] = useState(null); // checklist id with all tasks shown
+  const [customTpls, setCustomTpls] = useState(null); // null = still loading; {} = defaults
+  const [tplEditor, setTplEditor] = useState(false);
+  const templates = useMemo(() => ({ ...CHECKLIST_TEMPLATES, ...(customTpls || {}) }), [customTpls]);
+
+  useEffect(() => {
+    api("/api/admin/site-settings").then((r) => {
+      const v = r.settings?.checklist_templates;
+      setCustomTpls(v && typeof v === "object" ? v : {});
+    }).catch(() => setCustomTpls({}));
+  }, []);
 
   const load = async () => {
     setLoading(true);
@@ -601,6 +715,7 @@ function ChecklistsTab() {
       </div>
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
         <button type="button" className="btn btn-primary" onClick={() => setEditing("new")}>＋ New checklist</button>
+        <button type="button" className="btn btn-dark" onClick={() => setTplEditor((x) => !x)}>✏️ {tplEditor ? "Close templates" : "Edit templates"}</button>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search event / client…" style={{ flex: 1, minWidth: 200 }} />
         <select value={statusF} onChange={(e) => setStatusF(e.target.value)} aria-label="Filter by progress" style={{ maxWidth: 170 }}>
           <option value="all">All</option>
@@ -608,7 +723,8 @@ function ChecklistsTab() {
           <option value="complete">Complete</option>
         </select>
       </div>
-      {editing && <ChecklistForm initial={editing === "new" ? null : editing} onSave={save} onCancel={() => setEditing(null)} />}
+      {tplEditor && <TemplateEditor templates={templates} onSaved={(t) => setCustomTpls(t || {})} />}
+      {editing && <ChecklistForm initial={editing === "new" ? null : editing} templates={templates} onSave={save} onCancel={() => setEditing(null)} />}
       {loading ? <p className="admin-sub">Loading…</p> : (
         <div style={{ display: "grid", gap: 12 }}>
           {filtered.map((cl) => {
@@ -660,7 +776,8 @@ function ChecklistsTab() {
   );
 }
 
-function ChecklistForm({ initial, onSave, onCancel }) {
+function ChecklistForm({ initial, onSave, onCancel, templates }) {
+  const T = templates || CHECKLIST_TEMPLATES;
   const [f, setF] = useState(() => ({
     event_title: initial?.event_title || "", event_date: initial?.event_date || "", client_name: initial?.client_name || "",
     items: (initial?.items || []).map((it) => ({ label: it.label, done: !!it.done })),
@@ -672,9 +789,9 @@ function ChecklistForm({ initial, onSave, onCancel }) {
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
 
   const applyTemplate = () => {
-    if (!tpl) return;
+    if (!tpl || !T[tpl]) return;
     if (f.items.length && !confirm("Replace current tasks with the template?")) return;
-    set("items", CHECKLIST_TEMPLATES[tpl].map((label) => ({ label, done: false })));
+    set("items", T[tpl].map((label) => ({ label, done: false })));
     toast("Template applied.");
   };
 
@@ -705,7 +822,7 @@ function ChecklistForm({ initial, onSave, onCancel }) {
           <div style={{ display: "flex", gap: 8 }}>
             <select value={tpl} onChange={(e) => setTpl(e.target.value)} style={{ flex: 1 }}>
               <option value="">Choose a template…</option>
-              {Object.keys(CHECKLIST_TEMPLATES).map((t) => <option key={t}>{t} ({CHECKLIST_TEMPLATES[t].length} tasks)</option>)}
+              {Object.keys(T).map((t) => <option key={t} value={t}>{t} ({T[t].length} tasks)</option>)}
             </select>
             <button type="button" className="btn-sm btn-edit" onClick={applyTemplate}>Apply</button>
           </div>
