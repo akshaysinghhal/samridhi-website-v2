@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "../_lib/ui";
 import { api } from "../../../lib/adminApi";
@@ -300,6 +300,7 @@ function ChecklistsTab() {
   const [expanded, setExpanded] = useState(null); // checklist id with all tasks shown
   const [tplEditor, setTplEditor] = useState(false);
   const [templates, setCustomTpls] = useChecklistTemplates();
+  const togglingRef = useRef({}); // checklist id -> in-flight toggle chain
 
   const load = async () => {
     setLoading(true);
@@ -314,10 +315,26 @@ function ChecklistsTab() {
     try { await api(`/api/admin/checklists/${id}`, { method: "DELETE" }); toast("Checklist deleted."); load(); }
     catch (e) { toast("Delete failed: " + e.message, "error"); }
   };
-  const quickToggle = async (cl, i) => {
-    const items = cl.items.map((it, j) => (j === i ? { ...it, done: !it.done } : it));
-    try { await api(`/api/admin/checklists/${cl.id}`, { method: "PUT", body: { items } }); load(); }
-    catch (e) { toast("Failed: " + e.message, "error"); }
+  const quickToggle = (cl, i) => {
+    // Optimistic toggle: the checkbox flips instantly and the save happens
+    // quietly in the background — no full-page reload. Rapid taps on the same
+    // checklist are chained so they can't overwrite each other.
+    const run = async () => {
+      let nextItems;
+      setLists((ls) => ls.map((x) => {
+        if (x.id !== cl.id) return x;
+        nextItems = (x.items || []).map((it, j) => (j === i ? { ...it, done: !it.done } : it));
+        return { ...x, items: nextItems };
+      }));
+      try {
+        await api(`/api/admin/checklists/${cl.id}`, { method: "PUT", body: { items: nextItems } });
+      } catch (e) {
+        toast("Failed: " + e.message, "error");
+        load(); // reload to restore the true state
+      }
+    };
+    const prev = togglingRef.current[cl.id] || Promise.resolve();
+    togglingRef.current[cl.id] = prev.then(run, run);
   };
 
   const pctOf = (cl) => {

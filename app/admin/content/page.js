@@ -12,6 +12,22 @@ const PAGE_LABELS = {
 };
 const pageLabel = (p) => PAGE_LABELS[p] || (p ? p.charAt(0).toUpperCase() + p.slice(1) : p);
 
+// Sections in the order they appear on the public website, per page.
+// The admin lists them in this order so editing follows the page top-to-bottom.
+// Sections not listed here (unused/legacy) fall back to alphabetical at the end.
+const SECTION_ORDER = {
+  home: ["hero", "steps", "cta", "about", "stats"],
+  about: ["hero", "story", "vision", "team", "approach", "why", "brands"],
+  artists: ["hero", "list", "cta", "process"],
+  contact: ["info"],
+  weddings: ["hero"],
+};
+const sectionRank = (page, section) => {
+  const order = SECTION_ORDER[page];
+  const i = order ? order.indexOf(section) : -1;
+  return i === -1 ? 999 : i;
+};
+
 export default function ContentEditor() {
   const [blocks, setBlocks] = useState([]);
   const [busy, setBusy] = useState(true);
@@ -55,6 +71,12 @@ export default function ContentEditor() {
     const g = `${b.page} · ${b.section}`;
     (groups[g] = groups[g] || []).push(b);
   }
+  // Same order as the sections appear on the website.
+  const groupList = Object.entries(groups).sort(([ga], [gb]) => {
+    const sa = ga.split("·")[1]?.trim() || "";
+    const sb = gb.split("·")[1]?.trim() || "";
+    return sectionRank(active, sa) - sectionRank(active, sb) || sa.localeCompare(sb);
+  });
 
   return (
     <>
@@ -80,7 +102,7 @@ export default function ContentEditor() {
           ))}
         </div>
       )}
-      {Object.entries(groups).map(([g, bs]) => (
+      {groupList.map(([g, bs]) => (
         <div className="content-group" key={g}>
           <div className="sec">{g.split("·")[0].trim()}</div>
           <h2>{g.split("·")[1]?.trim()}</h2>
