@@ -52,7 +52,8 @@ class MediaPickerErrorBoundary extends Component {
 
 function MediaPickerInner({ open, onClose, onSelect, kind = "all", multi = false }) {
   const [media, setMedia] = useState([]);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false); // first batch not yet shown
+  const [loadingMore, setLoadingMore] = useState(false); // full list still fetching
   const [err, setErr] = useState("");
   const [q, setQ] = useState("");
   const [tab, setTab] = useState(kind === "all" ? "all" : kind);
@@ -65,14 +66,23 @@ function MediaPickerInner({ open, onClose, onSelect, kind = "all", multi = false
     setFolder("all");
     setQ("");
     setSel([]);
+    setMedia([]);
     let live = true;
     (async () => {
-      setBusy(true); setErr("");
+      setBusy(true); setErr(""); setLoadingMore(false);
       try {
-        const res = await api("/api/admin/media");
-        if (live) setMedia(res.media || []);
+        // Phase 1: first 15 files fast, so the picker opens instantly.
+        const first = await api("/api/admin/media?limit=15&usage=0");
+        if (!live) return;
+        setMedia(first.media || []);
+        setBusy(false);
+        // Phase 2: the rest in the background.
+        setLoadingMore(true);
+        const full = await api("/api/admin/media?usage=0");
+        if (!live) return;
+        setMedia(full.media || []);
       } catch (e) { if (live) setErr("Failed to load library: " + e.message); }
-      if (live) setBusy(false);
+      if (live) { setBusy(false); setLoadingMore(false); }
     })();
     const h = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", h);
@@ -106,7 +116,7 @@ function MediaPickerInner({ open, onClose, onSelect, kind = "all", multi = false
 
   if (!open) return null;
 
-  const norm = (m) => ({ url: m.url, kind: m.kind, public_id: m.public_id, thumb: m.thumb });
+  const norm = (m) => ({ url: m.url, kind: m.kind, public_id: m.public_id, thumb: m.thumb, width: m.width || 0, height: m.height || 0 });
 
   const pickOne = (m) => { onSelect(norm(m)); onClose(); };
 
@@ -186,7 +196,14 @@ function MediaPickerInner({ open, onClose, onSelect, kind = "all", multi = false
         </div>
         <div style={{ padding: 16, overflowY: "auto" }}>
           {err && <div className="login-err">{err}</div>}
-          {busy ? <p>Loading library…</p> : filtered.length === 0 ? (
+          {busy ? (
+            <div className="admin-loader-wrap" style={{ minHeight: 200, padding: "50px 20px" }}>
+              <div style={{ textAlign: "center" }}>
+                <div className="admin-loader" style={{ margin: "0 auto 14px" }} />
+                <div style={{ color: "#7a6a7c", fontSize: 13 }}>Loading library…</div>
+              </div>
+            </div>
+          ) : filtered.length === 0 ? (
             <p style={{ color: "#7a6a7c" }}>No files match. Upload new ones from the Media Library page.</p>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 10 }}>
@@ -242,6 +259,12 @@ function MediaPickerInner({ open, onClose, onSelect, kind = "all", multi = false
               ? (sel.length > 0 ? `${sel.length} selected` : "Tick the photos you want, then add them together.")
               : "Click one to use it in this field."}
             {" "}· {filtered.length} file{filtered.length === 1 ? "" : "s"} shown.
+            {loadingMore && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, marginLeft: 10 }}>
+                <span className="bulk-spin" style={{ width: 12, height: 12 }} />
+                Loading full library…
+              </span>
+            )}
           </span>
           {multi && (
             <button type="button" className="btn btn-primary" disabled={sel.length === 0} onClick={confirmMulti}>
