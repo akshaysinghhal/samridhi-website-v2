@@ -4,8 +4,11 @@ import { cloud } from "../../../../lib/cloudinary";
 // Media library source of truth is Cloudinary itself (Admin API), so every
 // file in the account appears here — including bulk imports that never went
 // through the `media` DB table. The DB table is only used for alt text.
-async function listCloudinary() {
+// `limit` stops early once enough items are collected (for a fast first
+// paint); omit it to fetch everything.
+async function listCloudinary(limit) {
   const items = [];
+  const wantAll = !limit || limit <= 0;
   for (const resourceType of ["image", "video"]) {
     let nextCursor;
     do {
@@ -33,21 +36,26 @@ async function listCloudinary() {
             ? cloud().url(r.public_id, { resource_type: "video", format: "jpg", transformation: [{ width: 640, crop: "limit" }, { start_offset: 1 }] })
             : r.secure_url,
         });
+        if (!wantAll && items.length >= limit) break;
       }
       nextCursor = res.next_cursor;
-    } while (nextCursor);
+    } while (nextCursor && (wantAll || items.length < limit));
+    if (!wantAll && items.length >= limit) break;
   }
   items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  return items;
+  return wantAll ? items : items.slice(0, limit);
 }
 
 export async function GET(request) {
   const user = await verifyAdmin(request);
   const denied = authedJson(user); if (denied) return denied;
+  const { searchParams } = new URL(request.url);
+  const limit = Math.max(0, parseInt(searchParams.get("limit") || "0", 10) || 0);
+  const skipUsage = searchParams.get("usage") === "0";
   try {
     const [items, usageRes] = await Promise.all([
-      listCloudinary(),
-      cloud().api.usage().catch(() => null),
+      listCloudinary(limit),
+      skipUsage ? null : cloud().api.usage().catch(() => null),
     ]);
     // Alt text from the DB media table (best effort).
     const alts = {};
