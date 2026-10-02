@@ -211,6 +211,8 @@ tr.row-selected td { background: #f3eefd; }
 .spin { display: inline-block; width: 14px; height: 14px; margin-right: 8px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin360 0.7s linear infinite; vertical-align: -2px; }
 .btn-sm .spin { width: 12px; height: 12px; margin-right: 6px; border-top-color: currentColor; border-color: rgba(0,0,0,0.15); border-top-color: currentColor; }
 @keyframes spin360 { to { transform: rotate(360deg); } }
+/* small terracotta spinner for inline busy text (e.g. bulk delete "Deleting 2/5…") */
+.bulk-spin { display: inline-block; width: 15px; height: 15px; border: 2px solid #e8d6c5; border-top-color: #B9553A; border-radius: 50%; animation: spin360 0.7s linear infinite; vertical-align: -2px; flex: none; }
 
 /* ---------- AI writing helper ---------- */
 .ai-float {
