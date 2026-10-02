@@ -28,6 +28,19 @@ export default function SettingsAdmin() {
   };
   useEffect(() => { load(); }, []);
 
+  // Deep links from admin search (e.g. /admin/settings#sec-announcement):
+  // scroll the matching section into view after load.
+  useEffect(() => {
+    if (busy) return;
+    const hash = window.location.hash;
+    if (!hash) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector(hash);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+    return () => clearTimeout(t);
+  }, [busy]);
+
   const set = (k, v) => setS((x) => ({ ...x, [k]: v }));
 
   // Upload a new logo straight from the phone's files/photos: uploads to
@@ -99,7 +112,7 @@ export default function SettingsAdmin() {
       {msg && <div className="login-err" style={{ marginBottom: 16 }}>{msg}</div>}
       {okMsg && <div className="admin-ok" style={{ marginBottom: 16 }}>{okMsg}</div>}
 
-      <div className="content-group">
+      <div className="content-group" id="sec-company">
         <div className="sec">Company</div><h2>Company</h2>
         <TextField s={s} set={set} k="company_name" label="Company name" />
         <TextField s={s} set={set} k="tagline1" label="Tagline 1" />
@@ -130,7 +143,7 @@ export default function SettingsAdmin() {
         onSelect={(m) => { if (m?.url) set("logo_url", m.url); setLogoPicker(false); }}
       />
 
-      <div className="content-group">
+      <div className="content-group" id="sec-theme">
         <div className="sec">Theme</div><h2>Website theme</h2>
         <p className="seo-hint" style={{ marginTop: 0 }}>One place to re-skin the whole website — buttons, links, headings, badges and highlights everywhere update to your colours.</p>
         <div className="theme-row">
@@ -153,7 +166,7 @@ export default function SettingsAdmin() {
         </div>
       </div>
 
-      <div className="content-group">
+      <div className="content-group" id="sec-contact">
         <div className="sec">Contact</div><h2>Contact</h2>
         <div className="form-row">
           <TextField s={s} set={set} k="phone1" label="Phone 1" />
@@ -167,13 +180,13 @@ export default function SettingsAdmin() {
         <SaveButton onClick={() => save(["phone1", "phone2", "whatsapp", "whatsapp_msg", "email"], "Contact")}>Save</SaveButton>
       </div>
 
-      <div className="content-group">
+      <div className="content-group" id="sec-addresses">
         <div className="sec">Addresses</div><h2>Addresses</h2>
         <AddressListField s={s} set={set} />
         <SaveButton onClick={() => save(["addresses"], "Addresses")}>Save</SaveButton>
       </div>
 
-      <div className="content-group">
+      <div className="content-group" id="sec-announcement">
         <div className="sec">Announcement</div><h2>Announcement bar</h2>
         <p className="admin-sub" style={{ marginTop: 0 }}>Show a slim announcement strip above the header on every page — for upcoming events, season bookings, or any news.</p>
         <label className="check-row">
@@ -186,7 +199,7 @@ export default function SettingsAdmin() {
         <SaveButton onClick={() => save(["announcement_enabled", "announcement_text", "announcement_link_label", "announcement_link_url"], "Announcement")}>Save</SaveButton>
       </div>
 
-      <div className="content-group">
+      <div className="content-group" id="sec-socials">
         <div className="sec">Socials</div><h2>Social media</h2>
         <TextField s={s} set={set} k="instagram" label="Instagram URL" />
         <TextField s={s} set={set} k="facebook" label="Facebook URL" />
@@ -194,7 +207,7 @@ export default function SettingsAdmin() {
         <SaveButton onClick={() => save(["instagram", "facebook", "youtube"], "Socials")}>Save</SaveButton>
       </div>
 
-      <div className="content-group">
+      <div className="content-group" id="sec-hero">
         <div className="sec">Hero</div><h2>Hero video</h2>
         <p className="seo-hint">Managed in detail at <a href="/admin/homepage">Homepage → Hero video</a>.</p>
         <TextField s={s} set={set} k="hero_video" label="Desktop video URL" />
@@ -203,7 +216,31 @@ export default function SettingsAdmin() {
         <SaveButton onClick={() => save(["hero_video", "hero_video_mobile", "hero_poster"], "Hero video")}>Save</SaveButton>
       </div>
 
-      <div className="content-group">
+      <div className="content-group" id="sec-home-sections">
+        <div className="sec">Homepage</div><h2>Homepage sections</h2>
+        <p className="admin-sub" style={{ marginTop: 0 }}>Show or hide sections on the homepage. Unticked = hidden. Sections with no content stay hidden automatically.</p>
+        {[
+          ["sec_services", "Services"],
+          ["sec_artists", "Artists"],
+          ["sec_portfolio", "Portfolio"],
+          ["sec_weddings", "Wedding feature"],
+          ["sec_process", "How It Works"],
+          ["sec_clients", "Clients"],
+          ["sec_intl", "International shows"],
+          ["sec_testimonials", "Video testimonials"],
+          ["sec_press", "Press"],
+          ["sec_stories", "Client stories"],
+          ["sec_contact", "Contact band"],
+        ].map(([k, label]) => (
+          <label className="check-row" key={k}>
+            <input type="checkbox" checked={s[k] !== false} onChange={(e) => set(k, e.target.checked)} />
+            <b>{label}</b>
+          </label>
+        ))}
+        <SaveButton onClick={() => save(["sec_services","sec_artists","sec_portfolio","sec_weddings","sec_process","sec_clients","sec_intl","sec_testimonials","sec_press","sec_stories","sec_contact"], "Homepage sections")}>Save</SaveButton>
+      </div>
+
+      <div className="content-group" id="sec-media">
         <div className="sec">Media</div><h2>Media storage</h2>
         <TextField s={s} set={set} k="cloudinary_storage_limit_gb" label="Cloudinary storage limit (GB)" hint="Used to show available space in the Media Library. Free plan = 25 GB — change this only if your plan is different." />
         <SaveButton onClick={() => save(["cloudinary_storage_limit_gb"], "Media storage")}>Save</SaveButton>
@@ -217,7 +254,7 @@ export default function SettingsAdmin() {
         <SaveButton onClick={() => save(["disclaimer"], "Disclaimer")}>Save</SaveButton>
       </div>
 
-      <div className="content-group">
+      <div className="content-group" id="sec-privacy">
         <div className="sec">Privacy</div><h2>Cookie banner</h2>
         <div className="field"><label>Cookie banner text</label><textarea rows={2} value={s.cookie_banner_text || ""} onChange={(e) => set("cookie_banner_text", e.target.value)} /></div>
         <SaveButton onClick={() => save(["cookie_banner_text"], "Cookie banner")}>Save</SaveButton>

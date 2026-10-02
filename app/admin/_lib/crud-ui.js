@@ -36,6 +36,7 @@ export default function AdminCrud({
   const [msg, setMsg] = useState("");
   const [okMsg, setOkMsg] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState(() => new Set());
   const [bulkBusy, setBulkBusy] = useState("");
@@ -214,6 +215,35 @@ export default function AdminCrud({
     } finally { setUploading(false); e.target.value = ""; }
   };
 
+  // AI watches the chosen video and fills text fields (e.g. testimonial quote).
+  // f.aiDescribe: { instructions?, fields?: [keys to merge] }
+  const describeVideo = async (f, url) => {
+    if (!url || aiBusy) return;
+    const cfg = typeof f.aiDescribe === "object" ? f.aiDescribe : {};
+    setAiBusy(true); setMsg("");
+    try {
+      const r = await api("/api/admin/ai-video", {
+        method: "POST",
+        body: { videoUrl: url, instructions: cfg.instructions || "" },
+      });
+      const keys = Array.isArray(cfg.fields) && cfg.fields.length ? cfg.fields : ["quote", "author_name", "company"];
+      const values = {};
+      let n = 0;
+      for (const k of keys) {
+        const val = r[k];
+        if (val !== undefined && val !== null && String(val).trim() !== "") { values[k] = String(val).trim(); n++; }
+      }
+      if (n) {
+        setForm((f0) => ({ ...f0, ...values }));
+        setMsg("AI watched the video and filled the form — please review before saving.");
+      } else {
+        setMsg("AI could not pick out a testimonial from that video.");
+      }
+    } catch (e) {
+      setMsg("AI video analysis failed: " + (e.message || "try again"));
+    } finally { setAiBusy(false); }
+  };
+
   // MediaPicker selection lands here: set (or append) the chosen URL(s).
   const onPick = (items) => {
     if (!picker) return;
@@ -296,8 +326,12 @@ export default function AdminCrud({
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
             <input value={v || ""} onChange={(e) => set(f.key, e.target.value)} placeholder="…or paste a video URL" style={{ flex: "1 1 200px" }} />
+            {f.aiDescribe && !!v && (
+              <button type="button" className="btn-sm btn-edit" disabled={aiBusy} onClick={() => describeVideo(f, v)}>✨ Describe video with AI</button>
+            )}
           </div>
           {uploading && <div className="seo-hint">Uploading…</div>}
+          {aiBusy && <div className="seo-hint">AI is watching the video… this takes ~20–30 seconds.</div>}
           {sizeHint}
           {v && <div className="img-preview"><div className="img-thumb">
             <video src={v} preload="metadata" onClick={() => setPreview({ url: v, kind: "video" })} style={{ cursor: "zoom-in", width: 120, height: 90, objectFit: "cover", borderRadius: 10 }} title="Click to preview" />

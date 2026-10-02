@@ -22,7 +22,7 @@ export default function TestimonialsAdmin() {
         { key: "company", label: "Company" },
         { key: "photo_url", label: "Photo", type: "image", sizeHint: SIZE_HINTS.portrait, hint: "Shown when no video is set — pick one, not both." },
         { key: "_or_media", label: "OR", type: "divider" },
-        { key: "video_url", label: "Video testimonial", type: "video", hint: "Upload a video file, paste a URL, or choose from the library. Shown instead of the photo. Goes public only with permission + Published status." },
+        { key: "video_url", label: "Video testimonial", type: "video", hint: "Upload a video file, paste a URL, or choose from the library — then tap “✨ Describe video with AI” to auto-fill the quote. Shown instead of the photo. Goes public only with permission + Published status.", aiDescribe: { fields: ["quote", "author_name", "company"] } },
         { key: "permission_granted", label: "Permission granted to publish", type: "check", hint: "Required before this can go public." },
         { key: "sort", label: "Display order", type: "number" },
         { key: "status", label: "Status", type: "select", options: STATUS_OPTIONS },
