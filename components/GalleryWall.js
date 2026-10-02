@@ -3,6 +3,17 @@ import { useState } from "react";
 import Lightbox from "./Lightbox";
 import VideoModal from "./VideoModal";
 
+// Title + caption overlay shown on each card.
+function GwCaption({ title, caption }) {
+  if (!title && !caption) return null;
+  return (
+    <figcaption>
+      {title ? <span className="gw-title">{title}</span> : null}
+      {caption ? <span className="gw-cap">{caption}</span> : null}
+    </figcaption>
+  );
+}
+
 // Unified gallery wall: photos + videos in one masonry, filterable by
 // media type (All / Photos / Videos) and by category (folders like "Venue Entry").
 export default function GalleryWall({ items, categories }) {
@@ -132,7 +143,7 @@ export default function GalleryWall({ items, categories }) {
                 <div className="gw-video-noimg" aria-hidden="true">▶</div>
               )}
               <div className="gw-play"><span>↗</span></div>
-              {g.title && <figcaption>{g.title}</figcaption>}
+              {<GwCaption title={g.title} caption={g.caption} />}
             </a>
           ) : (
             <figure
@@ -150,7 +161,7 @@ export default function GalleryWall({ items, categories }) {
                 <div className="gw-video-noimg" aria-hidden="true">▶</div>
               )}
               <div className="gw-play"><span>▶</span></div>
-              {g.title && <figcaption>{g.title}</figcaption>}
+              {<GwCaption title={g.title} caption={g.caption} />}
             </figure>
           )
         ) : (
@@ -164,7 +175,7 @@ export default function GalleryWall({ items, categories }) {
             aria-label={`View photo: ${g.title || "Gallery photo"}`}
           >
             <img src={g.image_url} alt={g.title || "Gallery photo"} loading="lazy" />
-            {g.title && <figcaption>{g.title}</figcaption>}
+            {<GwCaption title={g.title} caption={g.caption} />}
           </figure>
         ))}
       </div>
