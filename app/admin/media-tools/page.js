@@ -596,6 +596,15 @@ function VideoTool() {
     setAiBusy(false);
   };
 
+  const exportLabel = (() => {
+    if (typeof window === "undefined" || !window.MediaRecorder) return "⬇ Export video";
+    try {
+      if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9") || MediaRecorder.isTypeSupported("video/webm")) return "⬇ Export video (WebM)";
+      if (MediaRecorder.isTypeSupported("video/mp4")) return "⬇ Export video (MP4)";
+    } catch { /* ignore */ }
+    return "⬇ Export video";
+  })();
+
   const doExport = async (saveToLibrary) => {
     const v = videoRef.current;
     if (!v || !videoUrl) return;
@@ -604,14 +613,26 @@ function VideoTool() {
     if (e <= s) { toast("End time must be after start time.", "error"); return; }
     setExporting(true); setProgress("Preparing…");
     try {
+      // Feature-detect the recording pipeline. iPhone Safari has neither
+      // video.captureStream nor mozCaptureStream, so export is impossible
+      // there — say so plainly instead of throwing a cryptic error.
+      const grabVideoStream = v.captureStream ? () => v.captureStream()
+        : (v.mozCaptureStream ? () => v.mozCaptureStream() : null);
+      const probeCanvas = document.createElement("canvas");
+      if (!grabVideoStream || !probeCanvas.captureStream || !window.MediaRecorder) {
+        toast("Video export isn't supported in this browser — iPhone Safari can't record video. Please export from Chrome on a desktop; your original video is untouched.", "error");
+        setExporting(false); setProgress("");
+        return;
+      }
       const canvas = document.createElement("canvas");
       canvas.width = v.videoWidth || 1280; canvas.height = v.videoHeight || 720;
       const ctx = canvas.getContext("2d");
       // video + audio tracks combined
-      const vStream = v.captureStream ? v.captureStream() : v.mozCaptureStream();
+      const vStream = grabVideoStream();
       const cStream = canvas.captureStream(30);
       (vStream.getAudioTracks() || []).forEach((t) => cStream.addTrack(t));
-      const mime = ["video/webm;codecs=vp9", "video/webm"].find((m) => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || "";
+      const mime = ["video/webm;codecs=vp9", "video/webm", "video/mp4"].find((m) => MediaRecorder.isTypeSupported(m)) || "";
+      const ext = mime.includes("mp4") ? "mp4" : "webm"; // Safari records MP4, not WebM
       const rec = new MediaRecorder(cStream, mime ? { mimeType: mime, videoBitsPerSecond: 8_000_000 } : undefined);
       const chunks = [];
       rec.ondataavailable = (ev) => ev.data.size && chunks.push(ev.data);
@@ -665,14 +686,14 @@ function VideoTool() {
       v.pause();
       rec.stop();
       await done;
-      const blob = new Blob(chunks, { type: "video/webm" });
-      const name = `${(videoName || "video").replace(/\.[a-z0-9]+$/i, "")}${text ? "-text" : ""}-edited.webm`;
+      const blob = new Blob(chunks, { type: mime || "video/webm" });
+      const name = `${(videoName || "video").replace(/\.[a-z0-9]+$/i, "")}${text ? "-text" : ""}-edited.${ext}`;
       if (saveToLibrary) {
-        await uploadFile(new File([blob], name, { type: "video/webm" }));
+        await uploadFile(new File([blob], name, { type: mime || "video/webm" }));
         toast("Edited video saved to Media Library.");
       } else {
         downloadBlob(blob, name);
-        toast("Edited video downloaded (WebM).");
+        toast(`Edited video downloaded (${ext.toUpperCase()}).`);
       }
     } catch (err) { toast("Export failed: " + (err.message || err), "error"); }
     setExporting(false); setProgress("");
@@ -706,7 +727,7 @@ function VideoTool() {
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
               <button type="button" className="btn btn-primary" disabled={exporting} onClick={() => doExport(false)}>
-                {exporting ? "Rendering…" : "⬇ Export video (WebM)"}
+                {exporting ? "Rendering…" : exportLabel}
               </button>
               <button type="button" className="btn btn-dark" disabled={exporting} onClick={() => doExport(true)}>💾 Save to Media Library</button>
             </div>
