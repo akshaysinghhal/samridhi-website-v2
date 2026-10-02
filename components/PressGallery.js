@@ -95,13 +95,16 @@ export default function PressGallery({ items, publications, years }) {
             {zoomed ? "−" : "+"}
           </button>
           <div className="lb-content" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={filtered[open].image_url}
-              alt={altFor(filtered[open])}
-              className={zoomed ? "lb-zoomed" : ""}
-              onClick={() => setZoomed((z) => !z)}
-              style={{ cursor: zoomed ? "zoom-out" : "zoom-in" }}
-            />
+            <div className={zoomed ? "lb-zoomwrap" : undefined}>
+              <img
+                src={filtered[open].image_url}
+                alt={altFor(filtered[open])}
+                className={zoomed ? "lb-zoomed" : ""}
+                onClick={() => setZoomed((z) => !z)}
+                draggable={false}
+                style={{ cursor: zoomed ? "zoom-out" : "zoom-in" }}
+              />
+            </div>
             <div className="lb-cap">
               {[filtered[open].publication, filtered[open].headline].filter(Boolean).join(" — ")}
               <span>{open + 1} / {filtered.length}</span>

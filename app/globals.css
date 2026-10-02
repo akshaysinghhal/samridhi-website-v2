@@ -813,6 +813,13 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 .lb-prev { left: 16px; } .lb-next { right: 16px; }
 .lb-zoom { position: absolute; top: 16px; right: 76px; width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(201,161,90,0.5); background: transparent; color: var(--gold-soft); font-size: 22px; cursor: pointer; z-index: 2; }
 .lb-zoomed { max-height: none !important; max-width: none !important; width: 160%; cursor: zoom-out; }
+/* Zoomed press clipping: scroll/pan to see every part of the image. */
+.lb-zoomwrap {
+  max-width: 94vw; max-height: 78vh; overflow: auto; border-radius: 6px;
+  touch-action: pan-x pan-y; user-select: none; -webkit-user-select: none;
+  overscroll-behavior: contain;
+}
+.lb-zoomwrap img { display: block; }
 .video-modal-backdrop {
   position: fixed; inset: 0; z-index: 400; background: rgba(42, 27, 22, 0.94);
   display: flex; align-items: center; justify-content: center; padding: 20px; animation: lbIn 0.25s ease;
