@@ -156,14 +156,14 @@ export default async function Home() {
               return (
                 <Reveal key={sv.slug || sv.id || i} delay={i % 3} className={`svc-card ${size}${img ? " has-img" : ""}`}>
                   <Link href={`/services/${sv.slug}`} style={{ textDecoration: "none", display: "flex", flexDirection: "column", height: "100%", justifyContent: "flex-end" }} aria-label={sv.title}>
-                    {size === "svc-lg" && img ? (
+                    {img ? (
                       <>
                         <img className="svc-img" src={img} alt={sv.title} loading="lazy" />
                         <span className="svc-shade" aria-hidden="true" />
                         <span className="svc-body">
                           <h3>{sv.title}</h3>
                           <p>{sv.summary}</p>
-                          <span className="svc-link">Explore Service <span className="arr">→</span></span>
+                          <span className="svc-link">{size === "svc-lg" ? "Explore Service" : "Explore"} <span className="arr">→</span></span>
                         </span>
                       </>
                     ) : (
