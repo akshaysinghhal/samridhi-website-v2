@@ -244,6 +244,35 @@ export default function AdminCrud({
     } finally { setAiBusy(false); }
   };
 
+  // AI looks at the chosen image and fills form fields (e.g. press clipping).
+  // f.aiDescribeImage: { endpoint, fields?: [keys to merge] }
+  // Only empty fields are filled — existing values are never overwritten.
+  const describeImage = async (f, url) => {
+    if (!url || aiBusy) return;
+    const cfg = typeof f.aiDescribeImage === "object" ? f.aiDescribeImage : {};
+    const endpoint = cfg.endpoint || "/api/admin/ai-press";
+    setAiBusy(true); setMsg("");
+    try {
+      const r = await api(endpoint, { method: "POST", body: { imageUrl: url } });
+      const keys = Array.isArray(cfg.fields) && cfg.fields.length ? cfg.fields : ["headline", "publication", "city", "published_on", "type"];
+      const values = {};
+      for (const k of keys) {
+        const val = r[k];
+        const empty = form[k] === undefined || form[k] === null || String(form[k]).trim() === "";
+        if (empty && val !== undefined && val !== null && String(val).trim() !== "") values[k] = String(val).trim();
+      }
+      const n = Object.keys(values).length;
+      if (n) {
+        setForm((f0) => ({ ...f0, ...values }));
+        setMsg("AI read the image and filled the form — please review before saving.");
+      } else {
+        setMsg("AI found nothing new to fill in that image.");
+      }
+    } catch (e) {
+      setMsg("AI image analysis failed: " + (e.message || "try again"));
+    } finally { setAiBusy(false); }
+  };
+
   // MediaPicker selection lands here: set (or append) the chosen URL(s).
   const onPick = (items) => {
     if (!picker) return;
@@ -295,9 +324,14 @@ export default function AdminCrud({
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <input type="file" accept="image/*" onChange={(e) => onFile(e, f.key, false)} style={{ flex: "1 1 200px" }} />
             <button type="button" className="btn-sm btn-edit" onClick={() => openPicker(f.key, false, "image")}>📚 Choose from library</button>
+            {f.aiDescribeImage && !!v && (
+              <button type="button" className="btn-sm btn-edit" disabled={aiBusy} onClick={() => describeImage(f, v)}>✨ Fill form with AI</button>
+            )}
           </div>
           {uploading && <div className="seo-hint">Uploading…</div>}
+          {aiBusy && <div className="seo-hint">AI is reading the image…</div>}
           {sizeHint}
+          {f.hint && <div className="seo-hint">{f.hint}</div>}
           {v && <div className="img-preview"><div className="img-thumb">
             <img src={v} alt="" onClick={() => setPreview({ url: v, kind: "image" })} style={{ cursor: "zoom-in" }} title="Click to preview" />
             <button type="button" onClick={() => set(f.key, "")}>✕</button>

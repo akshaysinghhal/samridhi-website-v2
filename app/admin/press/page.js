@@ -57,7 +57,9 @@ export default function PressAdmin() {
           { key: "is_placeholder", label: "Flag" },
         ]}
         fields={[
-          { key: "image_url", label: "Clipping image", type: "image", required: true, sizeHint: SIZE_HINTS.cover },
+          { key: "image_url", label: "Clipping image", type: "image", required: true, sizeHint: SIZE_HINTS.cover,
+            aiDescribeImage: { endpoint: "/api/admin/ai-press", fields: ["publication", "city", "published_on", "headline", "type"] },
+            hint: "Set the image, then use ✨ Fill form with AI to read the publication, city, date and headline from the clipping." },
           { key: "type", label: "Type", type: "select", options: [{ value: "single_clipping", label: "Single clipping" }, { value: "page_collage", label: "Page collage (full scanned page)" }] },
           { key: "publication", label: "Publication", type: "select", options: PUBS },
           { key: "city", label: "City" },
