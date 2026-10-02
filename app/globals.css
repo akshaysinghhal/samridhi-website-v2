@@ -1161,6 +1161,8 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 .gw-wall img { width: 100%; height: auto; display: block; transition: transform 0.6s ease; }
 .gw-wall figure:hover img, .gw-wall a.gw-video:hover img { transform: scale(1.03); }
 .gw-wall figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 14px 12px; color: #fff; font-size: 13px; font-weight: 600; line-height: 1.4; background: linear-gradient(transparent, rgba(42,27,22,0.82)); }
+.gw-title { display: block; font-weight: 600; }
+.gw-cap { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12px; font-weight: 400; opacity: 0.85; margin-top: 3px; line-height: 1.45; }
 .gw-video-noimg { height: 220px; background: linear-gradient(135deg,#3B241C,#2A1B16); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.7); font-size: 40px; }
 .gw-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 .gw-play span { width: 56px; height: 56px; border-radius: 50%; background: rgba(185,85,58,0.94); color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center; padding-left: 4px; border: 1px solid rgba(221,190,122,0.5); transition: transform 0.25s ease; }
