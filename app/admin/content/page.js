@@ -52,6 +52,7 @@ export default function ContentEditor() {
   const [msg, setMsg] = useState("");
   const [tab, setTab] = useState(null);
   const [pickerFor, setPickerFor] = useState(null); // block id whose image is being chosen
+  const [aiBusyFor, setAiBusyFor] = useState(null); // image block id currently being AI-read
 
   useEffect(() => {
     (async () => {
@@ -62,6 +63,35 @@ export default function ContentEditor() {
 
   const setVal = (id, v) => setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, value: v } : b)));
   const setImg = (id, url) => setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, image_url: url } : b)));
+
+  // AI reads the section image and fills the section's EMPTY text fields.
+  // Never overwrites existing content — review, then Save All.
+  const aiFillFromImage = async (imgBlock, groupBlocks) => {
+    if (aiBusyFor) return;
+    if (!imgBlock.image_url) { toast("Set an image first.", "error"); return; }
+    const emptyFields = groupBlocks.filter((x) => x.key !== "image" && !String(x.value || "").trim());
+    if (!emptyFields.length) { toast("No empty text fields in this section.", "error"); return; }
+    setAiBusyFor(imgBlock.id); setMsg("");
+    try {
+      const r = await api("/api/admin/ai-content-image", {
+        method: "POST",
+        body: { imageUrl: imgBlock.image_url, fields: emptyFields.map((x) => ({ label: x.label || x.key })) },
+      });
+      const sugg = r.suggestions || {};
+      const filled = [];
+      setBlocks((prev) => prev.map((x) => {
+        const t = emptyFields.find((tb) => tb.id === x.id);
+        if (t) {
+          const v = sugg[t.label || t.key];
+          if (v) { filled.push(t.label || t.key); return { ...x, value: v }; }
+        }
+        return x;
+      }));
+      if (filled.length) toast(`AI filled: ${filled.join(", ")} — review, then Save All.`);
+      else { setMsg("AI found nothing reliable in that image to fill."); toast("AI found nothing reliable in that image to fill.", "error"); }
+    } catch (e) { setMsg("AI failed: " + (e.message || "try again")); toast("AI failed: " + (e.message || "try again"), "error"); }
+    setAiBusyFor(null);
+  };
 
   const save = async () => {
     setSaving(true); setMsg("");
@@ -136,6 +166,9 @@ export default function ContentEditor() {
                 )}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button type="button" className="ai-chip" onClick={() => setPickerFor(b.id)}>🖼 Choose from library</button>
+                  <button type="button" className="ai-chip" disabled={aiBusyFor === b.id || !b.image_url} onClick={() => aiFillFromImage(b, bs)}>
+                    {aiBusyFor === b.id ? "✨ AI is looking…" : "✨ Fill fields with AI"}
+                  </button>
                   <label className="ai-chip" style={{ cursor: "pointer" }}>
                     ⬆ Upload
                     <input type="file" accept="image/*" hidden onChange={async (e) => {
@@ -153,7 +186,7 @@ export default function ContentEditor() {
                     <button type="button" className="ai-chip" onClick={() => setImg(b.id, "")}>✕ Remove</button>
                   )}
                 </div>
-                <span className="seo-hint">{b.section === "hero" ? `This banner shows at the top of the ${pageLabel(b.page)} page.` : "This image shows in its section on the website."}</span>
+                <span className="seo-hint">{b.section === "hero" ? `This banner shows at the top of the ${pageLabel(b.page)} page.` : "This image shows in its section on the website."} AI reads the image and fills this section's empty text fields — review before Save All.</span>
               </div>
             ) : (
               <div className="field" key={b.id}>
