@@ -174,7 +174,12 @@ export function BulkBar({ bulk, onDone, scopeCount }) {
       )}
       <button className="btn-sm btn-del" disabled={!!bulk.bulkBusy} onClick={() => finish(bulk.bulkDelete, "Deleted")}>Delete selected</button>
       <button className="btn-sm" disabled={!!bulk.bulkBusy} onClick={bulk.clear} style={{ background: "#eee", color: "#555" }}>Clear</button>
-      {bulk.bulkBusy && <span className="seo-hint" style={{ margin: 0 }}>{bulk.bulkBusy}</span>}
+      {bulk.bulkBusy && (
+        <span className="seo-hint" style={{ margin: 0, display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <span className="bulk-spin" aria-hidden="true" />
+          {bulk.bulkBusy}
+        </span>
+      )}
       {note && <span className="seo-hint" style={{ margin: 0 }}>{note}</span>}
     </div>
   );
