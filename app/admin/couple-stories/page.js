@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/adminApi";
 import { revalidateSite, uploadOne, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter, AdminLoader, toast } from "../_lib/ui";
+import MediaPicker from "../_lib/MediaPicker";
 
 const SOURCES = [
   { value: "youtube", label: "YouTube" },
@@ -22,6 +23,7 @@ export default function CoupleStoriesAdmin() {
   const [okMsg, setOkMsg] = useState("");
   const [uploading, setUploading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [thumbPicker, setThumbPicker] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [q, setQ] = useState("");
 
@@ -114,7 +116,10 @@ export default function CoupleStoriesAdmin() {
             </div>
           </div>
           <div className="field"><label>Thumbnail</label>
-            <input type="file" accept="image/*" onChange={async (e) => { const u = await uploadOne(e.target.files[0], setUploading, setMsg); if (u) set("thumbnail_url", u); e.target.value = ""; }} />
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 8 }}>
+              <input type="file" accept="image/*" onChange={async (e) => { const u = await uploadOne(e.target.files[0], setUploading, setMsg); if (u) set("thumbnail_url", u); e.target.value = ""; }} />
+              <button type="button" className="btn-sm btn-edit" onClick={() => setThumbPicker(true)}>🖼 Choose from library</button>
+            </div>
             {uploading && <div className="seo-hint">Uploading…</div>}
             {form.thumbnail_url && <div className="img-preview"><img src={form.thumbnail_url} alt="" /></div>}
           </div>
@@ -177,6 +182,12 @@ export default function CoupleStoriesAdmin() {
           </tbody>
         </table>
       )}
+      <MediaPicker
+        open={thumbPicker}
+        kind="image"
+        onClose={() => setThumbPicker(false)}
+        onSelect={(m) => { if (m?.url) set("thumbnail_url", m.url); setThumbPicker(false); }}
+      />
     </>
   );
 }
