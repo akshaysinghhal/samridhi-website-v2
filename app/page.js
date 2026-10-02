@@ -60,6 +60,9 @@ export default async function Home() {
     ? setting(s, "stats", []).slice(0, 4)
     : FALLBACK_STATS;
 
+  // Homepage section visibility — toggled in Admin → Settings → Homepage sections.
+  // Unset (or true) = visible; explicitly false = hidden.
+  const showSec = (k) => setting(s, "sec_" + k, true) !== false;
   const heroVideo = setting(s, "hero_video", "");
   const heroVideoMobile = setting(s, "hero_video_mobile", "");
   const heroPoster = setting(s, "hero_poster", "/images/hero-concert.jpg");
@@ -136,6 +139,7 @@ export default async function Home() {
       </section>
 
       {/* ============ SERVICES ============ */}
+      {showSec("services") && (
       <section className="section" id="services" style={{ background: "var(--ivory)" }}>
         <div className="container">
           <Reveal>
@@ -174,8 +178,10 @@ export default async function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ============ ARTISTS ============ */}
+      {showSec("artists") && (
       <section className="section artist-band" id="artists">
         <div className="container">
           <Reveal>
@@ -212,8 +218,10 @@ export default async function Home() {
           </Reveal>
         </div>
       </section>
+      )}
 
       {/* ============ PORTFOLIO ============ */}
+      {showSec("portfolio") && (
       <section className="section" id="portfolio" style={{ background: "var(--ivory)" }}>
         <div className="container">
           <Reveal>
@@ -268,8 +276,10 @@ export default async function Home() {
           </Reveal>
         </div>
       </section>
+      )}
 
       {/* ============ WEDDING FEATURE ============ */}
+      {showSec("weddings") && (
       <section className="section" style={{ background: "var(--warm-white)" }}>
         <div className="container">
           <div className="wed-feature">
@@ -291,8 +301,10 @@ export default async function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ============ PROCESS ============ */}
+      {showSec("process") && (
       <section className="section process-band">
         <div className="container">
           <Reveal>
@@ -318,9 +330,10 @@ export default async function Home() {
           </Reveal>
         </div>
       </section>
+      )}
 
       {/* ============ CLIENTS ============ */}
-      {clients.length > 0 && (
+      {showSec("clients") && clients.length > 0 && (
         <section className="section" style={{ background: "var(--warm-white)" }}>
           <div className="container">
             <Reveal>
@@ -350,7 +363,7 @@ export default async function Home() {
       )}
 
       {/* ============ INTERNATIONAL ============ */}
-      {show && (
+      {showSec("intl") && show && (
         <section className="section" style={{ background: "var(--ivory)", paddingTop: 0 }}>
           <div className="container">
             <Reveal>
@@ -375,7 +388,7 @@ export default async function Home() {
       )}
 
       {/* ============ VIDEO TESTIMONIALS ============ */}
-      {videoTestimonials.length > 0 && (
+      {showSec("testimonials") && videoTestimonials.length > 0 && (
         <section className="section testi-band">
           <div className="container">
             <Reveal>
@@ -401,7 +414,7 @@ export default async function Home() {
       )}
 
       {/* ============ PRESS ============ */}
-      {pressFallback.length > 0 && (
+      {showSec("press") && pressFallback.length > 0 && (
         <section className="section" style={{ background: "var(--warm-white)" }}>
           <div className="container">
             <Reveal>
@@ -435,9 +448,10 @@ export default async function Home() {
       )}
 
       {/* ============ CLIENT STORIES ============ */}
-      <CoupleStories />
+      {showSec("stories") && <CoupleStories />}
 
       {/* ============ CONTACT ============ */}
+      {showSec("contact") && (
       <section className="section contact-band" id="contact">
         <div className="container">
           <Reveal>
@@ -482,6 +496,7 @@ export default async function Home() {
           </div>
         </div>
       </section>
+      )}
 
       <SiteFooter />
     </>
