@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ytEmbed } from "../lib/video";
 
 function vimeoId(url) {
@@ -12,6 +12,12 @@ function vimeoId(url) {
 // Props: { source: 'youtube'|'vimeo'|'cloudinary'|'mp4_url', ref, title, onClose }
 export default function VideoModal({ source, videoRef, title, onClose }) {
   const closeRef = useRef(null);
+  // Portrait phone videos get a tall player instead of the 16:9 letterbox.
+  const [isPortrait, setIsPortrait] = useState(false);
+  const onMeta = (e) => {
+    const v = e.currentTarget;
+    if (v.videoWidth && v.videoHeight) setIsPortrait(v.videoHeight > v.videoWidth);
+  };
 
   useEffect(() => {
     import("../lib/analytics").then(({ trackEvent }) => {
@@ -67,8 +73,8 @@ export default function VideoModal({ source, videoRef, title, onClose }) {
         : videoRef;
     if (src) {
       player = (
-        <div className="video-wrap">
-          <video src={src} controls autoPlay playsInline style={{ width: "100%", height: "100%" }} />
+        <div className={`video-wrap${isPortrait ? " portrait" : ""}`}>
+          <video src={src} controls autoPlay playsInline onLoadedMetadata={onMeta} style={{ width: "100%", height: "100%" }} />
         </div>
       );
     }
