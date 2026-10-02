@@ -6,6 +6,7 @@ import { supabaseBrowser } from "../../lib/supabaseClient";
 import { api } from "../../lib/adminApi";
 import { ADMIN_NAV } from "../../lib/adminNav";
 import { AiFloatHelper } from "./_lib/AiAssist";
+import { AdminSearch } from "./_lib/AdminSearch";
 import { AdminLoader, Toaster } from "./_lib/ui";
 import "./admin.css";
 
@@ -65,6 +66,7 @@ export default function AdminLayout({ children }) {
       </div>
       {menuOpen && (
         <nav className="admin-mobilenav">
+          <AdminSearch onNavigate={() => setMenuOpen(false)} />
           {ADMIN_NAV.map(([icon, label, href]) => (
             <Link key={href} href={href} className={path === href ? "active" : ""} onClick={() => setMenuOpen(false)}>{icon} {label}</Link>
           ))}
@@ -74,6 +76,7 @@ export default function AdminLayout({ children }) {
       )}
       <aside className="admin-side">
         <img src={logoUrl || "/images/logo.png"} alt="Samridhi" />
+        <AdminSearch />
         {ADMIN_NAV.map(([icon, label, href]) => (
           <Link key={href} href={href} className={path === href ? "active" : ""}>{icon} {label}</Link>
         ))}
