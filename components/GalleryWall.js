@@ -10,6 +10,7 @@ export default function GalleryWall({ items, categories }) {
   const [cat, setCat] = useState("all");
   const [lb, setLb] = useState(-1);
   const [videoIdx, setVideoIdx] = useState(-1);
+  const [catOpen, setCatOpen] = useState(false); // mobile category popup
 
   const list = items.filter((g) => {
     if (type === "photo" && g.kind !== "photo") return false;
@@ -51,29 +52,67 @@ export default function GalleryWall({ items, categories }) {
         ))}
       </div>
 
-      {/* Category folders */}
+      {/* Category pills (desktop) / filter popup trigger (mobile) */}
       {categories.length > 0 && (
-        <div className="gw-cats" role="tablist" aria-label="Gallery categories">
-          <button
-            role="tab"
-            aria-selected={cat === "all"}
-            className={`gw-cat-btn ${cat === "all" ? "active" : ""}`}
-            onClick={() => setCat("all")}
-          >
-            All folders
-          </button>
-          {categories.map((c) => (
+        <>
+          <div className="gw-cats" role="tablist" aria-label="Gallery categories">
             <button
-              key={c}
               role="tab"
-              aria-selected={cat === c}
-              className={`gw-cat-btn ${cat === c ? "active" : ""}`}
-              onClick={() => setCat(c)}
+              aria-selected={cat === "all"}
+              className={`gw-cat-btn ${cat === "all" ? "active" : ""}`}
+              onClick={() => setCat("all")}
             >
-              {c}
+              All categories
             </button>
-          ))}
-        </div>
+            {categories.map((c) => (
+              <button
+                key={c}
+                role="tab"
+                aria-selected={cat === c}
+                className={`gw-cat-btn ${cat === c ? "active" : ""}`}
+                onClick={() => setCat(c)}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+          <button
+            className="gw-cat-trigger"
+            onClick={() => setCatOpen(true)}
+            aria-haspopup="dialog"
+          >
+            <span className="gw-cat-trigger-label">Categories</span>
+            <strong>{cat === "all" ? "All" : cat}</strong>
+            <span aria-hidden="true" className="gw-cat-trigger-arrow">▾</span>
+          </button>
+          {catOpen && (
+            <div className="gw-sheet-backdrop" onClick={() => setCatOpen(false)}>
+              <div
+                className="gw-sheet"
+                role="dialog"
+                aria-label="Filter gallery by category"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="gw-sheet-head">
+                  <strong>Categories</strong>
+                  <button className="gw-sheet-close" onClick={() => setCatOpen(false)} aria-label="Close">×</button>
+                </div>
+                <div className="gw-sheet-list">
+                  {[["all", "All categories"], ...categories.map((c) => [c, c])].map(([key, label]) => (
+                    <button
+                      key={key}
+                      className={`gw-sheet-item ${cat === key ? "active" : ""}`}
+                      onClick={() => { setCat(key); setCatOpen(false); }}
+                    >
+                      {label}
+                      {cat === key && <span aria-hidden="true" className="gw-sheet-tick">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <div className="gw-wall">
@@ -93,7 +132,6 @@ export default function GalleryWall({ items, categories }) {
                 <div className="gw-video-noimg" aria-hidden="true">▶</div>
               )}
               <div className="gw-play"><span>↗</span></div>
-              <span className="gw-vbadge">Instagram</span>
               {g.title && <figcaption>{g.title}</figcaption>}
             </a>
           ) : (
@@ -112,7 +150,6 @@ export default function GalleryWall({ items, categories }) {
                 <div className="gw-video-noimg" aria-hidden="true">▶</div>
               )}
               <div className="gw-play"><span>▶</span></div>
-              <span className="gw-vbadge">Video</span>
               {g.title && <figcaption>{g.title}</figcaption>}
             </figure>
           )
@@ -133,7 +170,7 @@ export default function GalleryWall({ items, categories }) {
       </div>
       {list.length === 0 && (
         <p className="lead center" style={{ marginTop: 24 }}>
-          {type === "video" ? "No videos here yet — check back soon." : "More in this folder are being added."}
+          {type === "video" ? "No videos here yet — check back soon." : "More in this category are being added."}
         </p>
       )}
 

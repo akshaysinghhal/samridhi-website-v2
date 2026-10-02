@@ -56,7 +56,7 @@ export default async function GalleryPage() {
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">Gallery</span></Reveal>
           <Reveal delay={1}><h1>Moments &amp; Memories</h1></Reveal>
-          <Reveal delay={2}><p className="sub">Photos and videos from our stages, weddings and celebrations — pick a folder, or filter by photos and videos.</p></Reveal>
+          <Reveal delay={2}><p className="sub">Photos and videos from our stages, weddings and celebrations — pick a category, or filter by photos and videos.</p></Reveal>
         </div>
       </section>
 
