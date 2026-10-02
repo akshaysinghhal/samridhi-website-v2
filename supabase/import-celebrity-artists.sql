@@ -1,0 +1,46 @@
+-- Celebrity artists import — extracted from Samridhi_Celebrity_Portfolio.pdf
+-- Run ONCE in Supabase SQL editor (project used by samridhifilms.vercel.app).
+-- Safe to re-run: upserts on slug; never overwrites your publish/draft status.
+
+INSERT INTO artists (name, slug, category, image_url, sort) VALUES
+  ('Tejasswi Prakash', 'tejasswi-prakash', 'actors-actresses', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932048/artists/tejasswi-prakash.jpg', 101),
+  ('Mehak Chahal', 'mehak-chahal', 'actors-actresses', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932030/artists/mehak-chahal.jpg', 102),
+  ('Hiba Nawab', 'hiba-nawab', 'actors-actresses', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932023/artists/hiba-nawab.jpg', 103),
+  ('Sunil Grover', 'sunil-grover', 'actors-actresses', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932047/artists/sunil-grover.jpg', 104),
+  ('Kush Shah', 'kush-shah', 'actors-actresses', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932028/artists/kush-shah.jpg', 105),
+  ('Ankit Gupta', 'ankit-gupta', 'actors-actresses', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932011/artists/ankit-gupta.jpg', 106),
+  ('Rajpal Yadav', 'rajpal-yadav', 'icons-personalities', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932035/artists/rajpal-yadav.jpg', 107),
+  ('Govinda', 'govinda', 'icons-personalities', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932021/artists/govinda.jpg', 108),
+  ('Suniel Shetty', 'suniel-shetty', 'icons-personalities', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932046/artists/suniel-shetty.jpg', 109),
+  ('Preity Zinta', 'preity-zinta', 'icons-personalities', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932034/artists/preity-zinta.jpg', 110),
+  ('Ameesha Patel', 'ameesha-patel', 'icons-personalities', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932007/artists/ameesha-patel.jpg', 111),
+  ('Amrita Prakash', 'amrita-prakash', 'icons-personalities', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932010/artists/amrita-prakash.jpg', 112),
+  ('Shamita Shetty', 'shamita-shetty', 'icons-personalities', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932040/artists/shamita-shetty.jpg', 113),
+  ('Shilpa Shetty', 'shilpa-shetty', 'icons-personalities', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932041/artists/shilpa-shetty.jpg', 114),
+  ('Jacqueline Fernandez', 'jacqueline-fernandez', 'icons-personalities', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932024/artists/jacqueline-fernandez.jpg', 115),
+  ('Chunky Pandey', 'chunky-pandey', 'icons-personalities', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932018/artists/chunky-pandey.jpg', 116),
+  ('Aroon Bakshi', 'aroon-bakshi', 'icons-personalities', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932014/artists/aroon-bakshi.jpg', 117),
+  ('Saurabh Sachdeva', 'saurabh-sachdeva', 'icons-personalities', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932038/artists/saurabh-sachdeva.jpg', 118),
+  ('Anup Jalota', 'anup-jalota', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932013/artists/anup-jalota.jpg', 119),
+  ('Darshan Rawal', 'darshan-rawal', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932019/artists/darshan-rawal.jpg', 120),
+  ('Sonu Nigam', 'sonu-nigam', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932043/artists/sonu-nigam.jpg', 121),
+  ('Udit Narayan', 'udit-narayan', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932050/artists/udit-narayan.jpg', 122),
+  ('Amit Jadhav', 'amit-jadhav', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932008/artists/amit-jadhav.jpg', 123),
+  ('Kapil Thapa', 'kapil-thapa', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932027/artists/kapil-thapa.jpg', 124),
+  ('Sumit Saini', 'sumit-saini', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932044/artists/sumit-saini.jpg', 125),
+  ('B. Parekh', 'b-parekh', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932016/artists/b-parekh.jpg', 126),
+  ('Kailash Kher', 'kailash-kher', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932026/artists/kailash-kher.jpg', 127),
+  ('Shreya Ghoshal', 'shreya-ghoshal', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932042/artists/shreya-ghoshal.jpg', 128),
+  ('Alka Yagnik', 'alka-yagnik', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932005/artists/alka-yagnik.jpg', 129),
+  ('Dhavani Bhanushali', 'dhavani-bhanushali', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932020/artists/dhavani-bhanushali.jpg', 130),
+  ('Altaf Raja', 'altaf-raja', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932006/artists/altaf-raja.jpg', 131),
+  ('Sashi Suman', 'sashi-suman', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932036/artists/sashi-suman.jpg', 132),
+  ('Sawroop Khan', 'sawroop-khan', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932039/artists/sawroop-khan.jpg', 133),
+  ('Monali Thakur', 'monali-thakur', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932031/artists/monali-thakur.jpg', 134),
+  ('Prajkta Shukre', 'prajkta-shukre', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932033/artists/prajkta-shukre.jpg', 135),
+  ('Antra Mitra', 'antra-mitra', 'singers-musical-artists', 'https://res.cloudinary.com/gtu4qtut/image/upload/v1790932012/artists/antra-mitra.jpg', 136)
+ON CONFLICT (slug) DO UPDATE SET
+  name = EXCLUDED.name,
+  category = EXCLUDED.category,
+  image_url = EXCLUDED.image_url,
+  sort = EXCLUDED.sort;
