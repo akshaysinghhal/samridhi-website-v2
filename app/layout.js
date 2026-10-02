@@ -25,7 +25,7 @@ export async function generateMetadata() {
   const customLogo = String(setting(s, "logo_url", "") || "").trim();
   const ogImages = customLogo
     ? [{ url: customLogo, alt: "Samridhi Films & Television" }]
-    : [{ url: "/images/logo.png", width: 1200, height: 551, alt: "Samridhi Films & Television" }];
+    : [{ url: "/images/logo.png", width: 1200, height: 567, alt: "Samridhi Films & Television" }];
   return {
     metadataBase: new URL(BASE),
     title: {
