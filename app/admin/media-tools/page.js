@@ -326,6 +326,11 @@ const WM_SHORTCUTS_KEY = "samridhi-wm-shortcuts";
 const WM_DEFAULT_SHORTCUTS = ["© Samridhi Films & Television", "Samridhi Films & Television", "+91 96022 28846"];
 const SITE_LOGO = "/images/logo.png";
 
+// Watermark text fonts (Manrope + Cormorant Garamond come from next/font;
+// the rest load on demand via the Google Fonts <link> in WatermarkTool).
+const WM_FONTS = ["Manrope", "Poppins", "Montserrat", "Bebas Neue", "Playfair Display", "Cormorant Garamond", "Dancing Script", "Great Vibes", "Pacifico"];
+const WM_FONT_CSS_URL = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Montserrat:ital,wght@0,400;0,700;1,400&family=Pacifico&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@400;700&display=swap";
+
 function clParse(mediaUrl) {
   const m = String(mediaUrl).match(/res\.cloudinary\.com\/([^/]+)\/(image|video)\/upload\/(.+)$/);
   if (!m) return null;
@@ -388,8 +393,14 @@ function WatermarkTool() {
   const [logoOpacity, setLogoOpacity] = useState(90);
   // shared
   const [size, setSize] = useState(48);
+  const [font, setFont] = useState("Manrope");
   const [color, setColor] = useState("#ffffff");
+  const [fillType, setFillType] = useState("solid"); // solid | gradient (dual colour)
+  const [color2, setColor2] = useState("#C9A15A");
+  const [gradDir, setGradDir] = useState("vertical"); // vertical | horizontal | diagonal
   const [opacity, setOpacity] = useState(70);
+  // Mobile tool rail (Picsart-style): which tool panel is open below the preview.
+  const [mobTool, setMobTool] = useState("photo");
   // Position = center of the watermark as a fraction (0..1) of the image.
   // Grid mode (default): pick a cell in the 5×5 grid. Drag mode (opt-in):
   // drag the watermark directly on the preview.
@@ -427,6 +438,18 @@ function WatermarkTool() {
     return () => { live = false; };
   }, [logoUrl]);
 
+  // Preload the watermark fonts so canvas can draw them (Manrope + Cormorant
+  // Garamond come from next/font; the rest via the Google Fonts <link>).
+  useEffect(() => {
+    if (!document.fonts) return;
+    ["Poppins", "Montserrat", "Bebas Neue", "Playfair Display", "Dancing Script", "Great Vibes", "Pacifico"].forEach((f) => {
+      ["400", "700"].forEach((w) => {
+        try { document.fonts.load(`${w} 32px "${f}"`); } catch { /* ignore */ }
+      });
+      try { document.fonts.load(`italic 400 32px "${f}"`); } catch { /* ignore */ }
+    });
+  }, []);
+
   const saveShortcut = () => {
     const t = text.trim();
     if (!t || shortcuts.includes(t)) return;
@@ -458,11 +481,23 @@ function WatermarkTool() {
     const rects = { text: null, logo: null };
 
     const paintText = (x, y, fs, tw) => {
+      // Fill: solid colour, or a dual-colour gradient across the text bounds.
+      let fill = color;
+      if (fillType === "gradient") {
+        let x0 = x, y0 = y - fs * 0.8, x1 = x, y1 = y;
+        if (gradDir === "horizontal") { x1 = x + tw; y1 = y - fs * 0.8; }
+        else if (gradDir === "diagonal") { x1 = x + tw; }
+        const g = ctx.createLinearGradient(x0, y0, x1, y1);
+        g.addColorStop(0, color);
+        g.addColorStop(1, color2);
+        fill = g;
+      }
       if (outline) {
         ctx.lineWidth = Math.max(1, fs * 0.07);
         ctx.strokeStyle = "rgba(0,0,0,0.75)";
         ctx.strokeText(text, x, y);
       }
+      ctx.fillStyle = fill;
       ctx.fillText(text, x, y);
       if (underline) {
         ctx.save();
@@ -479,8 +514,7 @@ function WatermarkTool() {
       ctx.save();
       ctx.globalAlpha = opacity / 100;
       const fs = Math.max(8, size * k);
-      ctx.font = `${italic ? "italic " : ""}${bold ? "700" : "400"} ${fs}px Manrope, sans-serif`;
-      ctx.fillStyle = color;
+      ctx.font = `${italic ? "italic " : ""}${bold ? "700" : "400"} ${fs}px "${font}", Manrope, sans-serif`;
       if (shadow) { ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = Math.max(2, 6 * k); }
       const tw = ctx.measureText(text).width;
       if (layout === "tiled") {
@@ -611,7 +645,7 @@ function WatermarkTool() {
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
     drawWm(ctx, cv.width, cv.height);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [img, mode, textOn, logoOn, text, size, color, opacity, pos, logoPos, logoOpacity, layout, bold, italic, underline, shadow, outline, logoImg, logoSize]);
+  }, [img, mode, textOn, logoOn, text, size, font, color, fillType, color2, gradDir, opacity, pos, logoPos, logoOpacity, layout, bold, italic, underline, shadow, outline, logoImg, logoSize]);
 
   const renderFullWm = async () => {
     if (!img) return null;
@@ -710,8 +744,40 @@ function WatermarkTool() {
     </button>
   );
 
+  // Picsart-style tool rail (mobile): one icon button per tool; the active
+  // tool's panel opens below the rail. On desktop every panel stacks.
+  const wmTools = [
+    { id: "photo", icon: "🖼️", label: "Photo" },
+    ...(textOn ? [
+      { id: "text", icon: "✏️", label: "Text" },
+      { id: "style", icon: "Aa", label: "Style", textIcon: true },
+      { id: "colour", icon: "🎨", label: "Colour" },
+    ] : []),
+    ...(logoOn ? [{ id: "logo", icon: "⭐", label: "Logo" }] : []),
+    ...((textOn || logoOn) && !(mode === "image" && layout === "tiled") ? [{ id: "position", icon: "📍", label: "Position" }] : []),
+    ...(mode === "image" && (textOn || logoOn) ? [{ id: "layout", icon: "▦", label: "Layout" }] : []),
+  ];
+  const activeWmTool = wmTools.some((t) => t.id === mobTool) ? mobTool : "photo";
+  const wmToolCls = (id) => "editor wm-tool" + (activeWmTool === id ? " active" : "");
+  // Live text preview swatch (Style panel) mirrors the canvas fill.
+  const gradCssDir = gradDir === "horizontal" ? "to right" : gradDir === "diagonal" ? "to bottom right" : "to bottom";
+  const textPreviewStyle = fillType === "gradient"
+    ? {
+        fontFamily: `"${font}", Manrope, sans-serif`,
+        fontWeight: bold ? 800 : 400, fontStyle: italic ? "italic" : "normal",
+        textDecoration: underline ? "underline" : "none",
+        background: `linear-gradient(${gradCssDir}, ${color}, ${color2})`,
+        WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
+      }
+    : {
+        fontFamily: `"${font}", Manrope, sans-serif`,
+        fontWeight: bold ? 800 : 400, fontStyle: italic ? "italic" : "normal",
+        textDecoration: underline ? "underline" : "none", color,
+      };
+
   return (
     <div>
+      <link rel="stylesheet" href={WM_FONT_CSS_URL} />
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         {[["image", "🖼 Image watermark"], ["cloudinary", "☁ Cloudinary overlay (images + video)"]].map(([id, label]) => (
           <button key={id} type="button" onClick={() => setMode(id)} className="ai-chip"
@@ -729,44 +795,72 @@ function WatermarkTool() {
         <span className="seo-hint" style={{ alignSelf: "center" }}>Both can be on together.</span>
       </div>
 
-      {mode === "image" ? (
-        <>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-            <button type="button" className="btn btn-dark" onClick={() => setPicker("image")}>🖼 Choose from library</button>
-            <label className="btn btn-dark" style={{ cursor: "pointer" }}>
-              ⬆ Upload image
-              <input type="file" accept="image/*" hidden onChange={(e) => {
-                const fl = e.target.files[0];
-                if (fl) chooseImage(URL.createObjectURL(fl), fl.name);
-                e.target.value = "";
-              }} />
-            </label>
+      <div className="wm-work">
+        <div className="wm-side">
+          <div className="wm-rail" role="tablist" aria-label="Watermark tools">
+            {wmTools.map((t) => (
+              <button key={t.id} type="button" role="tab" aria-selected={activeWmTool === t.id}
+                onClick={() => setMobTool(t.id)} className={"wm-rail-btn" + (activeWmTool === t.id ? " active" : "")}>
+                {t.textIcon ? <span className="wm-rail-aa">Aa</span> : <span className="wm-rail-icon" aria-hidden="true">{t.icon}</span>}
+                <span className="wm-rail-label">{t.label}</span>
+              </button>
+            ))}
           </div>
-        </>
-      ) : (
-        <>
-          <button type="button" className="btn btn-dark" style={{ marginBottom: 14 }} onClick={() => setPicker("any")}>
-            {media ? "🔁 Change media" : "🎞 Choose image / video from library"}
-          </button>
-          {media && <div className="seo-hint" style={{ margin: "-6px 0 14px" }}>Selected: {(media.public_id || "").split("/").pop()} — overlay is applied by Cloudinary, no re-encoding.</div>}
-        </>
-      )}
 
-      <div className="editor" style={{ marginBottom: 16 }}>
-        {!textOn && !logoOn && (
-          <p className="admin-sub" style={{ margin: 0 }}>Switch on the text or logo watermark above to begin — both can be used together.</p>
-        )}
+          <div className={wmToolCls("photo")}>
+            {mode === "image" ? (
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <button type="button" className="btn btn-dark" onClick={() => setPicker("image")}>🖼 Choose from library</button>
+                <label className="btn btn-dark" style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}>
+                  ⬆ Upload image
+                  <input type="file" accept="image/*" onChange={(e) => {
+                    const fl = e.target.files[0];
+                    if (fl) chooseImage(URL.createObjectURL(fl), fl.name);
+                    e.target.value = "";
+                  }} style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
+                </label>
+              </div>
+            ) : (
+              <>
+                <button type="button" className="btn btn-dark" onClick={() => setPicker("any")}>
+                  {media ? "🔁 Change media" : "🎞 Choose image / video from library"}
+                </button>
+                {media && <div className="seo-hint" style={{ margin: "8px 0 0" }}>Selected: {(media.public_id || "").split("/").pop()} — overlay is applied by Cloudinary, no re-encoding.</div>}
+              </>
+            )}
+            {!textOn && !logoOn && (
+              <p className="admin-sub" style={{ margin: "12px 0 0" }}>Switch on the text or logo watermark above to begin — both can be used together.</p>
+            )}
+          </div>
         {textOn && (
-          <>
+          <div className={wmToolCls("text")}>
             <div className="field">
               <label>Watermark text</label>
               <input value={text} onChange={(e) => setText(e.target.value)} placeholder="© Samridhi Films & Television" />
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {shortcuts.map((sc) => (
                 <button key={sc} type="button" className="ai-chip" onClick={() => setText(sc)} title="Use this text">{sc}</button>
               ))}
               <button type="button" className="ai-chip" onClick={saveShortcut} title="Save current text as a shortcut">＋ Save current</button>
+            </div>
+          </div>
+        )}
+        {textOn && (
+          <div className={wmToolCls("style")}>
+            <div className="wm-text-preview" style={textPreviewStyle}>{text.trim() || "Watermark preview"}</div>
+            <div className="field">
+              <label>Font</label>
+              <div className="wm-fonts">
+                {WM_FONTS.map((f) => (
+                  <button key={f} type="button" onClick={() => setFont(f)} title={f}
+                    className={"wm-font" + (font === f ? " active" : "")}
+                    style={{ fontFamily: `"${f}", Manrope, sans-serif` }}>
+                    <span className="wm-font-ag">Ag</span>
+                    <span className="wm-font-name">{f}</span>
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="field">
               <label>Text style</label>
@@ -781,24 +875,58 @@ function WatermarkTool() {
                 <span className="seo-hint">Underline, shadow &amp; outline render in Image watermark mode — the Cloudinary overlay supports bold &amp; italic.</span>
               )}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14, alignItems: "end", marginBottom: 4 }}>
-              <div className="field" style={{ margin: 0 }}>
-                <label>Size: {size}px</label>
-                <input type="range" min={16} max={160} value={size} onChange={(e) => setSize(+e.target.value)} style={{ width: "100%" }} />
+            <div className="field" style={{ margin: 0 }}>
+              <label>Size: {size}px</label>
+              <input type="range" min={16} max={160} value={size} onChange={(e) => setSize(+e.target.value)} style={{ width: "100%" }} />
+            </div>
+          </div>
+        )}
+        {textOn && (
+          <div className={wmToolCls("colour")}>
+            <div className="field">
+              <label>Fill</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                {[["solid", "Solid"], ["gradient", "Gradient"]].map(([id, label]) => (
+                  <button key={id} type="button" onClick={() => setFillType(id)} className="ai-chip"
+                    title={id === "gradient" ? "Two colours blended across the text" : "One flat colour"}
+                    style={fillType === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
+                ))}
               </div>
+            </div>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "end" }}>
               <div className="field" style={{ margin: 0 }}>
-                <label>Colour</label>
+                <label>{fillType === "gradient" ? "Colour 1" : "Colour"}</label>
                 <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 60, height: 38, padding: 2 }} />
               </div>
-              <div className="field" style={{ margin: 0 }}>
+              {fillType === "gradient" && (
+                <div className="field" style={{ margin: 0 }}>
+                  <label>Colour 2</label>
+                  <input type="color" value={color2} onChange={(e) => setColor2(e.target.value)} style={{ width: 60, height: 38, padding: 2 }} />
+                </div>
+              )}
+              <div className="field" style={{ margin: 0, flex: "1 1 140px" }}>
                 <label>Opacity: {opacity}%</label>
                 <input type="range" min={10} max={100} value={opacity} onChange={(e) => setOpacity(+e.target.value)} style={{ width: "100%" }} />
               </div>
             </div>
-          </>
+            {fillType === "gradient" && (
+              <div className="field">
+                <label>Gradient direction</label>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {[["vertical", "⇅ Top–bottom"], ["horizontal", "⇥ Left–right"], ["diagonal", "⤡ Diagonal"]].map(([id, label]) => (
+                    <button key={id} type="button" onClick={() => setGradDir(id)} className="ai-chip"
+                      style={gradDir === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {mode === "cloudinary" && fillType === "gradient" && (
+              <span className="seo-hint">Gradient is applied in Image watermark export — the Cloudinary overlay uses the first colour.</span>
+            )}
+          </div>
         )}
         {logoOn && (
-          <>
+          <div className={wmToolCls("logo")}>
             <div className="field">
               <label>Logo</label>
               <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -826,10 +954,11 @@ function WatermarkTool() {
                 <input type="range" min={10} max={100} value={logoOpacity} onChange={(e) => setLogoOpacity(+e.target.value)} style={{ width: "100%" }} />
               </div>
             </div>
-          </>
+          </div>
         )}
         {mode === "image" && (textOn || logoOn) && (
-          <div className="field" style={{ margin: "12px 0 0" }}>
+          <div className={wmToolCls("layout")}>
+          <div className="field" style={{ margin: 0 }}>
             <label>Layout</label>
             <div style={{ display: "flex", gap: 8 }}>
               {[["single", "Single"], ["tiled", "Tiled repeat"]].map(([id, label]) => (
@@ -841,9 +970,11 @@ function WatermarkTool() {
               <span className="seo-hint">Tiled repeats the watermark diagonally across the photo — position is set by the layout.</span>
             )}
           </div>
+          </div>
         )}
         {!(mode === "image" && layout === "tiled") && (textOn || logoOn) && (
-          <div className="field" style={{ margin: "12px 0 0" }}>
+          <div className={wmToolCls("position")}>
+          <div className="field" style={{ margin: 0 }}>
             <label>Position{activeLayer === "logo" ? " — logo" : textOn && logoOn ? " — text" : ""}</label>
             <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap", alignItems: "center" }}>
               {[["grid", "⊞ Grid"], ["drag", "✋ Drag"]].map(([id, label]) => (
@@ -877,8 +1008,10 @@ function WatermarkTool() {
               <span className="seo-hint">Drag the watermark directly on the preview below to place it anywhere.</span>
             )}
           </div>
+          </div>
         )}
-      </div>
+        </div>
+        <div className="wm-view">
 
       {mode === "image" && (
         <>
@@ -949,6 +1082,9 @@ function WatermarkTool() {
           )}
         </>
       )}
+
+        </div>
+      </div>
 
       <MediaPicker open={!!picker} kind={picker === "any" ? undefined : "image"} onClose={() => setPicker(null)}
         onSelect={(items) => {
