@@ -47,6 +47,7 @@ function CropTool() {
   const [crop, setCrop] = useState(null); // natural px {x,y,w,h}
   const [fitMode, setFitMode] = useState(false); // false = cut to shape, true = fit whole image with padded background
   const [padColor, setPadColor] = useState("#ffffff");
+  const [padMode, setPadMode] = useState("blur"); // blur | color — what fills the frame around the fitted photo
   const [busy, setBusy] = useState(false);
   const canvasRef = useRef(null);
   const dragRef = useRef(null);
@@ -93,12 +94,14 @@ function CropTool() {
       ctx.fillStyle = "rgba(20,8,20,0.55)";
       ctx.fillRect(0, 0, dispW, dispH);
       if (fitMode && ratio) {
-        // Fit preview: paint the frame with the pad colour, whole image contained inside.
-        ctx.fillStyle = padColor;
-        ctx.fillRect(c.x, c.y, c.w, c.h);
+        // Fit preview: blurred-photo or solid-colour frame, whole image contained inside.
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        paintFitBg(ctx, c.w, c.h);
         const fs = Math.min(c.w / dispW, c.h / dispH);
         const dw = dispW * fs, dh = dispH * fs;
-        ctx.drawImage(img, c.x + (c.w - dw) / 2, c.y + (c.h - dh) / 2, dw, dh);
+        ctx.drawImage(img, (c.w - dw) / 2, (c.h - dh) / 2, dw, dh);
+        ctx.restore();
       } else {
         ctx.clearRect(c.x, c.y, c.w, c.h);
         ctx.drawImage(img, crop.x, crop.y, crop.w, crop.h, c.x, c.y, c.w, c.h);
@@ -111,7 +114,32 @@ function CropTool() {
       }
     }
     cv.dataset.scale = s;
-  }, [img, crop, fitMode, padColor, ratio]);
+  }, [img, crop, fitMode, padColor, padMode, ratio]);
+
+  // Paint the Fit-mode frame background: either the solid pad colour, or a
+  // blurred cover-scaled copy of the photo (tiny downscale → upscale = smooth
+  // blur on every browser, no canvas-filter needed), darkened a touch so the
+  // sharp fitted photo pops.
+  const paintFitBg = (ctx, W, H) => {
+    if (padMode === "blur" && img) {
+      const tw = 48, th = Math.max(1, Math.round((48 * H) / W));
+      const tiny = document.createElement("canvas");
+      tiny.width = tw; tiny.height = th;
+      const tctx = tiny.getContext("2d");
+      const cover = Math.max(tw / img.naturalWidth, th / img.naturalHeight);
+      const sw = tw / cover, sh = th / cover;
+      tctx.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, 0, tw, th);
+      ctx.save();
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(tiny, 0, 0, W, H);
+      ctx.fillStyle = "rgba(20,12,10,0.28)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = padColor;
+      ctx.fillRect(0, 0, W, H);
+    }
+  };
 
   const pos = (e) => {
     const r = canvasRef.current.getBoundingClientRect();
@@ -196,9 +224,8 @@ function CropTool() {
       const ctx = c.getContext("2d");
       let suffix;
       if (fitMode && ratio) {
-        // Fit: whole image contained in the target frame, padded with the chosen colour.
-        ctx.fillStyle = padColor;
-        ctx.fillRect(0, 0, c.width, c.height);
+        // Fit: whole image contained in the target frame, blurred-photo or solid-colour background.
+        paintFitBg(ctx, c.width, c.height);
         const fs = Math.min(c.width / img.naturalWidth, c.height / img.naturalHeight);
         const dw = img.naturalWidth * fs, dh = img.naturalHeight * fs;
         ctx.drawImage(img, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
@@ -250,11 +277,21 @@ function CropTool() {
             <b>🖼 Fit — no cut</b><span>Whole image kept, background filled</span>
           </button>
           {fitMode && (
-            <label className="mt-padcolor">
-              <span>Background colour</span>
-              <input type="color" value={padColor} onChange={(e) => setPadColor(e.target.value)} />
-              <input value={padColor} onChange={(e) => setPadColor(e.target.value)} spellCheck={false} style={{ width: 84 }} />
-            </label>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: "1 1 100%" }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {[["blur", "🌀 Blurred photo"], ["color", "🎨 Solid colour"]].map(([id, label]) => (
+                  <button key={id} type="button" onClick={() => setPadMode(id)} className="ai-chip"
+                    style={padMode === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
+                ))}
+              </div>
+              {padMode === "color" && (
+                <label className="mt-padcolor">
+                  <span>Background colour</span>
+                  <input type="color" value={padColor} onChange={(e) => setPadColor(e.target.value)} />
+                  <input value={padColor} onChange={(e) => setPadColor(e.target.value)} spellCheck={false} style={{ width: 84 }} />
+                </label>
+              )}
+            </div>
           )}
         </div>
       )}
