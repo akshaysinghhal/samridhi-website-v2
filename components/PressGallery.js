@@ -16,6 +16,13 @@ export default function PressGallery({ items, publications, years }) {
   const altFor = (p) =>
     [p.headline, p.publication, p.year].filter(Boolean).join(" — ") || "Press clipping";
 
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const dateLabel = (p) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(p.published_on || "");
+    if (m) return `${+m[3]} ${MONTHS[+m[2] - 1]} ${m[1]}`;
+    return p.year ? String(p.year) : "";
+  };
+
   useEffect(() => {
     if (open < 0) return;
     const h = (e) => {
@@ -51,18 +58,19 @@ export default function PressGallery({ items, publications, years }) {
 
       <div className="press-wall">
         {filtered.map((p, i) => (
-          <figure key={p.id} onClick={() => setOpen(i)} style={{ cursor: "zoom-in" }} tabIndex={0}
+          <figure key={p.id} onClick={() => setOpen(i)} tabIndex={0}
             onKeyDown={(e) => { if (e.key === "Enter") setOpen(i); }}>
-            {p.publication && <span className="press-pub-badge">{p.publication}</span>}
-            <img src={p.image_url} alt={altFor(p)} loading="lazy" />
-            {(p.headline || p.year) && (
-              <figcaption>
-                {[p.headline].filter(Boolean).join(" — ")}{" "}
-                <span style={{ opacity: 0.6 }}>
-                  ({p.type === "page_collage" ? "Page collage" : "Clipping"}{p.year ? `, ${p.year}` : ""})
-                </span>
-              </figcaption>
-            )}
+            <span className="press-img">
+              <img src={p.image_url} alt={altFor(p)} loading="lazy" />
+            </span>
+            <figcaption>
+              <span className="press-meta">
+                {p.publication && <span className="press-pub">{p.publication}</span>}
+                {dateLabel(p) && <span className="press-date">{dateLabel(p)}</span>}
+              </span>
+              {p.headline && <span className="press-head">{p.headline}</span>}
+              {p.type === "page_collage" && <span className="press-type">Page collage</span>}
+            </figcaption>
           </figure>
         ))}
       </div>

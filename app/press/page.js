@@ -34,7 +34,7 @@ export default async function PressPage() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section section-tight">
         <div className="container">
           {items.length === 0 ? (
             <p className="lead center">Press coverage is being digitised — check back soon.</p>
