@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../../lib/adminApi";
 
 // Reusable media-library picker popup. Shows every file in the Cloudinary
@@ -49,7 +49,8 @@ export default function MediaPicker({ open, onClose, onSelect, kind = "all", mul
     const needle = q.trim().toLowerCase();
     return media.filter((m) => {
       if (tab !== "all" && m.kind !== tab) return false;
-      if (folder !== "all" && m.folder !== folder) return false;
+      if (folder === "__root") { if (m.folder) return false; }
+      else if (folder !== "all" && m.folder !== folder) return false;
       if (needle && !((m.public_id || "").toLowerCase().includes(needle))) return false;
       return true;
     });
@@ -74,19 +75,47 @@ export default function MediaPicker({ open, onClose, onSelect, kind = "all", mul
 
   const fname = (m) => (m.public_id || "").split("/").pop();
 
+  // Bottom-sheet drag-to-dismiss (mobile). Dragging the handle down closes.
+  const sheetRef = useRef(null);
+  const dragY = useRef(null);
+  const onTouchStart = (e) => { dragY.current = e.touches[0].clientY; };
+  const onTouchMove = (e) => {
+    if (dragY.current == null) return;
+    const dy = e.touches[0].clientY - dragY.current;
+    if (dy > 0 && sheetRef.current) sheetRef.current.style.transform = `translateY(${Math.min(dy, 220)}px)`;
+  };
+  const onTouchEnd = (e) => {
+    const dy = dragY.current == null ? 0 : e.changedTouches[0].clientY - dragY.current;
+    dragY.current = null;
+    if (sheetRef.current) sheetRef.current.style.transform = "";
+    if (dy > 90) onClose();
+  };
+
   return (
     <div
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Choose from media library"
+      className="mp-overlay"
       style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(20,12,10,0.72)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
     >
       <div
+        ref={sheetRef}
         onClick={(e) => e.stopPropagation()}
+        className="mp-panel"
         style={{ background: "#fff", borderRadius: 14, width: "min(920px, 96vw)", maxHeight: "86vh", display: "flex", flexDirection: "column", overflow: "hidden" }}
       >
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid #eee", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <div
+          className="mp-handle"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          aria-hidden="true"
+        >
+          <span />
+        </div>
+        <div className="mp-head" style={{ padding: "16px 20px", borderBottom: "1px solid #eee", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <h2 style={{ margin: 0, fontSize: 18, flex: "1 1 auto" }}>Choose from library</h2>
           <input
             value={q}
@@ -102,6 +131,7 @@ export default function MediaPicker({ open, onClose, onSelect, kind = "all", mul
           </select>
           <select value={folder} onChange={(e) => setFolder(e.target.value)} aria-label="Filter by folder" style={{ maxWidth: 200 }}>
             <option value="all">All folders</option>
+            <option value="__root">🏠 Home (root)</option>
             {folders.map((f) => (
               <option key={f} value={f}>{f}</option>
             ))}
@@ -134,6 +164,11 @@ export default function MediaPicker({ open, onClose, onSelect, kind = "all", mul
                       : <img src={m.url} alt="" loading="lazy" style={{ width: "100%", height: 84, objectFit: "cover", display: "block" }} />}
                     {m.kind === "video" && (
                       <span style={{ position: "absolute", top: 4, left: 4, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 6px", borderRadius: 999 }}>▶</span>
+                    )}
+                    {m.kind === "video" && m.duration > 0 && (
+                      <span style={{ position: "absolute", bottom: 36, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", fontSize: 9.5, fontWeight: 700, padding: "2px 5px", borderRadius: 5 }}>
+                        {Math.floor(m.duration / 60)}:{String(Math.round(m.duration % 60)).padStart(2, "0")}
+                      </span>
                     )}
                     {multi && (
                       <span style={{
