@@ -39,11 +39,11 @@ export default async function ServicesPage() {
                 {sv.hero_image ? (
                   <img src={sv.hero_image} alt="" loading="lazy" className="svc-thumb" />
                 ) : (
-                  <span className="svc-thumb svc-thumb-fallback" aria-hidden="true">{sv.icon || sv.title.charAt(0)}</span>
+                  <span className="svc-thumb svc-thumb-fallback" aria-hidden="true">{sv.title.charAt(0)}</span>
                 )}
-                <span>
-                  <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 30, color: "var(--brown)", marginBottom: 6 }}>{sv.title}</span>
-                  <span style={{ display: "block", color: "var(--text-muted)", fontSize: 15.5, maxWidth: 640 }}>{sv.summary}</span>
+                <span className="svc-row-body">
+                  <span className="svc-row-title">{sv.title}</span>
+                  <span className="svc-row-desc">{sv.summary}</span>
                 </span>
                 <span className="pf-link">Explore <span className="arr">→</span></span>
               </Link>

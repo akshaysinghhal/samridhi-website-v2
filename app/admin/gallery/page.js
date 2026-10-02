@@ -5,7 +5,7 @@ import { ytThumb } from "../../../lib/video";
 import { revalidateSite, PhBadge, StatusBadge, STATUS_OPTIONS, useBulk, BulkBar, CheckCell, SaveButton, StatusFilter, AdminLoader, toast, CircleProgress } from "../_lib/ui";
 import PreviewModal from "../_lib/PreviewModal";
 
-const CATEGORIES = ["Events", "Weddings", "Corporate", "Celebrity Shows", "Cultural", "Press", "Highlight Videos", "Other"];
+const CATEGORIES = ["Venue Entry", "Stage & Decor", "Events", "Weddings", "Corporate", "Government", "Celebrity Shows", "Cultural", "Behind the Scenes", "Press", "Highlight Videos", "Other"];
 
 export default function GalleryAdmin() {
   const [tab, setTab] = useState("photos");

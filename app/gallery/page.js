@@ -1,6 +1,6 @@
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
-import GalleryExplorer from "../../components/GalleryExplorer";
+import GalleryWall from "../../components/GalleryWall";
 import ArtistVideos from "../../components/ArtistVideos";
 import Reveal from "../../components/Reveal";
 import { getGalleryItems } from "../../lib/db";
@@ -10,31 +10,42 @@ export const revalidate = 60;
 
 export const metadata = {
   title: "Gallery",
-  description: "Photos from government events, corporate nights, weddings, celebrity shows and behind-the-scenes moments by Samridhi Films & Television.",
+  description: "Photos and videos from government events, corporate nights, weddings, celebrity shows and behind-the-scenes moments by Samridhi Films & Television.",
 };
 
-const CATEGORIES = [
-  "Government", "Corporate", "Weddings", "Celebrity Shows",
-  "Cultural", "Stage Productions", "Behind the Scenes", "Event Posters",
-];
+// Detect the player source from the URL: YouTube links need the YouTube
+// embed player — a <video> tag cannot play a youtube.com watch URL.
+// Instagram reels cannot be embedded in a player at all — they open on Instagram.
+const detectSource = (url) => {
+  const u = String(url || "");
+  if (youTubeId(u)) return "youtube";
+  if (/vimeo\.com/.test(u)) return "vimeo";
+  if (/instagram\.com/.test(u)) return "instagram";
+  return "mp4_url";
+};
 
 export default async function GalleryPage() {
-  const items = await getGalleryItems();
-  const photos = items.filter((g) => g.kind === "photo" || !g.kind);
-  // Detect the player source from the URL: YouTube links need the YouTube
-  // embed player — a <video> tag cannot play a youtube.com watch URL.
-  // Instagram reels cannot be embedded in a player at all — they open on Instagram.
-  const detectSource = (url) => {
-    const u = String(url || "");
-    if (youTubeId(u)) return "youtube";
-    if (/vimeo\.com/.test(u)) return "vimeo";
-    if (/instagram\.com/.test(u)) return "instagram";
-    return "mp4_url";
-  };
-  const videos = items
-    .filter((g) => g.kind === "video" && g.video_url)
-    .map((g) => ({ source: detectSource(g.video_url), ref: g.video_url, thumb: g.image_url || "", title: g.title || "" }));
-  const cats = CATEGORIES.filter((c) => photos.some((g) => g.category === c));
+  const raw = await getGalleryItems();
+  // Unified wall: photos and videos share the same category folders,
+  // so e.g. "Venue Entry" shows its photos AND videos together.
+  const items = raw.map((g) => {
+    const isVideo = g.kind === "video";
+    return {
+      id: g.id,
+      kind: isVideo ? "video" : "photo",
+      title: g.title || "",
+      image_url: g.image_url || "",
+      category: g.category || "Other",
+      // video fields
+      source: isVideo && g.video_url ? detectSource(g.video_url) : null,
+      ref: isVideo ? g.video_url || "" : "",
+      thumb: isVideo ? g.image_url || "" : "",
+    };
+  }).filter((g) => (g.kind === "photo" ? g.image_url : g.ref));
+  const categories = [...new Set(items.map((g) => g.category))].sort();
+
+  // Celebrity feedback reels stay in their own section below.
+  const feedback = items.filter((g) => g.kind === "video" && g.category === "Celebrity Feedback");
 
   return (
     <>
@@ -45,17 +56,17 @@ export default async function GalleryPage() {
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">Gallery</span></Reveal>
           <Reveal delay={1}><h1>Moments &amp; Memories</h1></Reveal>
-          <Reveal delay={2}><p className="sub">Photos from our stages, weddings and celebrations — select any photo to view it up close.</p></Reveal>
+          <Reveal delay={2}><p className="sub">Photos and videos from our stages, weddings and celebrations — pick a folder, or filter by photos and videos.</p></Reveal>
         </div>
       </section>
 
       <section className="section">
         <div className="container">
-          <GalleryExplorer items={photos} categories={cats} />
+          <GalleryWall items={items} categories={categories} />
         </div>
       </section>
 
-      {videos.length > 0 && (
+      {feedback.length > 0 && (
         <section className="section" style={{ paddingTop: 0, background: "var(--ivory)" }}>
           <div className="container">
             <Reveal>
@@ -65,7 +76,7 @@ export default async function GalleryPage() {
                 <p className="lead">Artists and celebrities share their experience of working with Samridhi.</p>
               </div>
             </Reveal>
-            <ArtistVideos videos={videos} />
+            <ArtistVideos videos={feedback} />
           </div>
         </section>
       )}
