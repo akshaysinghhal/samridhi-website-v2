@@ -546,3 +546,8 @@ tr.row-selected td { background: #f3eefd; }
   .wm-tool { display: none; }
   .wm-tool.active { display: block; }
 }
+
+/* OR divider between alternative fields (e.g. photo OR video). */
+.or-divider { display: flex; align-items: center; gap: 14px; margin: 6px 0; }
+.or-divider::before, .or-divider::after { content: ""; flex: 1; height: 1px; background: var(--border-gold, #E4D3AE); }
+.or-divider span { font-size: 12px; font-weight: 800; letter-spacing: 3px; color: var(--brown-muted, #6F574B); }

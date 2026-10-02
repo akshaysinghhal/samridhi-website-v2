@@ -245,6 +245,8 @@ export default function AdminCrud({
       <div className="ai-field-row"><label>{f.label}{req}</label>{aiBtn}</div>
     ) : <label>{f.label}{req}</label>;
     switch (f.type) {
+      case "divider":
+        return <div className="or-divider" key={f.key || "divider"} aria-hidden="true"><span>{f.label || "OR"}</span></div>;
       case "textarea":
         return <div className="field" key={f.key}>{labelRow}<textarea rows={f.rows || 4} value={v || ""} onChange={(e) => set(f.key, e.target.value)} placeholder={f.placeholder} />{f.hint && <div className="seo-hint">{f.hint}</div>}</div>;
       case "number":

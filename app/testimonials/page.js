@@ -36,10 +36,12 @@ export default async function TestimonialsPage() {
           ) : (
             <div className="testi-grid">
               {testimonials.map((t, i) => (
-                <Reveal key={t.id} delay={i % 3} className={`testi-card${t.video_url ? " has-video" : ""}`}>
-                  {t.video_url && (
+                <Reveal key={t.id} delay={i % 3} className={`testi-card${t.video_url ? " has-video" : ""}${!t.video_url && t.photo_url ? " has-photo" : ""}`}>
+                  {t.video_url ? (
                     <video className="tvideo" src={t.video_url} controls preload="metadata" playsInline aria-label={`Video testimonial by ${t.author_name || "client"}`} />
-                  )}
+                  ) : t.photo_url ? (
+                    <img className="tphoto" src={t.photo_url} alt={t.author_name || "Client"} loading="lazy" />
+                  ) : null}
                   <p className="tquote">&ldquo;{t.quote}&rdquo;</p>
                   <p className="tauthor">
                     {t.author_name}
