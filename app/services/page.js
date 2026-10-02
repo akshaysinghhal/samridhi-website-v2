@@ -29,15 +29,18 @@ export default async function ServicesPage() {
 
       <section className="section" style={{ background: "var(--ivory)" }}>
         <div className="container">
-          {services.map((sv, i) => (
+          {services.map((sv) => (
             <Reveal key={sv.slug}>
               <Link
                 href={`/services/${sv.slug}`}
-                style={{ textDecoration: "none", display: "grid", gridTemplateColumns: "90px 1fr auto", gap: 30, alignItems: "center", padding: "38px 10px", borderBottom: "1px solid var(--border-gold)" }}
                 className="svc-row"
                 aria-label={sv.title}
               >
-                <span style={{ fontFamily: "var(--font-display)", fontSize: 30, color: "var(--gold)" }}>{String(i + 1).padStart(2, "0")}</span>
+                {sv.hero_image ? (
+                  <img src={sv.hero_image} alt="" loading="lazy" className="svc-thumb" />
+                ) : (
+                  <span className="svc-thumb svc-thumb-fallback" aria-hidden="true">{sv.icon || sv.title.charAt(0)}</span>
+                )}
                 <span>
                   <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 30, color: "var(--brown)", marginBottom: 6 }}>{sv.title}</span>
                   <span style={{ display: "block", color: "var(--text-muted)", fontSize: 15.5, maxWidth: 640 }}>{sv.summary}</span>
