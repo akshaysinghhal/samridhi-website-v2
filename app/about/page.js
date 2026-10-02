@@ -46,7 +46,7 @@ export default async function AboutPage() {
           <div className="about-grid">
             <Reveal>
               <div>
-                <span className="eyebrow"><span className="sec-num">01</span> {c(map, "about", "story", "eyebrow")}</span>
+                <span className="eyebrow">{c(map, "about", "story", "eyebrow")}</span>
                 <h2 className="h2">{c(map, "about", "story", "title")}</h2>
                 <hr className="gold-rule" />
                 <p className="lead">{c(map, "about", "story", "body1")}</p>
@@ -86,7 +86,7 @@ export default async function AboutPage() {
         <div className="container">
           <Reveal>
             <div className="center">
-              <span className="eyebrow"><span className="sec-num">02</span> {c(map, "about", "team", "eyebrow")}</span>
+              <span className="eyebrow">{c(map, "about", "team", "eyebrow")}</span>
               <h2 className="h2">{c(map, "about", "team", "title")}</h2>
             </div>
           </Reveal>
@@ -116,7 +116,7 @@ export default async function AboutPage() {
         <div className="container">
           <Reveal>
             <div className="center">
-              <span className="eyebrow"><span className="sec-num">03</span> {c(map, "about", "approach", "eyebrow")}</span>
+              <span className="eyebrow">{c(map, "about", "approach", "eyebrow")}</span>
               <h2 className="h2">{c(map, "about", "approach", "title")}</h2>
               <p className="lead" style={{ color: "rgba(247,242,232,0.65)", marginTop: 12 }}>Tap each step to see how it works.</p>
             </div>
@@ -129,7 +129,7 @@ export default async function AboutPage() {
         <div className="container">
           <Reveal>
             <div className="center">
-              <span className="eyebrow"><span className="sec-num">04</span> {c(map, "about", "why", "eyebrow")}</span>
+              <span className="eyebrow">{c(map, "about", "why", "eyebrow")}</span>
               <h2 className="h2">{c(map, "about", "why", "title")}</h2>
             </div>
           </Reveal>
@@ -148,7 +148,7 @@ export default async function AboutPage() {
         <div className="container">
           <Reveal>
             <div className="center">
-              <span className="eyebrow"><span className="sec-num">05</span> {c(map, "about", "brands", "eyebrow")}</span>
+              <span className="eyebrow">{c(map, "about", "brands", "eyebrow")}</span>
               <h2 className="h2">{c(map, "about", "brands", "title")}</h2>
               <p className="lead" style={{ margin: "0 auto" }}>{c(map, "about", "brands", "body")}</p>
               <div style={{ marginTop: 30, display: "inline-flex", alignItems: "center", gap: 16, background: "var(--warm-white)", border: "1px solid var(--border-gold)", borderRadius: 6, padding: "16px 28px" }}>

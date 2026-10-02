@@ -55,7 +55,7 @@ export default async function ArtistDetailPage({ params }) {
               )}
             </div>
             <div className="wed-body">
-              <span className="eyebrow"><span className="sec-num">Profile</span> {a.category || "Artist"}</span>
+              <span className="eyebrow">Profile · {a.category || "Artist"}</span>
               <h1 className="h2">{a.name}</h1>
               <hr className="gold-rule" />
               {a.bio && <p className="lead">{a.bio}</p>}

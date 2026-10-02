@@ -60,7 +60,7 @@ export default async function WeddingsPage() {
               <img className="inset" src="/images/ig-sangeet-performer-turban.jpg" alt="Sangeet performer" loading="lazy" />
             </Reveal>
             <Reveal delay={1} className="wed-body">
-              <span className="eyebrow"><span className="sec-num">01</span> Weddings</span>
+              <span className="eyebrow">Weddings</span>
               <h2>Celebrations,<br /><em>Composed Beautifully.</em></h2>
               <hr className="gold-rule" />
               <p className="lead">From haldi to reception — décor, sangeet, artists and complete coordination, handled by one senior team.</p>
@@ -76,7 +76,7 @@ export default async function WeddingsPage() {
         <div className="container">
           <Reveal>
             <div className="center">
-              <span className="eyebrow"><span className="sec-num">02</span> Real Weddings</span>
+              <span className="eyebrow">Real Weddings</span>
               <h2 className="h2">Celebrations We&apos;ve Planned</h2>
             </div>
           </Reveal>
@@ -93,7 +93,7 @@ export default async function WeddingsPage() {
           <div className="container">
             <Reveal>
               <div className="center">
-                <span className="eyebrow"><span className="sec-num">03</span> Gallery</span>
+                <span className="eyebrow">Gallery</span>
                 <h2 className="h2">Wedding Moments</h2>
               </div>
             </Reveal>

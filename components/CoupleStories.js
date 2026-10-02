@@ -25,7 +25,7 @@ export default async function CoupleStories() {
       <div className="container">
         <Reveal>
           <div className="center">
-            <span className="eyebrow"><span className="sec-num">08</span> {eyebrow}</span>
+            <span className="eyebrow">{eyebrow}</span>
             <h2 className="h2">{title}</h2>
           </div>
         </Reveal>

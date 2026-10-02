@@ -42,7 +42,7 @@ export default async function ContactPage() {
       <section className="section contact-band">
         <div className="container">
           <Reveal>
-            <span className="eyebrow"><span className="sec-num">01</span> Enquire</span>
+            <span className="eyebrow">Enquire</span>
             <h2 className="h2">Let&apos;s Plan Your Celebration</h2>
             <p className="lead">A senior planner will call you back within one working day.</p>
           </Reveal>

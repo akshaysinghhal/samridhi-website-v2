@@ -1078,19 +1078,17 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 .about-step { border: 1px solid rgba(201,161,90,0.3); border-radius: 10px; background: rgba(252,250,245,0.04); overflow: hidden; transition: border-color 0.5s ease, background 0.5s ease; }
 .about-step.open { border-color: var(--gold); background: rgba(252,250,245,0.07); }
 .about-step-head { width: 100%; display: flex; align-items: center; gap: 18px; padding: 22px 24px; background: none; border: 0; cursor: pointer; text-align: left; color: var(--ivory); }
-.about-step-num { font-family: var(--font-display); font-size: 30px; color: var(--gold); min-width: 52px; line-height: 1; }
-.about-step-title { flex: 1; font-size: 15px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; }
+.about-step-title { flex: 1; font-size: 16px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; }
 .about-step-icon { font-size: 26px; font-weight: 300; color: var(--gold); width: 34px; height: 34px; border: 1px solid rgba(201,161,90,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; transition: transform 0.5s ease, background 0.5s ease; }
 .about-step.open .about-step-icon { transform: rotate(180deg); background: var(--gold); color: var(--brown); }
 .about-step-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.55s ease; }
 .about-step.open .about-step-body { grid-template-rows: 1fr; }
 .about-step-body-inner { overflow: hidden; }
-.about-step-body p { margin: 0; padding: 0 24px 26px 94px; color: rgba(247,242,232,0.72); font-size: 15.5px; line-height: 1.7; }
+.about-step-body p { margin: 0; padding: 0 24px 26px; color: rgba(247,242,232,0.72); font-size: 15.5px; line-height: 1.7; }
 @media (max-width: 640px) {
   .about-step-head { padding: 18px; gap: 14px; }
-  .about-step-num { font-size: 24px; min-width: 40px; }
-  .about-step-title { font-size: 13.5px; letter-spacing: 1.8px; }
-  .about-step-body p { padding: 0 18px 22px 72px; font-size: 14.5px; }
+  .about-step-title { font-size: 14px; letter-spacing: 1.8px; }
+  .about-step-body p { padding: 0 18px 22px; font-size: 14.5px; }
 }
 
 /* ---------- About: why-choose-us cards (no numbers) ---------- */

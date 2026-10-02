@@ -125,7 +125,7 @@ export default async function Home() {
       <section className="section" id="services" style={{ background: "var(--ivory)" }}>
         <div className="container">
           <Reveal>
-            <span className="eyebrow"><span className="sec-num">01</span> Our Services</span>
+            <span className="eyebrow">Our Services</span>
             <h2 className="h2">One Team.<br />Every Celebration.</h2>
             <p className="lead">Eight specialised verticals, one accountable team — from the first concept note to the final applause.</p>
           </Reveal>
@@ -141,7 +141,6 @@ export default async function Home() {
                         <img className="svc-img" src={img} alt={sv.title} loading="lazy" />
                         <span className="svc-shade" aria-hidden="true" />
                         <span className="svc-body">
-                          <span className="svc-num">{String(i + 1).padStart(2, "0")}</span>
                           <h3>{sv.title}</h3>
                           <p>{sv.summary}</p>
                           <span className="svc-link">Explore Service <span className="arr">→</span></span>
@@ -149,7 +148,6 @@ export default async function Home() {
                       </>
                     ) : (
                       <>
-                        <span className="svc-num">{String(i + 1).padStart(2, "0")}</span>
                         <h3>{sv.title}</h3>
                         <p>{sv.summary}</p>
                         <span className="svc-link">Explore <span className="arr">→</span></span>
@@ -167,7 +165,7 @@ export default async function Home() {
       <section className="section artist-band" id="artists">
         <div className="container">
           <Reveal>
-            <span className="eyebrow"><span className="sec-num">02</span> Entertainment &amp; Artists</span>
+            <span className="eyebrow">Entertainment &amp; Artists</span>
             <h2 className="h2">Nights They&apos;ll<br />Never Forget</h2>
             <p className="lead">Singers, folk troupes, bands &amp; anchors — curated, contracted and stage-managed by us. Available for booking through Samridhi Films &amp; Television.</p>
           </Reveal>
@@ -206,7 +204,7 @@ export default async function Home() {
         <div className="container">
           <Reveal>
             <div className="center">
-              <span className="eyebrow"><span className="sec-num">03</span> Portfolio</span>
+              <span className="eyebrow">Portfolio</span>
               <h2 className="h2">Events That Speak<br />for Themselves</h2>
               <p className="lead">Stages, crowds and celebrations we have produced — across India and beyond.</p>
             </div>
@@ -267,7 +265,7 @@ export default async function Home() {
               <img className="inset" src="/images/ig-haldi-decor-collage.jpg" alt="Haldi décor details" loading="lazy" />
             </Reveal>
             <Reveal delay={1} className="wed-body">
-              <span className="eyebrow"><span className="sec-num">04</span> Weddings</span>
+              <span className="eyebrow">Weddings</span>
               <h2>Your Moments.<br /><em>Beautifully Managed.</em></h2>
               <hr className="gold-rule" />
               <p className="lead">From intimate family functions to grand destination weddings — décor, entertainment and complete coordination under one roof.</p>
@@ -285,7 +283,7 @@ export default async function Home() {
         <div className="container">
           <Reveal>
             <div className="center">
-              <span className="eyebrow"><span className="sec-num">05</span> How It Works</span>
+              <span className="eyebrow">How It Works</span>
               <h2 className="h2">{c(map, "home", "steps", "title") || "From First Call to Final Applause"}</h2>
               <p className="lead">{c(map, "home", "steps", "subtitle") || "A simple, transparent process — refined over 20+ years and 1000+ events."}</p>
             </div>
@@ -293,7 +291,6 @@ export default async function Home() {
           <div className="tl">
             {steps.map((st, i) => (
               <Reveal key={i} delay={i} className="tl-step">
-                <div className="tl-num">{String(i + 1).padStart(2, "0")}</div>
                 <h3>{st.title}</h3>
                 <p>{st.desc}</p>
               </Reveal>
@@ -313,7 +310,7 @@ export default async function Home() {
           <div className="container">
             <Reveal>
               <div className="center">
-                <span className="eyebrow"><span className="sec-num">06</span> Clients</span>
+                <span className="eyebrow">Clients</span>
                 <h2 className="h2">Trusted by Leading Organisations</h2>
               </div>
             </Reveal>
@@ -347,7 +344,7 @@ export default async function Home() {
                   {show.cover_image && <img src={show.cover_image} alt={show.title} loading="lazy" />}
                 </div>
                 <div className="intl-panel">
-                  <span className="eyebrow"><span className="sec-num">07</span> International Shows</span>
+                  <span className="eyebrow">International Shows</span>
                   <h3>Taking Indian Entertainment Beyond Borders</h3>
                   <div className="intl-loc">{[show.city, show.country].filter(Boolean).join(", ") || "International"}</div>
                   <p style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#fff" }}>{show.title}</p>
@@ -368,7 +365,7 @@ export default async function Home() {
           <div className="container">
             <Reveal>
               <div className="center">
-                <span className="eyebrow"><span className="sec-num">08</span> Press</span>
+                <span className="eyebrow">Press</span>
                 <h2 className="h2">As Seen In</h2>
               </div>
             </Reveal>
@@ -403,7 +400,7 @@ export default async function Home() {
       <section className="section contact-band" id="contact">
         <div className="container">
           <Reveal>
-            <span className="eyebrow"><span className="sec-num">09</span> Get in Touch</span>
+            <span className="eyebrow">Get in Touch</span>
             <h2 className="h2">{c(map, "home", "cta", "title") || "Let's Plan Your Celebration"}</h2>
             <p className="lead">{c(map, "home", "cta", "subtitle") || "Tell us about your event — a senior planner will call you back within one working day."}</p>
           </Reveal>

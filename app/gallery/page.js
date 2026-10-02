@@ -60,7 +60,7 @@ export default async function GalleryPage() {
           <div className="container">
             <Reveal>
               <div className="center">
-                <span className="eyebrow"><span className="sec-num">01</span> Celebrity Feedback</span>
+                <span className="eyebrow">Celebrity Feedback</span>
                 <h2 className="h2">In Their Words — On Video</h2>
                 <p className="lead">Artists and celebrities share their experience of working with Samridhi.</p>
               </div>

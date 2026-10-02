@@ -18,7 +18,6 @@ export default function AboutSteps({ steps }) {
               onClick={() => setOpenIdx(open ? -1 : i)}
               aria-expanded={open}
             >
-              <span className="about-step-num">{String(i + 1).padStart(2, "0")}</span>
               <span className="about-step-title">{s.title}</span>
               <span className="about-step-icon" aria-hidden="true">{open ? "−" : "+"}</span>
             </button>

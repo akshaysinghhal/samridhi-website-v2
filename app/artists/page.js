@@ -52,7 +52,7 @@ export default async function ArtistsPage() {
         <div className="container">
           <Reveal>
             <div className="center">
-              <span className="eyebrow"><span className="sec-num">01</span> Line-up</span>
+              <span className="eyebrow">Line-up</span>
               <h2 className="h2">{c(map, "artists", "list", "title") || "The Artists"}</h2>
               <p className="lead">{c(map, "artists", "list", "subtitle") || "A curated roster across every genre and stage."} All artists are available for booking through Samridhi Films &amp; Television.</p>
             </div>
@@ -65,7 +65,7 @@ export default async function ArtistsPage() {
         <div className="container">
           <Reveal>
             <div className="center">
-              <span className="eyebrow"><span className="sec-num">02</span> From Booking to Spotlight</span>
+              <span className="eyebrow">From Booking to Spotlight</span>
               <h2 className="h2">We Manage Every Detail</h2>
             </div>
           </Reveal>
