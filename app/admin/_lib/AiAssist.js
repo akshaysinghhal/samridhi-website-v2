@@ -5,48 +5,9 @@ import { api } from "../../../lib/adminApi";
 // Shared AI writing helper for the admin panel. Everything goes through the
 // server-side /api/admin/ai proxy (Gemini key stays server-side).
 
-// Renders the common markdown the AI produces as real formatted HTML
-// (bold, italic, headings, bullets) for the Preview view. HTML is escaped first.
-export function mdToHtml(t) {
-  let h = String(t || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  h = h
-    .replace(/^#{1,6}\s*(.+)$/gm, "<b>$1</b>")
-    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
-    .replace(/__(.+?)__/g, "<b>$1</b>")
-    .replace(/`(.+?)`/g, "$1")
-    .replace(/(^|[\s(>])\*([^*\n]+?)\*/g, "$1<i>$2</i>")
-    .replace(/(^|[\s(>])_([^_\n]+?)_/g, "$1<i>$2</i>")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/^\s*[-*+]\s+(.+)$/gm, "<li>$1</li>")
-    .replace(/^\s*\d+[.)]\s+(.+)$/gm, "<li>$1</li>")
-    .replace(/<\/li>\s*<li>/g, "</li><li>")
-    .replace(/((?:<li>[\s\S]*?<\/li>)+)/g, "<ul>$1</ul>")
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/\n/g, "<br/>");
-  return h;
-}
-export function stripMarkdown(t) {
-  return String(t || "")
-    .replace(/^#{1,6}\s+/gm, "")            // ## headings
-    .replace(/\*\*(.+?)\*\*/g, "$1")        // **bold**
-    .replace(/__(.+?)__/g, "$1")            // __bold__
-    .replace(/(^|[\s(])\*(.+?)\*/g, "$1$2") // *italics*
-    .replace(/(^|[\s(])_(.+?)_/g, "$1$2")   // _italics_
-    .replace(/`(.+?)`/g, "$1")              // `code`
-    .replace(/^\s*[-*+]\s+/gm, "")          // - bullets
-    .replace(/^\s*\d+[.)]\s+/gm, "")        // 1. numbered lists
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // [links](url)
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
 export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seedTick, quickActions, historyEnabled }) {
   const [prompt, setPrompt] = useState("");
   const [lang, setLang] = useState("en"); // en | hinglish | hi
-  const [preview, setPreview] = useState(false); // formatted preview of the result (bold etc.)
   const [result, setResult] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -60,7 +21,6 @@ export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seed
       setResult("");
       setErr("");
       setCopied(false);
-      setPreview(false);
       if (historyEnabled) setHistory(loadAiHistory());
       document.body.style.overflow = "hidden";
       const onKey = (e) => { if (e.key === "Escape") onClose(); };
@@ -134,18 +94,9 @@ export function AiAssistModal({ open, onClose, onInsert, seedPrompt, title, seed
         {result && (
           <>
             <label className="ai-label" style={{ marginTop: 14 }}>Result</label>
-            {preview ? (
-              <div className="ai-result ai-preview" dangerouslySetInnerHTML={{ __html: mdToHtml(result) }} />
-            ) : (
-              <div className="ai-result" style={{ whiteSpace: "pre-wrap" }}>{result}</div>
-            )}
+            <div className="ai-result" style={{ whiteSpace: "pre-wrap" }}>{result}</div>
             <div className="ai-actions">
               <button type="button" className="btn btn-dark" onClick={copy}>{copied ? "Copied ✓" : "Copy"}</button>
-              <button type="button" className="btn btn-dark" onClick={() => setResult(stripMarkdown(result))} title="Remove **bold**, ## headings and bullets">🧹 Plain text</button>
-              <button type="button" className="btn btn-dark" onClick={() => setPreview((v) => !v)} title="See the text formatted — bold, italics, lists"
-                style={preview ? { background: "#8F3F2D", borderColor: "#8F3F2D" } : undefined}>{preview ? "📝 Raw text" : "👁 Preview"}</button>
-              <button type="button" className="btn btn-dark" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(result)}`, "_blank")}
-                title="Share this text on WhatsApp" style={{ background: "#1fa855", borderColor: "#1fa855" }}>💬 WhatsApp</button>
               {onInsert && (
                 <button type="button" className="btn btn-primary" onClick={() => onInsert(result)}>Use this text</button>
               )}
