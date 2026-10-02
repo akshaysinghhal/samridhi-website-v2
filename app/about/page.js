@@ -62,7 +62,7 @@ export default async function AboutPage() {
               </div>
             </Reveal>
             <Reveal delay={1} className="frame-wrap">
-              <img className="main" src="/images/fb-performer-big-audience.jpg" alt="Performer before a large audience" loading="lazy" />
+              <img className="main" src={ci(map, "about", "story", "image") || "/images/fb-performer-big-audience.jpg"} alt="Performer before a large audience" loading="lazy" />
             </Reveal>
           </div>
         </div>

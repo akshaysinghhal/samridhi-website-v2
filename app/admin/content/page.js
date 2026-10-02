@@ -153,7 +153,7 @@ export default function ContentEditor() {
                     <button type="button" className="ai-chip" onClick={() => setImg(b.id, "")}>✕ Remove</button>
                   )}
                 </div>
-                <span className="seo-hint">This banner shows at the top of the {pageLabel(b.page)} page.</span>
+                <span className="seo-hint">{b.section === "hero" ? `This banner shows at the top of the ${pageLabel(b.page)} page.` : "This image shows in its section on the website."}</span>
               </div>
             ) : (
               <div className="field" key={b.id}>
