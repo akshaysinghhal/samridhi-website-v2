@@ -17,8 +17,6 @@ export default async function TestimonialsPage() {
   // Only genuine testimonials are ever presented publicly.
   const testimonials = raw.filter((t) => !t.is_placeholder);
   const hasVideo = (t) => !!(t.video_url && String(t.video_url).trim());
-  const videoOnes = testimonials.filter(hasVideo);
-  const written = testimonials.filter((t) => !hasVideo(t));
 
   return (
     <>
@@ -33,62 +31,42 @@ export default async function TestimonialsPage() {
         </div>
       </section>
 
-      {videoOnes.length > 0 && (
-        <section className="section testi-band">
-          <div className="container">
-            <Reveal>
-              <div className="center">
-                <span className="eyebrow">Video Testimonials</span>
-                <h2 className="h2">Watch Their Stories</h2>
-                <p className="lead" style={{ color: "var(--gold-soft)", margin: "12px auto 0" }}>Tap a card to watch the full video.</p>
-              </div>
-            </Reveal>
-            <div className="testi-video-grid">
-              {videoOnes.map((t, i) => (
-                <Reveal key={t.id} delay={i % 4}>
-                  <TestimonialCard t={t} />
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {written.length > 0 && (
-        <section className="section" style={{ background: "var(--ivory)" }}>
-          <div className="container">
-            <Reveal>
-              <div className="center">
-                <span className="eyebrow">Testimonials</span>
-                <h2 className="h2">In Their Words</h2>
-              </div>
-            </Reveal>
-            <div className="testi-grid">
-              {written.map((t, i) => (
-                <Reveal key={t.id} delay={i % 3} className={`testi-card${t.photo_url ? " has-photo" : ""}`}>
-                  {t.photo_url ? (
-                    <img className="tphoto" src={t.photo_url} alt={t.author_name || "Client"} loading="lazy" />
-                  ) : null}
-                  <p className="tquote">&ldquo;{t.quote}&rdquo;</p>
-                  <p className="tauthor">
-                    {t.author_name}
-                    {t.company ? `, ${t.company}` : ""}
-                    {t.event_name ? <span style={{ display: "block", fontWeight: 400, fontSize: 13, color: "var(--text-muted)", letterSpacing: 0.4, textTransform: "none" }}>{t.event_name}</span> : null}
-                  </p>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {testimonials.length === 0 && (
-        <section className="section" style={{ background: "var(--ivory)" }}>
-          <div className="container">
+      <section className="section" style={{ background: "var(--ivory)" }}>
+        <div className="container">
+          {testimonials.length === 0 ? (
             <p className="lead center">Client testimonials are being added — check back soon.</p>
-          </div>
-        </section>
-      )}
+          ) : (
+            <>
+              <Reveal>
+                <div className="center">
+                  <span className="eyebrow">Testimonials</span>
+                  <h2 className="h2">In Their Words</h2>
+                  {testimonials.some(hasVideo) && (
+                    <p className="lead" style={{ margin: "12px auto 0" }}>Tap a video to watch it full-screen.</p>
+                  )}
+                </div>
+              </Reveal>
+              <div className="testi-grid">
+                {testimonials.map((t, i) => (
+                  <Reveal key={t.id} delay={i % 3} className={`testi-card${hasVideo(t) ? " has-video" : ""}${!hasVideo(t) && t.photo_url ? " has-photo" : ""}`}>
+                    {hasVideo(t) ? (
+                      <div className="tvideo-card"><TestimonialCard t={t} /></div>
+                    ) : t.photo_url ? (
+                      <img className="tphoto" src={t.photo_url} alt={t.author_name || "Client"} loading="lazy" />
+                    ) : null}
+                    {t.quote ? <p className="tquote">&ldquo;{t.quote}&rdquo;</p> : null}
+                    <p className="tauthor">
+                      {t.author_name}
+                      {t.company ? `, ${t.company}` : ""}
+                      {t.event_name ? <span style={{ display: "block", fontWeight: 400, fontSize: 13, color: "var(--text-muted)", letterSpacing: 0.4, textTransform: "none" }}>{t.event_name}</span> : null}
+                    </p>
+                  </Reveal>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
       <SiteFooter />
     </>
   );
