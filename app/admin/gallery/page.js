@@ -102,7 +102,10 @@ export default function GalleryAdmin() {
 
   const addPhotos = async (e) => {
     try {
-      const files = e.target.files; e.target.value = "";
+      // Snapshot to a real array BEFORE clearing: in Chrome input.files is a
+      // live view, so clearing the input would empty the captured list too.
+      const files = Array.from(e.target.files || []);
+      e.target.value = "";
       await runUploads(files, (m, file) => ({
         kind: "photo", title: file.name.replace(/\.[^.]+$/, ""),
         image_url: m.url, category: "Events", status: "published",
@@ -124,7 +127,10 @@ export default function GalleryAdmin() {
 
   const addVideoFile = async (e) => {
     try {
-      const files = e.target.files; e.target.value = "";
+      // Snapshot to a real array BEFORE clearing: in Chrome input.files is a
+      // live view, so clearing the input would empty the captured list too.
+      const files = Array.from(e.target.files || []);
+      e.target.value = "";
       await runUploads(files, (m, file) => ({
         kind: "video", title: file.name.replace(/\.[^.]+$/, ""),
         video_url: m.url, image_url: "", category: "Events", status: "published",
