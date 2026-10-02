@@ -998,6 +998,18 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 .site-footer a:hover { color: var(--gold-soft); }
 .footer-brand img { height: 64px; width: auto; margin-bottom: 20px; }
 .footer-brand p { font-size: 14.5px; line-height: 1.8; color: var(--border); max-width: 360px; }
+/* Footer credential badges: ISO + GeM. */
+.footer-creds { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.fcred { display: inline-flex; align-items: center; gap: 12px; border: 1px solid rgba(201,161,90,.5); border-radius: 10px; padding: 8px 16px 8px 8px; background: rgba(201,161,90,.08); }
+.fcred img { height: 40px !important; width: auto !important; margin: 0 !important; }
+.fcred-gem { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 8px; background: var(--gold); color: var(--brown); font-weight: 800; font-size: 13px; flex: none; }
+.fcred-tx { font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--gold-soft); font-weight: 700; line-height: 1.6; }
+/* Homepage hero credential badges: ISO + GeM. */
+.hero-creds { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+.hcred { display: inline-flex; align-items: center; gap: 10px; border: 1px solid rgba(221,190,122,.45); background: rgba(42,27,22,.45); backdrop-filter: blur(6px); border-radius: 999px; padding: 5px 16px 5px 5px; }
+.hcred img { height: 32px; width: 32px; border-radius: 50%; background: #fff; object-fit: contain; }
+.hcred-gem { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--gold); color: var(--brown); font-weight: 800; font-size: 11px; flex: none; }
+.hcred-tx { font-size: 11px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--gold-soft); font-weight: 700; }
 .footer-contact p { font-size: 14.5px; margin: 0 0 6px; color: var(--border); }
 .footer-contact strong { color: var(--gold-soft); font-weight: 700; }
 .footer-legal { font-size: 12.5px; color: rgba(216,201,181,0.7); line-height: 1.8; }
