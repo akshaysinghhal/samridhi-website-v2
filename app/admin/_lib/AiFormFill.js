@@ -9,7 +9,7 @@ import { toast } from "./ui";
 // into the form state. Always asks the user to review before saving.
 //
 // fields: [{ key, label, type: "text"|"textarea"|"date"|"select"|"number"|"list", options? }]
-export function AiFormFill({ title = "Describe it — AI fills the form", hint, fields, onFill, context }) {
+export function AiFormFill({ title = "Describe it — AI fills the form", hint, fields, onFill, context, instructions, placeholder }) {
   const [open, setOpen] = useState(true);
   const [desc, setDesc] = useState("");
   const [busy, setBusy] = useState(false);
@@ -27,11 +27,15 @@ export function AiFormFill({ title = "Describe it — AI fills the form", hint, 
         return t;
       }).join("\n");
       const prompt =
-        `You are a data-entry assistant for an Indian event company's admin panel. ` +
-        `Read the description below and extract the fields. Reply with ONLY a valid JSON object ` +
-        `(no code fences, no explanation) with exactly these keys:\n${spec}\n` +
-        `Rules: use "" for anything not mentioned; keep text in the same language as the description; ` +
-        `never invent facts, names, dates or places not present in the description.` +
+        (instructions
+          ? `${instructions}\n\nReturn exactly these JSON keys:\n${spec}\n` +
+            `Rules: reply with ONLY a valid JSON object (no code fences, no explanation); ` +
+            `use "" for anything not mentioned; keep the response in the same language as the description.`
+          : `You are a data-entry assistant for an Indian event company's admin panel. ` +
+            `Read the description below and extract the fields. Reply with ONLY a valid JSON object ` +
+            `(no code fences, no explanation) with exactly these keys:\n${spec}\n` +
+            `Rules: use "" for anything not mentioned; keep text in the same language as the description; ` +
+            `never invent facts, names, dates or places not present in the description.`) +
         (context ? `\nContext: ${context}` : "") +
         `\nDescription:\n${desc.trim()}`;
       const r = await api("/api/admin/ai", { method: "POST", body: { prompt, lang: "en" } });
@@ -72,7 +76,7 @@ export function AiFormFill({ title = "Describe it — AI fills the form", hint, 
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
             rows={3}
-            placeholder='e.g. "Dussehra Mela 2026 in Bhilwara for Nagar Palika, on 24 Oct 2026. Cultural programs category. We handled stage, sound and artist management."'
+            placeholder={placeholder || 'e.g. "Dussehra Mela 2026 in Bhilwara for Nagar Palika, on 24 Oct 2026. Cultural programs category. We handled stage, sound and artist management."'}
             aria-label="Describe the entry for AI"
           />
           <div className="ai-fill-row">

@@ -27,7 +27,7 @@ export const SIZE_HINTS = {
 export default function AdminCrud({
   title, sub, endpoint, listKey, columns, fields,
   defaults = {}, validate, slugFrom, note, addLabel, beforeSave, previewFor, shareFor, externalRefresh,
-  revalidatePaths, aiFillFields, aiFillHint,
+  revalidatePaths, aiFillFields, aiFillHint, aiInstructions, aiPlaceholder,
 }) {
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(true);
@@ -377,6 +377,8 @@ export default function AdminCrud({
             <AiFormFill
               fields={aiFillFields}
               hint={aiFillHint}
+              instructions={aiInstructions}
+              placeholder={aiPlaceholder}
               onFill={(values) => setForm((f) => ({ ...f, ...values }))}
             />
           )}
