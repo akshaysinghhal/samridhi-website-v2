@@ -581,11 +581,11 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 /* ---------- press — newspaper editorial grid ---------- */
 /* ---------- Homepage press mosaic: one-viewport interactive tile wall ---------- */
 .press-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; margin-top: 50px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 26px; margin-top: 50px;
 }
 .press-clip {
   background: var(--warm-white);
-  border: 1px solid var(--border); border-radius: 3px; overflow: hidden;
+  border: 1px solid var(--border); border-radius: 0; overflow: hidden;
   text-decoration: none; position: relative;
   transition: transform 0.45s ease, box-shadow 0.45s ease;
 }
@@ -1055,6 +1055,7 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
   .intl-media { min-height: 320px; }
   .contact-grid { grid-template-columns: 1fr; gap: 50px; }
   .story-grid, .couple-grid { grid-template-columns: 1fr 1fr; }
+  .press-grid { grid-template-columns: repeat(2, 1fr); }
   .testi-video-grid { grid-template-columns: 1fr 1fr; }
   .testi-grid { grid-template-columns: 1fr 1fr; }
   .footer-top { grid-template-columns: 1fr 1fr; }

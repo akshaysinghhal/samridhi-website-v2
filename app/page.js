@@ -69,7 +69,9 @@ export default async function Home() {
   const wa = setting(s, "whatsapp", "919602228846");
   const waMsg = encodeURIComponent(setting(s, "whatsapp_msg", "Hi Samridhi Films! I want to plan an event."));
   const show = intl[0];
-  const pressStrip = press.filter((p) => !p.is_placeholder).slice(0, 6);
+  // Homepage "As Seen In": pinned clippings first (max 4), then the latest.
+  const pressLive = press.filter((p) => !p.is_placeholder);
+  const pressStrip = [...pressLive.filter((p) => p.pinned_to_home), ...pressLive.filter((p) => !p.pinned_to_home)].slice(0, 4);
   const pressFallback = pressStrip.length ? pressStrip : press.slice(0, 4);
   const videoTestimonials = (testimonials || []).filter((t) => t.video_url && String(t.video_url).trim()).slice(0, 4);
 
