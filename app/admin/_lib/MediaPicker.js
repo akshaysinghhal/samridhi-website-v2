@@ -98,7 +98,11 @@ function MediaPickerInner({ open, onClose, onSelect, kind = "all", multi = false
     });
   }, [media, q, tab, folder]);
 
-  if (!open) return null;
+  // Bottom-sheet drag-to-dismiss (mobile). Hooks must stay above the early
+  // return — calling useRef only when open breaks the Rules of Hooks and
+  // crashes React with "Rendered more hooks than during the previous render".
+  const sheetRef = useRef(null);
+  const dragY = useRef(null);
 
   if (!open) return null;
 
@@ -120,8 +124,6 @@ function MediaPickerInner({ open, onClose, onSelect, kind = "all", multi = false
   const fname = (m) => (m.public_id || "").split("/").pop();
 
   // Bottom-sheet drag-to-dismiss (mobile). Dragging the handle down closes.
-  const sheetRef = useRef(null);
-  const dragY = useRef(null);
   const onTouchStart = (e) => { dragY.current = e.touches[0].clientY; };
   const onTouchMove = (e) => {
     if (dragY.current == null) return;
