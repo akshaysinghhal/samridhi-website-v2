@@ -10,6 +10,14 @@ import { breadcrumbJsonLd, jsonLdScript } from "../../../lib/seo";
 
 export const revalidate = 60;
 
+const ARTIST_DISCLAIMER = [
+  "The information provided on this website is for general informational purposes only. We would like to clarify that while we may not exclusively manage the artists mentioned, we have established close relationships with them and their official management teams. These relationships allow us to negotiate favorable deals on behalf of our clients due to our extensive experience and volume of business, including repeated engagements. However, it is important to note that the availability, rates, and services offered by the artists are subject to their official management's discretion and scheduling.",
+  "While we strive to provide accurate and up-to-date information, we cannot guarantee the availability or terms of any specific booking or collaboration. We work diligently to maintain strong partnerships with the artists and their official management teams, enabling us to provide our clients with exceptional opportunities. Our aim is to facilitate successful bookings, appearances, and collaborations based on our established relationships and industry expertise.",
+  "Please contact us directly for further information regarding specific artists, their availability, and any other inquiries you may have. Our dedicated team is here to assist you and provide the most accurate and current information possible.",
+  "If you are the owner of any copyrighted image displayed on our website and would like it to be removed/amended or properly credited, please contact us, and we will promptly address your concerns. We are committed to respecting intellectual property rights and will take all the appropriate action as necessary for managing a reputed artist management website.",
+  "By using this website, you agree to be bound by these terms and conditions of use. This disclaimer is subject to change without notice.",
+];
+
 export async function generateMetadata({ params }) {
   const a = await getArtist(params.slug);
   if (!a) return {};
@@ -99,6 +107,12 @@ export default async function ArtistDetailPage({ params }) {
           </div>
           <div style={{ marginTop: 40 }}>
             <LeadForm type="artist_booking" artistId={a.id} presetEventType="Celebrity / Artist Booking" />
+          </div>
+          <div className="artist-disclaimer">
+            <h3>Disclaimer</h3>
+            {ARTIST_DISCLAIMER.map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
           </div>
         </div>
       </section>

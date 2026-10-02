@@ -678,6 +678,28 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 .contact-band .eyebrow::before { background: var(--gold-soft); }
 .contact-band h2, .contact-band .h2 { color: var(--warm-white); }
 .contact-band .lead { color: rgba(247,242,232,0.72); }
+
+/* Artist profile disclaimer below the enquiry form */
+.artist-disclaimer {
+  margin-top: 44px;
+  padding-top: 26px;
+  border-top: 1px solid rgba(201,161,90,0.35);
+}
+.artist-disclaimer h3 {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold-soft);
+  margin: 0 0 14px;
+}
+.artist-disclaimer p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: rgba(247,242,232,0.62);
+  margin: 0 0 12px;
+}
+.artist-disclaimer p:last-child { margin-bottom: 0; }
 .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; margin-top: 54px; align-items: start; }
 .contact-lines { display: grid; gap: 0; margin-top: 36px; border-top: 1px solid rgba(201,161,90,0.28); }
 .contact-line { padding: 22px 0; border-bottom: 1px solid rgba(201,161,90,0.28); }
