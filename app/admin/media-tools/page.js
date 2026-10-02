@@ -292,8 +292,9 @@ const GRAVITIES = [
   ["west", "center", "east"],
   ["south_west", "south", "south_east"],
 ];
+const SITE_LOGO = "/images/logo.png";
 
-function clOverlayUrl(mediaUrl, { text, size, color, opacity, gravity, dx, dy }) {
+function clTextOverlayUrl(mediaUrl, { text, size, color, opacity, gravity, dx, dy, bold, italic }) {
   const m = String(mediaUrl).match(/res\.cloudinary\.com\/([^/]+)\/(image|video)\/upload\/(.+)$/);
   if (!m) return null;
   const [, cloud, kind, rest] = m;
@@ -301,19 +302,55 @@ function clOverlayUrl(mediaUrl, { text, size, color, opacity, gravity, dx, dy })
   const ext = (noVer.match(/\.([a-z0-9]+)$/i) || [])[1] || "";
   const pub = noVer.replace(/\.[a-z0-9]+$/i, "");
   const enc = encodeURIComponent(text).replace(/!/g, "%21").replace(/'/g, "%27").replace(/\(/g, "%28").replace(/\)/g, "%29").replace(/\*/g, "%2A");
-  const t = `l_text:Arial_${Math.round(size)}_bold:${enc},co_rgb:${color.replace("#", "")},o_${opacity},g_${gravity},x_${Math.round(dx)},y_${Math.round(dy)}`;
+  const style = [bold ? "bold" : "", italic ? "italic" : ""].filter(Boolean).join("_");
+  const fontSpec = style ? `Arial_${Math.round(size)}_${style}` : `Arial_${Math.round(size)}`;
+  const t = `l_text:${fontSpec}:${enc},co_rgb:${color.replace("#", "")},o_${opacity},g_${gravity},x_${Math.round(dx)},y_${Math.round(dy)}`;
+  return `https://res.cloudinary.com/${cloud}/${kind}/upload/${t}/${pub}${ext ? "." + ext : ""}`;
+}
+
+function clPublicId(url) {
+  const m = String(url).match(/res\.cloudinary\.com\/[^/]+\/image\/upload\/(.+)$/);
+  if (!m) return null;
+  return m[1].replace(/^v\d+\//, "").replace(/\.[a-z0-9]+$/i, "");
+}
+
+// Logo overlay sized relative to the base image: fl_relative makes w_ a
+// fraction of the base image width, gravity pins the corner (no x/y needed).
+function clLogoOverlayUrl(mediaUrl, { logoUrl, widthPct, opacity, gravity }) {
+  const m = String(mediaUrl).match(/res\.cloudinary\.com\/([^/]+)\/(image|video)\/upload\/(.+)$/);
+  if (!m) return null;
+  const [, cloud, kind, rest] = m;
+  const noVer = rest.replace(/^v\d+\//, "");
+  const ext = (noVer.match(/\.([a-z0-9]+)$/i) || [])[1] || "";
+  const pub = noVer.replace(/\.[a-z0-9]+$/i, "");
+  const logoPub = clPublicId(logoUrl);
+  if (!logoPub) return null;
+  const w = Math.min(0.9, Math.max(0.05, widthPct / 100)).toFixed(2);
+  const t = `l_${logoPub},fl_relative,w_${w},o_${opacity},g_${gravity}`;
   return `https://res.cloudinary.com/${cloud}/${kind}/upload/${t}/${pub}${ext ? "." + ext : ""}`;
 }
 
 function WatermarkTool() {
   const [mode, setMode] = useState("image"); // image | cloudinary
+  const [content, setContent] = useState("text"); // text | logo
   const [img, setImg] = useState(null);
   const [imgUrl, setImgUrl] = useState("");
   const [imgName, setImgName] = useState("");
   const [media, setMedia] = useState(null); // cloudinary asset for overlay mode
   const [loadErr, setLoadErr] = useState(false); // preview failed to load from Cloudinary
-  const [picker, setPicker] = useState(null); // image | any
+  const [picker, setPicker] = useState(null); // image | any | logo
+  // text styling
   const [text, setText] = useState("© Samridhi Films & Television");
+  const [bold, setBold] = useState(true);
+  const [italic, setItalic] = useState(false);
+  const [underline, setUnderline] = useState(false);
+  const [shadow, setShadow] = useState(true);
+  const [outline, setOutline] = useState(false);
+  // logo watermark
+  const [logoUrl, setLogoUrl] = useState(SITE_LOGO);
+  const [logoImg, setLogoImg] = useState(null);
+  const [logoSize, setLogoSize] = useState(18); // % of image width
+  // shared
   const [size, setSize] = useState(48);
   const [color, setColor] = useState("#ffffff");
   const [opacity, setOpacity] = useState(70);
@@ -328,6 +365,14 @@ function WatermarkTool() {
       if (Array.isArray(saved) && saved.length) setShortcuts(saved);
     } catch { /* ignore */ }
   }, []);
+
+  // Load the logo image for canvas drawing (site logo or a custom one).
+  useEffect(() => {
+    if (!logoUrl) { setLogoImg(null); return; }
+    let live = true;
+    loadImage(logoUrl).then((im) => { if (live) setLogoImg(im); }).catch(() => { if (live) setLogoImg(null); });
+    return () => { live = false; };
+  }, [logoUrl]);
 
   const saveShortcut = () => {
     const t = text.trim();
@@ -347,57 +392,84 @@ function WatermarkTool() {
     setBusy(false);
   };
 
-  // draw watermarked image
+  // Draw the watermark (text or logo) onto ctx for a W×H image that is
+  // already drawn. Shared by the live preview and the full-res export.
+  const drawWm = (ctx, W, H) => {
+    if (!img) return;
+    const k = W / img.naturalWidth;
+    const pad = Math.max(6, Math.round(W * 0.035));
+    ctx.save();
+    ctx.globalAlpha = opacity / 100;
+    if (content === "logo" && logoImg) {
+      const lw = W * (logoSize / 100);
+      const lh = lw * (logoImg.naturalHeight / logoImg.naturalWidth);
+      const pm = {
+        north_west: [pad, pad], north: [(W - lw) / 2, pad], north_east: [W - pad - lw, pad],
+        west: [pad, (H - lh) / 2], center: [(W - lw) / 2, (H - lh) / 2], east: [W - pad - lw, (H - lh) / 2],
+        south_west: [pad, H - pad - lh], south: [(W - lw) / 2, H - pad - lh], south_east: [W - pad - lw, H - pad - lh],
+      };
+      const [x, y] = pm[grav] || pm.south_east;
+      if (shadow) { ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = Math.max(2, 8 * k); }
+      ctx.drawImage(logoImg, x, y, lw, lh);
+    } else if (content === "text" && text.trim()) {
+      const fs = Math.max(8, size * k);
+      ctx.font = `${italic ? "italic " : ""}${bold ? "700" : "400"} ${fs}px Manrope, sans-serif`;
+      ctx.fillStyle = color;
+      if (shadow) { ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = Math.max(2, 6 * k); }
+      const tw = ctx.measureText(text).width;
+      const pm = {
+        north_west: [pad, pad + fs], north: [(W - tw) / 2, pad + fs], north_east: [W - pad - tw, pad + fs],
+        west: [pad, H / 2], center: [(W - tw) / 2, H / 2], east: [W - pad - tw, H / 2],
+        south_west: [pad, H - pad], south: [(W - tw) / 2, H - pad], south_east: [W - pad - tw, H - pad],
+      };
+      const [x, y] = pm[grav] || pm.south_east;
+      if (outline) {
+        ctx.lineWidth = Math.max(1, fs * 0.07);
+        ctx.strokeStyle = "rgba(0,0,0,0.75)";
+        ctx.strokeText(text, x, y);
+      }
+      ctx.fillText(text, x, y);
+      if (underline) {
+        ctx.shadowBlur = 0; ctx.shadowColor = "transparent";
+        ctx.lineWidth = Math.max(1, fs * 0.06);
+        ctx.strokeStyle = color;
+        const uy = y + fs * 0.14;
+        ctx.beginPath(); ctx.moveTo(x, uy); ctx.lineTo(x + tw, uy); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  };
+
+  // live preview
   useEffect(() => {
     const cv = canvasRef.current;
     if (!cv || !img || mode !== "image") return;
     const dispW = Math.min(680, img.naturalWidth);
-    const s = dispW / img.naturalWidth;
-    cv.width = dispW; cv.height = img.naturalHeight * s;
+    cv.width = dispW; cv.height = Math.round(img.naturalHeight * (dispW / img.naturalWidth));
     const ctx = cv.getContext("2d");
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
-    const fs = Math.max(10, size * s);
-    ctx.font = `700 ${fs}px Manrope, sans-serif`;
-    ctx.globalAlpha = opacity / 100;
-    ctx.fillStyle = color;
-    ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = 6;
-    const pad = 24 * s;
-    const tw = ctx.measureText(text).width;
-    const posMap = {
-      north_west: [pad, pad + fs], north: [(cv.width - tw) / 2, pad + fs], north_east: [cv.width - pad - tw, pad + fs],
-      west: [pad, cv.height / 2], center: [(cv.width - tw) / 2, cv.height / 2], east: [cv.width - pad - tw, cv.height / 2],
-      south_west: [pad, cv.height - pad], south: [(cv.width - tw) / 2, cv.height - pad], south_east: [cv.width - pad - tw, cv.height - pad],
-    };
-    const [x, y] = posMap[grav] || posMap.south_east;
-    ctx.fillText(text, x, y);
-    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
-  }, [img, text, size, color, opacity, grav, mode]);
+    drawWm(ctx, cv.width, cv.height);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [img, mode, content, text, size, color, opacity, grav, bold, italic, underline, shadow, outline, logoImg, logoSize]);
+
+  const renderFullWm = async () => {
+    if (!img) return null;
+    const full = document.createElement("canvas");
+    full.width = img.naturalWidth; full.height = img.naturalHeight;
+    const ctx = full.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    drawWm(ctx, full.width, full.height);
+    return new Promise((r) => full.toBlob(r, "image/png"));
+  };
+
+  const wmFileName = () => `${(imgName || "image").replace(/\.[a-z]+$/i, "")}-watermarked.png`;
 
   const exportWm = async (saveToLibrary) => {
-    const cv = canvasRef.current;
-    if (!cv || !img) return;
+    const blob = await renderFullWm();
+    if (!blob) return null;
     setBusy(true);
     try {
-      // re-render at full resolution
-      const full = document.createElement("canvas");
-      full.width = img.naturalWidth; full.height = img.naturalHeight;
-      const ctx = full.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      ctx.font = `700 ${size}px Manrope, sans-serif`;
-      ctx.globalAlpha = opacity / 100; ctx.fillStyle = color;
-      ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = 8;
-      const pad = Math.round(img.naturalWidth * 0.035);
-      const tw = ctx.measureText(text).width;
-      const W = full.width, H = full.height;
-      const posMap = {
-        north_west: [pad, pad + size], north: [(W - tw) / 2, pad + size], north_east: [W - pad - tw, pad + size],
-        west: [pad, H / 2], center: [(W - tw) / 2, H / 2], east: [W - pad - tw, H / 2],
-        south_west: [pad, H - pad], south: [(W - tw) / 2, H - pad], south_east: [W - pad - tw, H - pad],
-      };
-      const [x, y] = posMap[grav] || posMap.south_east;
-      ctx.fillText(text, x, y);
-      const blob = await new Promise((r) => full.toBlob(r, "image/png"));
-      const name = `${imgName.replace(/\.[a-z]+$/i, "")}-watermarked.png`;
+      const name = wmFileName();
       if (saveToLibrary) {
         await uploadFile(new File([blob], name, { type: "image/png" }));
         toast("Watermarked image saved to Media Library.");
@@ -407,19 +479,77 @@ function WatermarkTool() {
       }
     } catch (e) { toast("Export failed: " + e.message, "error"); }
     setBusy(false);
+    return null;
   };
 
-  const clUrl = media ? clOverlayUrl(media.url, { text, size: Math.min(size * 2, 200), color, opacity, gravity: grav, dx: 20, dy: 20 }) : null;
+  const shareWhatsApp = async () => {
+    if (mode === "cloudinary") {
+      if (clUrl) window.open(`https://wa.me/?text=${encodeURIComponent(clUrl)}`, "_blank");
+      return;
+    }
+    setBusy(true);
+    try {
+      const blob = await renderFullWm();
+      if (!blob) { setBusy(false); return; }
+      const file = new File([blob], wmFileName(), { type: "image/png" });
+      // Mobile: native share sheet with the image file (WhatsApp appears there).
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: "Watermarked image" }); } catch (e) { /* dismissed */ }
+        setBusy(false);
+        return;
+      }
+      // Desktop fallback: save to the Media Library, then share its link.
+      toast("Uploading to Media Library for sharing…");
+      const m = await uploadFile(file);
+      window.open(`https://wa.me/?text=${encodeURIComponent(m.url)}`, "_blank");
+    } catch (e) { toast("Share failed: " + e.message, "error"); }
+    setBusy(false);
+  };
+
+  const uploadLogo = async (e) => {
+    const fl = e.target.files[0];
+    e.target.value = "";
+    if (!fl) return;
+    setBusy(true);
+    try {
+      const m = await uploadFile(fl);
+      setLogoUrl(m.url);
+      toast("Logo uploaded — now hosted on Cloudinary, works for video too.");
+    } catch (err) { toast("Logo upload failed: " + err.message, "error"); }
+    setBusy(false);
+  };
+
+  const clUrl = media ? (
+    content === "logo"
+      ? clLogoOverlayUrl(media.url, { logoUrl, widthPct: logoSize, opacity, gravity: grav })
+      : clTextOverlayUrl(media.url, { text, size: Math.min(size * 2, 200), color, opacity, gravity: grav, dx: 20, dy: 20, bold, italic })
+  ) : null;
+  const logoOnCloudinary = !!clPublicId(logoUrl);
   const isVideo = media && /video|\.mp4|\.mov|\.webm/i.test(media.url || "") && !/\.(jpe?g|png|gif|webp)$/i.test(media.url || "");
 
   useEffect(() => { setLoadErr(false); }, [clUrl]);
 
+  const styleBtn = (active, label, title, onClick, extraStyle) => (
+    <button type="button" onClick={onClick} title={title} className="ai-chip"
+      style={active
+        ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff", fontWeight: 800, ...(extraStyle || {}) }
+        : { fontWeight: 800, ...(extraStyle || {}) }}>
+      {label}
+    </button>
+  );
+
   return (
     <div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         {[["image", "🖼 Image watermark"], ["cloudinary", "☁ Cloudinary overlay (images + video)"]].map(([id, label]) => (
           <button key={id} type="button" onClick={() => setMode(id)} className="ai-chip"
             style={mode === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        {[["text", "📝 Text watermark"], ["logo", "🖼 Logo watermark"]].map(([id, label]) => (
+          <button key={id} type="button" onClick={() => setContent(id)} className="ai-chip"
+            style={content === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
         ))}
       </div>
 
@@ -447,25 +577,70 @@ function WatermarkTool() {
       )}
 
       <div className="editor" style={{ marginBottom: 16 }}>
-        <div className="field">
-          <label>Watermark text</label>
-          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="© Samridhi Films & Television" />
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          {shortcuts.map((sc) => (
-            <button key={sc} type="button" className="ai-chip" onClick={() => setText(sc)} title="Use this text">{sc}</button>
-          ))}
-          <button type="button" className="ai-chip" onClick={saveShortcut} title="Save current text as a shortcut">＋ Save current</button>
-        </div>
+        {content === "text" ? (
+          <>
+            <div className="field">
+              <label>Watermark text</label>
+              <input value={text} onChange={(e) => setText(e.target.value)} placeholder="© Samridhi Films & Television" />
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+              {shortcuts.map((sc) => (
+                <button key={sc} type="button" className="ai-chip" onClick={() => setText(sc)} title="Use this text">{sc}</button>
+              ))}
+              <button type="button" className="ai-chip" onClick={saveShortcut} title="Save current text as a shortcut">＋ Save current</button>
+            </div>
+            <div className="field">
+              <label>Text style</label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {styleBtn(bold, "B", "Bold", () => setBold((b) => !b))}
+                {styleBtn(italic, "I", "Italic", () => setItalic((v) => !v), { fontStyle: "italic" })}
+                {styleBtn(underline, "U", "Underline", () => setUnderline((v) => !v), { textDecoration: "underline" })}
+                {styleBtn(shadow, "Shadow", "Drop shadow", () => setShadow((v) => !v), { textShadow: "2px 2px 3px rgba(0,0,0,0.5)" })}
+                {styleBtn(outline, "Outline", "Dark outline around letters", () => setOutline((v) => !v), { WebkitTextStroke: "1px #8F3F2D" })}
+              </div>
+              {mode === "cloudinary" && (
+                <span className="seo-hint">Underline, shadow &amp; outline render in Image watermark mode — the Cloudinary overlay supports bold &amp; italic.</span>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="field">
+              <label>Logo</label>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                {logoImg && (
+                  <img src={logoUrl} alt="Watermark logo" style={{ height: 44, background: "#fff", borderRadius: 8, padding: 4, border: "1px solid #ddd" }} />
+                )}
+                <button type="button" className="ai-chip" onClick={() => setLogoUrl(SITE_LOGO)} title="Use the website logo">Use site logo</button>
+                <button type="button" className="ai-chip" onClick={() => setPicker("logo")}>🖼 Choose from library</button>
+                <label className="ai-chip" style={{ cursor: "pointer" }}>
+                  ⬆ Upload logo
+                  <input type="file" accept="image/*" hidden onChange={uploadLogo} />
+                </label>
+              </div>
+              {mode === "cloudinary" && !logoOnCloudinary && (
+                <span className="seo-hint">The site logo isn&apos;t on Cloudinary — choose a logo from the library or upload one to watermark videos / cloud images.</span>
+              )}
+            </div>
+            <div className="field" style={{ maxWidth: 320 }}>
+              <label>Logo size: {logoSize}% of image width</label>
+              <input type="range" min={5} max={60} value={logoSize} onChange={(e) => setLogoSize(+e.target.value)} style={{ width: "100%" }} />
+            </div>
+          </>
+        )}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14, alignItems: "end" }}>
-          <div className="field" style={{ margin: 0 }}>
-            <label>Size: {size}px</label>
-            <input type="range" min={16} max={160} value={size} onChange={(e) => setSize(+e.target.value)} style={{ width: "100%" }} />
-          </div>
-          <div className="field" style={{ margin: 0 }}>
-            <label>Colour</label>
-            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 60, height: 38, padding: 2 }} />
-          </div>
+          {content === "text" && (
+            <>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Size: {size}px</label>
+                <input type="range" min={16} max={160} value={size} onChange={(e) => setSize(+e.target.value)} style={{ width: "100%" }} />
+              </div>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Colour</label>
+                <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 60, height: 38, padding: 2 }} />
+              </div>
+            </>
+          )}
           <div className="field" style={{ margin: 0 }}>
             <label>Opacity: {opacity}%</label>
             <input type="range" min={10} max={100} value={opacity} onChange={(e) => setOpacity(+e.target.value)} style={{ width: "100%" }} />
@@ -484,13 +659,14 @@ function WatermarkTool() {
 
       {mode === "image" && (
         <>
-          {!img && <p className="admin-sub">Pick an image above, set your watermark text and style, then export.</p>}
+          {!img && <p className="admin-sub">Pick an image above, set your watermark and style, then export.</p>}
           {img && (
             <>
               <canvas ref={canvasRef} style={{ maxWidth: "100%", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)" }} />
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
                 <button type="button" className="btn btn-primary" disabled={busy} onClick={() => exportWm(false)}>⬇ Download watermarked PNG</button>
                 <button type="button" className="btn btn-dark" disabled={busy} onClick={() => exportWm(true)}>💾 Save to Media Library</button>
+                <button type="button" className="btn btn-dark" disabled={busy} onClick={shareWhatsApp} style={{ background: "#1fa855", borderColor: "#1fa855" }}>💬 Share on WhatsApp</button>
               </div>
             </>
           )}
@@ -500,7 +676,13 @@ function WatermarkTool() {
       {mode === "cloudinary" && (
         <>
           {!media && <p className="admin-sub">Choose a Cloudinary image or video — the watermark is applied on delivery, so it works on video too, with zero re-encoding.</p>}
-          {media && !clUrl && <div className="login-err">That asset is not a Cloudinary URL — overlays only work on Cloudinary-hosted media.</div>}
+          {media && !clUrl && (
+            <div className="login-err">
+              {content === "logo"
+                ? "The current logo isn't hosted on Cloudinary — choose a logo from the library or upload one."
+                : "That asset is not a Cloudinary URL — overlays only work on Cloudinary-hosted media."}
+            </div>
+          )}
           {media && clUrl && (
             <>
               <div style={{ borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,0.15)", maxWidth: 680 }}>
@@ -510,7 +692,7 @@ function WatermarkTool() {
               </div>
               {loadErr && (
                 <div className="login-err" style={{ margin: "10px 0" }}>
-                  Couldn't load the watermarked file from Cloudinary — the original may have been deleted, moved or renamed after appearing in the library.
+                  Couldn&apos;t load the watermarked file from Cloudinary — the original may have been deleted, moved or renamed after appearing in the library.
                   Try choosing it again from the library, or re-upload it.
                 </div>
               )}
@@ -518,17 +700,19 @@ function WatermarkTool() {
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <button type="button" className="btn btn-dark" onClick={() => { navigator.clipboard.writeText(clUrl).then(() => toast("Watermarked URL copied.")); }}>📋 Copy URL</button>
                 <a className="btn btn-primary" href={clUrl} target="_blank" rel="noreferrer" download>⬇ Open / download file</a>
+                <button type="button" className="btn btn-dark" onClick={shareWhatsApp} style={{ background: "#1fa855", borderColor: "#1fa855" }}>💬 Share on WhatsApp</button>
               </div>
             </>
           )}
         </>
       )}
 
-      <MediaPicker open={!!picker} kind={picker === "image" ? "image" : undefined} onClose={() => setPicker(null)}
+      <MediaPicker open={!!picker} kind={picker === "any" ? undefined : "image"} onClose={() => setPicker(null)}
         onSelect={(items) => {
           const a = Array.isArray(items) ? items : [items];
           if (a[0]) {
             if (picker === "image") chooseImage(a[0].url, (a[0].public_id || "image").split("/").pop());
+            else if (picker === "logo") setLogoUrl(a[0].url);
             else setMedia(a[0]);
           }
           setPicker(null);
