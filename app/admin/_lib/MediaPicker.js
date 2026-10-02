@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Component, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../../lib/adminApi";
 
 // Reusable media-library picker popup. Shows every file in the Cloudinary
@@ -10,7 +10,47 @@ import { api } from "../../../lib/adminApi";
 //   onSelect    — single mode: (item) => void; multi mode: (items[]) => void
 //   kind        — "image" | "video" | "all" (default "all")
 //   multi       — when true, tick several files then confirm once
-export default function MediaPicker({ open, onClose, onSelect, kind = "all", multi = false }) {
+
+// Error boundary: a picker failure shows an inline error instead of crashing
+// the whole admin page, and surfaces the actual message for diagnosis.
+class MediaPickerErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+  render() {
+    const { error } = this.state;
+    if (error) {
+      return (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Choose from media library"
+          className="mp-overlay"
+          style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(20,12,10,0.72)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+        >
+          <div
+            className="mp-panel"
+            style={{ background: "#fff", borderRadius: 14, width: "min(480px, 94vw)", padding: "28px 24px", textAlign: "center" }}
+          >
+            <h2 style={{ margin: "0 0 10px", fontSize: 18 }}>Couldn't open the media picker</h2>
+            <p style={{ color: "#7a6a7c", fontSize: 13, margin: "0 0 6px" }}>Please try again — the rest of this page is unaffected.</p>
+            <p style={{ color: "#a33", fontSize: 12, wordBreak: "break-word", background: "#fdf0ef", borderRadius: 8, padding: "8px 10px" }}>
+              {String((error && error.message) || error || "Unknown error")}
+            </p>
+            <button type="button" className="btn btn-dark" onClick={this.props.onClose} style={{ marginTop: 10 }}>Close</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function MediaPickerInner({ open, onClose, onSelect, kind = "all", multi = false }) {
   const [media, setMedia] = useState([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -41,13 +81,15 @@ export default function MediaPicker({ open, onClose, onSelect, kind = "all", mul
 
   const folders = useMemo(() => {
     const set = new Set();
-    for (const m of media) if (m.folder) set.add(m.folder);
+    for (const m of media) if (m && m.folder) set.add(m.folder);
     return Array.from(set).sort();
   }, [media]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return media.filter((m) => {
+    // Guard against malformed API items so one bad record can't crash the grid.
+    return (Array.isArray(media) ? media : []).filter((m) => {
+      if (!m || typeof m !== "object") return false;
       if (tab !== "all" && m.kind !== tab) return false;
       if (folder === "__root") { if (m.folder) return false; }
       else if (folder !== "all" && m.folder !== folder) return false;
@@ -55,6 +97,8 @@ export default function MediaPicker({ open, onClose, onSelect, kind = "all", mul
       return true;
     });
   }, [media, q, tab, folder]);
+
+  if (!open) return null;
 
   if (!open) return null;
 
@@ -67,7 +111,7 @@ export default function MediaPicker({ open, onClose, onSelect, kind = "all", mul
   };
 
   const confirmMulti = () => {
-    const items = media.filter((m) => sel.includes(m.id)).map(norm);
+    const items = (Array.isArray(media) ? media : []).filter((m) => m && sel.includes(m.id)).map(norm);
     if (items.length === 0) return;
     onSelect(items);
     onClose();
@@ -205,5 +249,16 @@ export default function MediaPicker({ open, onClose, onSelect, kind = "all", mul
         </div>
       </div>
     </div>
+  );
+}
+
+// Default export: the picker wrapped in its error boundary, so a picker
+// failure can never take down the whole admin page it was opened from.
+export default function MediaPicker(props) {
+  if (!props.open) return null;
+  return (
+    <MediaPickerErrorBoundary onClose={props.onClose}>
+      <MediaPickerInner {...props} />
+    </MediaPickerErrorBoundary>
   );
 }
