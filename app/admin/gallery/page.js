@@ -21,6 +21,8 @@ export default function GalleryAdmin() {
   const [statusFilter, setStatusFilter] = useState("");
   const [catFilter, setCatFilter] = useState("");
   const [q, setQ] = useState("");
+  const [aiBusyId, setAiBusyId] = useState(null); // gallery item currently being AI-described
+  const [renameBusyId, setRenameBusyId] = useState(null);
 
   const load = async () => {
     setBusy(true);
@@ -138,6 +140,43 @@ export default function GalleryAdmin() {
     } catch (err) { toast("Upload failed: " + (err.message || err), "error"); }
   };
 
+  // AI looks at the photo and suggests title, caption and category.
+  const aiFillItem = async (item) => {
+    const src = item.image_url || "";
+    if (!src || aiBusyId) return;
+    setAiBusyId(item.id); setMsg("");
+    try {
+      const r = await api("/api/admin/ai-image", { method: "POST", body: { imageUrl: src, categories: CATEGORIES } });
+      const patch = {};
+      if (r.title) patch.title = r.title;
+      if (r.caption) patch.caption = r.caption;
+      if (r.category) patch.category = r.category;
+      if (Object.keys(patch).length) {
+        update(item.id, patch);
+        toast("AI filled title, caption & category — review, then Save.");
+      } else {
+        setMsg("AI could not describe that photo.");
+      }
+    } catch (e) { setMsg("AI fill failed: " + (e.message || "try again")); toast("AI fill failed: " + (e.message || "try again"), "error"); }
+    setAiBusyId(null);
+  };
+
+  // Rename the Cloudinary file from the item's title (slugified, ≤80 chars).
+  const renameItemFile = async (item) => {
+    if (!item.title || !item.title.trim() || renameBusyId) return;
+    setRenameBusyId(item.id); setMsg("");
+    try {
+      const r = await api("/api/admin/gallery-items/rename", { method: "POST", body: { id: item.id } });
+      if (r.renamed) {
+        update(item.id, { image_url: r.image_url });
+        toast(`File renamed to “${r.file_name}”.`);
+      } else {
+        toast("File name already matches the title.");
+      }
+    } catch (e) { setMsg("Rename failed: " + (e.message || "try again")); toast("Rename failed: " + (e.message || "try again"), "error"); }
+    setRenameBusyId(null);
+  };
+
   const saveItem = async (item) => {
     try {
       await api("/api/admin/gallery-items", {
@@ -159,7 +198,7 @@ export default function GalleryAdmin() {
   };
 
   const card = (item) => (
-    <div className="media-item" key={item.id} style={{
+    <div className={`media-item${editing === item.id ? " editing" : ""}`} key={item.id} style={{
       ...(bulk.selected.has(item.id) ? { outline: "3px solid var(--brand)" } : undefined),
       // The open details editor needs room — span the full grid width while editing.
       ...(editing === item.id ? { gridColumn: "1 / -1" } : undefined),
@@ -193,6 +232,14 @@ export default function GalleryAdmin() {
         {editing === item.id ? (
           <div className="g-details">
             <div className="g-details-head">Edit details</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+              <button type="button" className="btn-sm btn-edit" disabled={aiBusyId === item.id} onClick={() => aiFillItem(item)}>
+                {aiBusyId === item.id ? "✨ AI is looking…" : "✨ Fill with AI"}
+              </button>
+              <button type="button" className="btn-sm btn-edit" disabled={renameBusyId === item.id || !item.title?.trim()} onClick={() => renameItemFile(item)} title="Rename the image file on Cloudinary from the title (max 80 characters)">
+                {renameBusyId === item.id ? "Renaming…" : "✏️ Rename file from title"}
+              </button>
+            </div>
             <div className="field"><label>Title</label>
               <input value={item.title || ""} onChange={(e) => update(item.id, { title: e.target.value })} placeholder="e.g. Sangeet night highlights" />
             </div>
