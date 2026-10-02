@@ -301,10 +301,11 @@ function ChecklistsTab() {
   const [tplEditor, setTplEditor] = useState(false);
   const [templates, setCustomTpls] = useChecklistTemplates();
   const togglingRef = useRef({}); // checklist id -> in-flight toggle chain
+  const listsRef = useRef([]); // always-current checklists (refs update synchronously, state doesn't)
 
   const load = async () => {
     setLoading(true);
-    try { const r = await api("/api/admin/checklists"); setLists(r.checklists || []); }
+    try { const r = await api("/api/admin/checklists"); listsRef.current = r.checklists || []; setLists(listsRef.current); }
     catch (e) { toast("Failed to load checklists: " + e.message, "error"); }
     setLoading(false);
   };
@@ -318,14 +319,15 @@ function ChecklistsTab() {
   const quickToggle = (cl, i) => {
     // Optimistic toggle: the checkbox flips instantly and the save happens
     // quietly in the background — no full-page reload. Rapid taps on the same
-    // checklist are chained so they can't overwrite each other.
+    // checklist are chained so they can't overwrite each other. nextItems is
+    // computed from listsRef (synchronous) — NOT inside the setLists updater,
+    // which React runs later during re-render.
     const run = async () => {
-      let nextItems;
-      setLists((ls) => ls.map((x) => {
-        if (x.id !== cl.id) return x;
-        nextItems = (x.items || []).map((it, j) => (j === i ? { ...it, done: !it.done } : it));
-        return { ...x, items: nextItems };
-      }));
+      const cur = listsRef.current.find((x) => x.id === cl.id) || cl;
+      const nextItems = (cur.items || []).map((it, j) => (j === i ? { ...it, done: !it.done } : it));
+      const next = listsRef.current.map((x) => (x.id === cl.id ? { ...x, items: nextItems } : x));
+      listsRef.current = next;
+      setLists(next);
       try {
         await api(`/api/admin/checklists/${cl.id}`, { method: "PUT", body: { items: nextItems } });
       } catch (e) {

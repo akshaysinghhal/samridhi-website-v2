@@ -86,6 +86,14 @@ export function makeItem({ table, map }) {
     const row = map ? map(b) : { ...b };
     delete row.id;
     delete row.created_at;
+    if (!Object.keys(row).length) {
+      // Nothing to update — return the current row instead of running an
+      // empty UPDATE, whose .single() would fail with a cryptic
+      // "Cannot coerce the result to a single JSON object".
+      const { data, error } = await adminDb().from(table).select("*").eq("id", params.id).single();
+      if (error) return Response.json({ error: error.message }, { status: 500 });
+      return Response.json({ item: data });
+    }
     const { data: before } = await adminDb().from(table).select("*").eq("id", params.id).single();
     const { data, error } = await adminDb().from(table).update(row).eq("id", params.id).select().single();
     if (error) return Response.json({ error: error.message }, { status: 500 });
