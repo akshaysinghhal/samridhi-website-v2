@@ -1,6 +1,7 @@
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import Reveal from "../../components/Reveal";
+import AboutSteps from "../../components/AboutSteps";
 import { getContentMap, c } from "../../lib/content";
 import { getTeam } from "../../lib/db";
 
@@ -66,18 +67,16 @@ export default async function AboutPage() {
 
       <section className="section" style={{ background: "var(--ivory)", padding: "90px 0" }}>
         <div className="container">
-          <div className="about-grid">
-            <Reveal>
-              <div>
-                <span className="eyebrow">Vision</span>
-                <p className="lead" style={{ fontFamily: "var(--font-display)", fontSize: 24, color: "var(--brown)", fontStyle: "italic" }}>{c(map, "about", "vision", "vision")}</p>
-              </div>
+          <div className="vm-grid">
+            <Reveal className="vm-card">
+              <span className="vm-icon" aria-hidden="true">✦</span>
+              <span className="eyebrow">Vision</span>
+              <p>{c(map, "about", "vision", "vision")}</p>
             </Reveal>
-            <Reveal delay={1}>
-              <div>
-                <span className="eyebrow">Mission</span>
-                <p className="lead" style={{ fontFamily: "var(--font-display)", fontSize: 24, color: "var(--brown)", fontStyle: "italic" }}>{c(map, "about", "vision", "mission")}</p>
-              </div>
+            <Reveal delay={1} className="vm-card">
+              <span className="vm-icon" aria-hidden="true">◉</span>
+              <span className="eyebrow">Mission</span>
+              <p>{c(map, "about", "vision", "mission")}</p>
             </Reveal>
           </div>
         </div>
@@ -119,17 +118,10 @@ export default async function AboutPage() {
             <div className="center">
               <span className="eyebrow"><span className="sec-num">03</span> {c(map, "about", "approach", "eyebrow")}</span>
               <h2 className="h2">{c(map, "about", "approach", "title")}</h2>
+              <p className="lead" style={{ color: "rgba(247,242,232,0.65)", marginTop: 12 }}>Tap each step to see how it works.</p>
             </div>
           </Reveal>
-          <div className="steps" style={{ marginTop: 44 }}>
-            {steps.map((p, i) => (
-              <Reveal key={p.title + i} delay={i} className="step-card">
-                <div className="step-num">{String(i + 1).padStart(2, "0")}</div>
-                <h3>{p.title}</h3>
-                {p.text && <p>{p.text}</p>}
-              </Reveal>
-            ))}
-          </div>
+          <AboutSteps steps={steps} />
         </div>
       </section>
 
@@ -141,13 +133,11 @@ export default async function AboutPage() {
               <h2 className="h2">{c(map, "about", "why", "title")}</h2>
             </div>
           </Reveal>
-          <div className="services-grid">
+          <div className="why-grid">
             {why.map((w, i) => (
-              <Reveal key={w + i} delay={i % 4} className="service-tile solid">
-                <div className="bento-body" style={{ padding: 0 }}>
-                  <div className="svc-num" style={{ fontFamily: "var(--font-display)", color: "var(--gold)", fontSize: 15, letterSpacing: 2, marginBottom: 12 }}>{String(i + 1).padStart(2, "0")}</div>
-                  <h3 style={{ fontSize: 19 }}>{w}</h3>
-                </div>
+              <Reveal key={w + i} delay={i % 4} className="why-card">
+                <span className="why-check" aria-hidden="true">✓</span>
+                <p>{w}</p>
               </Reveal>
             ))}
           </div>
