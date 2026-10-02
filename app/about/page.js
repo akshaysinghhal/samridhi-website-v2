@@ -22,7 +22,7 @@ const parseTimeline = (v) =>
 
 export default async function AboutPage() {
   const [map, team] = await Promise.all([getContentMap(), getTeam()]);
-  const steps = lines(c(map, "about", "approach", "steps"));
+  const steps = parseTimeline(c(map, "about", "approach", "steps"));
   const why = lines(c(map, "about", "why", "items"));
   const timeline = parseTimeline(c(map, "about", "story", "timeline"));
 
@@ -121,11 +121,12 @@ export default async function AboutPage() {
               <h2 className="h2">{c(map, "about", "approach", "title")}</h2>
             </div>
           </Reveal>
-          <div className="process" style={{ marginTop: 44 }}>
+          <div className="steps" style={{ marginTop: 44 }}>
             {steps.map((p, i) => (
-              <Reveal key={p + i} delay={i} className="step">
-                <b>{String(i + 1).padStart(2, "0")}</b>
-                <span>{p}</span>
+              <Reveal key={p.title + i} delay={i} className="step-card">
+                <div className="step-num">{String(i + 1).padStart(2, "0")}</div>
+                <h3>{p.title}</h3>
+                {p.text && <p>{p.text}</p>}
               </Reveal>
             ))}
           </div>
