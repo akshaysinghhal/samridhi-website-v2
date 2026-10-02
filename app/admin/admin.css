@@ -490,3 +490,15 @@ tr.row-selected td { background: #f3eefd; }
 .g-details .check-row { margin: 4px 0 10px; font-size: 13px; }
 .g-details-actions { display: flex; gap: 8px; margin-top: 4px; }
 .g-details .seo-hint { margin-top: 4px; }
+
+/* ---------- Media Tools mobile polish ---------- */
+@media (max-width: 640px) {
+  .mt-tab { padding: 16px 18px; }
+  .mt-tab-icon { font-size: 26px; }
+  .mt-tab-title { font-size: 16px; }
+  .mt-tab-desc { font-size: 12.5px; }
+  .mt-seg-btn { padding: 10px 14px; flex: 1 1 45%; }
+  .mt-seg-btn b { font-size: 13.5px; }
+  .mt-seg-btn span { font-size: 11.5px; }
+  .mt-padcolor { flex-wrap: wrap; font-size: 13px; }
+}
