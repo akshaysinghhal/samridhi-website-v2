@@ -1,6 +1,7 @@
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import Reveal from "../../components/Reveal";
+import TestimonialCard from "../../components/TestimonialCard";
 import { getContentMap, ci } from "../../lib/content";
 import { getTestimonials } from "../../lib/db";
 
@@ -15,6 +16,9 @@ export default async function TestimonialsPage() {
   const [map, raw] = await Promise.all([getContentMap(), getTestimonials()]);
   // Only genuine testimonials are ever presented publicly.
   const testimonials = raw.filter((t) => !t.is_placeholder);
+  const hasVideo = (t) => !!(t.video_url && String(t.video_url).trim());
+  const videoOnes = testimonials.filter(hasVideo);
+  const written = testimonials.filter((t) => !hasVideo(t));
 
   return (
     <>
@@ -29,17 +33,40 @@ export default async function TestimonialsPage() {
         </div>
       </section>
 
-      <section className="section" style={{ background: "var(--ivory)" }}>
-        <div className="container">
-          {testimonials.length === 0 ? (
-            <p className="lead center">Client testimonials are being added — check back soon.</p>
-          ) : (
+      {videoOnes.length > 0 && (
+        <section className="section testi-band">
+          <div className="container">
+            <Reveal>
+              <div className="center">
+                <span className="eyebrow">Video Testimonials</span>
+                <h2 className="h2">Watch Their Stories</h2>
+                <p className="lead" style={{ color: "var(--gold-soft)", margin: "12px auto 0" }}>Tap a card to watch the full video.</p>
+              </div>
+            </Reveal>
+            <div className="testi-video-grid">
+              {videoOnes.map((t, i) => (
+                <Reveal key={t.id} delay={i % 4}>
+                  <TestimonialCard t={t} />
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {written.length > 0 && (
+        <section className="section" style={{ background: "var(--ivory)" }}>
+          <div className="container">
+            <Reveal>
+              <div className="center">
+                <span className="eyebrow">Testimonials</span>
+                <h2 className="h2">In Their Words</h2>
+              </div>
+            </Reveal>
             <div className="testi-grid">
-              {testimonials.map((t, i) => (
-                <Reveal key={t.id} delay={i % 3} className={`testi-card${t.video_url ? " has-video" : ""}${!t.video_url && t.photo_url ? " has-photo" : ""}`}>
-                  {t.video_url ? (
-                    <video className="tvideo" src={t.video_url} controls preload="metadata" playsInline aria-label={`Video testimonial by ${t.author_name || "client"}`} />
-                  ) : t.photo_url ? (
+              {written.map((t, i) => (
+                <Reveal key={t.id} delay={i % 3} className={`testi-card${t.photo_url ? " has-photo" : ""}`}>
+                  {t.photo_url ? (
                     <img className="tphoto" src={t.photo_url} alt={t.author_name || "Client"} loading="lazy" />
                   ) : null}
                   <p className="tquote">&ldquo;{t.quote}&rdquo;</p>
@@ -51,9 +78,17 @@ export default async function TestimonialsPage() {
                 </Reveal>
               ))}
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
+
+      {testimonials.length === 0 && (
+        <section className="section" style={{ background: "var(--ivory)" }}>
+          <div className="container">
+            <p className="lead center">Client testimonials are being added — check back soon.</p>
+          </div>
+        </section>
+      )}
       <SiteFooter />
     </>
   );
