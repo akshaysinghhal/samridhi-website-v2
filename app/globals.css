@@ -885,8 +885,11 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
 .tauthor { margin-top: 18px; font-weight: 800; color: var(--terracotta-deep); font-size: 13px; letter-spacing: 1.6px; text-transform: uppercase; }
 /* Video testimonial: player on top, quote mark hidden so it never overlaps the video. */
 .testi-card .tvideo { width: 100%; aspect-ratio: 16/9; border-radius: 4px; margin-bottom: 22px; background: #000; display: block; }
+.testi-card .tphoto { width: 100%; aspect-ratio: 4/5; object-fit: cover; border-radius: 4px; margin-bottom: 22px; display: block; }
 .testi-card.has-video { padding-top: 26px; }
 .testi-card.has-video::before { display: none; }
+.testi-card.has-photo { padding-top: 26px; }
+.testi-card.has-photo::before { display: none; }
 
 /* ---------- checklist / faq / legal ---------- */
 .checklist { list-style: none; padding: 0; margin: 0; }
