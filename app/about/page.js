@@ -2,7 +2,7 @@ import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import Reveal from "../../components/Reveal";
 import AboutSteps from "../../components/AboutSteps";
-import { getContentMap, c } from "../../lib/content";
+import { getContentMap, c, ci } from "../../lib/content";
 import { getTeam } from "../../lib/db";
 
 export const revalidate = 60;
@@ -32,7 +32,7 @@ export default async function AboutPage() {
       <SiteHeader />
 
       <section className="page-hero">
-        <img className="hero-bg" src="/images/diwali-stage-group.jpg" alt="Samridhi Films team on stage" />
+        <img className="hero-bg" src={ci(map, "about", "hero", "image") || "/images/diwali-stage-group.jpg"} alt="Samridhi Films team on stage" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">{c(map, "about", "hero", "eyebrow")}</span></Reveal>

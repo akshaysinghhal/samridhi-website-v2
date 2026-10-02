@@ -2,6 +2,7 @@ import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import Reveal from "../../components/Reveal";
+import { getContentMap, ci } from "../../lib/content";
 import { getClients } from "../../lib/db";
 
 export const revalidate = 60;
@@ -12,13 +13,13 @@ export const metadata = {
 };
 
 export default async function ClientsPage() {
-  const clients = await getClients();
+  const [map, clients] = await Promise.all([getContentMap(), getClients()]);
 
   return (
     <>
       <SiteHeader />
       <section className="page-hero">
-        <img className="hero-bg" src="/images/fb-performer-big-audience.jpg" alt="Corporate event audience" />
+        <img className="hero-bg" src={ci(map, "clients", "hero", "image") || "/images/fb-performer-big-audience.jpg"} alt="Corporate event audience" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">Clients</span></Reveal>

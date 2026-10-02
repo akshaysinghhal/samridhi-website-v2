@@ -3,6 +3,7 @@ import SiteFooter from "../../components/SiteFooter";
 import GalleryWall from "../../components/GalleryWall";
 import ArtistVideos from "../../components/ArtistVideos";
 import Reveal from "../../components/Reveal";
+import { getContentMap, ci } from "../../lib/content";
 import { getGalleryItems } from "../../lib/db";
 import { youTubeId } from "../../lib/video";
 
@@ -25,7 +26,7 @@ const detectSource = (url) => {
 };
 
 export default async function GalleryPage() {
-  const raw = await getGalleryItems();
+  const [map, raw] = await Promise.all([getContentMap(), getGalleryItems()]);
   // Unified wall: photos and videos share the same category folders,
   // so e.g. "Venue Entry" shows its photos AND videos together.
   const items = raw.map((g) => {
@@ -52,7 +53,7 @@ export default async function GalleryPage() {
     <>
       <SiteHeader />
       <section className="page-hero">
-        <img className="hero-bg" src="/images/ig-guests-celebrating.jpg" alt="Celebration" />
+        <img className="hero-bg" src={ci(map, "gallery", "hero", "image") || "/images/ig-guests-celebrating.jpg"} alt="Celebration" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">Gallery</span></Reveal>

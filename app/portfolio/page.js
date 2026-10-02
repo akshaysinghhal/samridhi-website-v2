@@ -3,6 +3,7 @@ import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import PortfolioFilter from "../../components/PortfolioFilter";
 import Reveal from "../../components/Reveal";
+import { getContentMap, ci } from "../../lib/content";
 import { getEvents } from "../../lib/db";
 
 export const revalidate = 60;
@@ -18,7 +19,7 @@ const CATEGORIES = [
 ];
 
 export default async function PortfolioPage() {
-  const all = await getEvents({ limit: 200 });
+  const [map, all] = await Promise.all([getContentMap(), getEvents({ limit: 200 })]);
   // Upcoming (future-dated) events live on /events — portfolio shows completed work.
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const events = all.filter((e) => !e.event_date || e.event_date < today);
@@ -28,7 +29,7 @@ export default async function PortfolioPage() {
     <>
       <SiteHeader />
       <section className="page-hero">
-        <img className="hero-bg" src="/images/fb-performer-big-audience.jpg" alt="Large event audience" />
+        <img className="hero-bg" src={ci(map, "portfolio", "hero", "image") || "/images/fb-performer-big-audience.jpg"} alt="Large event audience" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">Portfolio</span></Reveal>

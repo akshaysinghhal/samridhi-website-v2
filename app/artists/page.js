@@ -3,7 +3,7 @@ import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import ArtistTabs from "../../components/ArtistTabs";
 import Reveal from "../../components/Reveal";
-import { getContentMap, c } from "../../lib/content";
+import { getContentMap, c, ci } from "../../lib/content";
 import { getArtists, getArtistCategories, getSettings, setting } from "../../lib/db";
 
 export const revalidate = 60;
@@ -34,7 +34,7 @@ export default async function ArtistsPage() {
     <>
       <SiteHeader />
       <section className="page-hero">
-        <img className="hero-bg" src="/images/diwali-live-musical.jpg" alt="Live musical night" />
+        <img className="hero-bg" src={ci(map, "artists", "hero", "image") || "/images/diwali-live-musical.jpg"} alt="Live musical night" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">{c(map, "artists", "hero", "eyebrow") || "Artist Management"}</span></Reveal>

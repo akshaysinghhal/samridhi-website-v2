@@ -5,7 +5,7 @@ import WeddingGrid from "../../components/WeddingGrid";
 import LeadForm from "../../components/LeadForm";
 import CoupleStories from "../../components/CoupleStories";
 import Reveal from "../../components/Reveal";
-import { getContentMap, c } from "../../lib/content";
+import { getContentMap, c, ci } from "../../lib/content";
 import { getWeddings, getGalleryItems, getSettings, setting } from "../../lib/db";
 
 export const revalidate = 60;
@@ -37,7 +37,7 @@ export default async function WeddingsPage() {
     <>
       <SiteHeader />
       <section className="page-hero">
-        <img className="hero-bg" src="/images/ig-haldi-decor-collage.jpg" alt="Wedding décor" />
+        <img className="hero-bg" src={ci(map, "weddings", "hero", "image") || "/images/ig-haldi-decor-collage.jpg"} alt="Wedding décor" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">{c(map, "weddings", "hero", "eyebrow") || "Weddings"}</span></Reveal>
