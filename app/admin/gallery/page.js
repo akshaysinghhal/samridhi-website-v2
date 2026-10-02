@@ -63,8 +63,15 @@ export default function GalleryAdmin() {
   // Shared upload runner with circular progress. `makeItem(m, file)` builds the
   // gallery-item body from the uploaded Cloudinary file.
   const runUploads = async (files, makeItem) => {
-    const list = [...files];
-    if (!list.length) return;
+    const list = [...(files || [])];
+    if (!list.length) {
+      // The picker opened but handed us nothing (can happen on phones when
+      // the chosen item can't be read) — say so instead of failing silently.
+      const m = "No file was received from the picker — try again, or choose the file from Files instead of the gallery app.";
+      setMsg(m);
+      toast(m, "error");
+      return;
+    }
     const jobs = list.map((file, i) => ({ id: `${Date.now()}-${i}`, name: file.name, progress: 0, error: "" }));
     setUploads((xs) => [...xs, ...jobs]);
     const setJob = (id, patch) => setUploads((xs) => xs.map((j) => (j.id === id ? { ...j, ...patch } : j)));
@@ -94,11 +101,13 @@ export default function GalleryAdmin() {
   };
 
   const addPhotos = async (e) => {
-    const files = e.target.files; e.target.value = "";
-    await runUploads(files, (m, file) => ({
-      kind: "photo", title: file.name.replace(/\.[^.]+$/, ""),
-      image_url: m.url, category: "Events", status: "published",
-    }));
+    try {
+      const files = e.target.files; e.target.value = "";
+      await runUploads(files, (m, file) => ({
+        kind: "photo", title: file.name.replace(/\.[^.]+$/, ""),
+        image_url: m.url, category: "Events", status: "published",
+      }));
+    } catch (err) { toast("Upload failed: " + (err.message || err), "error"); }
   };
 
   const addYouTube = async () => {
@@ -114,11 +123,13 @@ export default function GalleryAdmin() {
   };
 
   const addVideoFile = async (e) => {
-    const files = e.target.files; e.target.value = "";
-    await runUploads(files, (m, file) => ({
-      kind: "video", title: file.name.replace(/\.[^.]+$/, ""),
-      video_url: m.url, image_url: "", category: "Events", status: "published",
-    }));
+    try {
+      const files = e.target.files; e.target.value = "";
+      await runUploads(files, (m, file) => ({
+        kind: "video", title: file.name.replace(/\.[^.]+$/, ""),
+        video_url: m.url, image_url: "", category: "Events", status: "published",
+      }));
+    } catch (err) { toast("Upload failed: " + (err.message || err), "error"); }
   };
 
   const saveItem = async (item) => {
@@ -280,9 +291,10 @@ export default function GalleryAdmin() {
 
       {tab === "photos" && (
         <>
-          <label className="btn btn-primary" style={{ cursor: "pointer" }}>
+          <label className="btn btn-primary" style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}>
             + Upload Photos
-            <input type="file" accept="image/*" multiple hidden onChange={addPhotos} />
+            <input type="file" accept="image/*" multiple onChange={addPhotos}
+              style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
           </label>
           {busy ? <AdminLoader /> : <div className="media-grid">{photos.map(card)}</div>}
         </>
@@ -301,9 +313,10 @@ export default function GalleryAdmin() {
           </div>
           <div className="editor" style={{ marginBottom: 20 }}>
             <h2 style={{ marginTop: 0 }}>Or upload a video file</h2>
-            <label className="btn btn-dark" style={{ cursor: "pointer" }}>
+            <label className="btn btn-dark" style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}>
               + Upload Video
-              <input type="file" accept="video/*" multiple hidden onChange={addVideoFile} />
+              <input type="file" accept="video/*" multiple onChange={addVideoFile}
+                style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
             </label>
           </div>
           {busy ? <AdminLoader /> : <div className="media-grid">{videos.map(card)}</div>}
