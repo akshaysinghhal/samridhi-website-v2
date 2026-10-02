@@ -2,6 +2,7 @@ import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import Reveal from "../../components/Reveal";
+import { getContentMap, ci } from "../../lib/content";
 import { getInternationalShows } from "../../lib/db";
 
 export const revalidate = 60;
@@ -12,14 +13,14 @@ export const metadata = {
 };
 
 export default async function InternationalShowsPage() {
-  const shows = await getInternationalShows();
+  const [map, shows] = await Promise.all([getContentMap(), getInternationalShows()]);
   const href = (s) => `/international-shows/${s.slug || s.id}`;
 
   return (
     <>
       <SiteHeader />
       <section className="page-hero">
-        <img className="hero-bg" src="/images/poster-china-diwali-2015.jpg" alt="International show" />
+        <img className="hero-bg" src={ci(map, "international-shows", "hero", "image") || "/images/poster-china-diwali-2015.jpg"} alt="International show" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">International Shows</span></Reveal>

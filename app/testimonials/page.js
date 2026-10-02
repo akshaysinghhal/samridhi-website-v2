@@ -1,6 +1,7 @@
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import Reveal from "../../components/Reveal";
+import { getContentMap, ci } from "../../lib/content";
 import { getTestimonials } from "../../lib/db";
 
 export const revalidate = 60;
@@ -11,7 +12,7 @@ export const metadata = {
 };
 
 export default async function TestimonialsPage() {
-  const raw = await getTestimonials();
+  const [map, raw] = await Promise.all([getContentMap(), getTestimonials()]);
   // Only genuine testimonials are ever presented publicly.
   const testimonials = raw.filter((t) => !t.is_placeholder);
 
@@ -19,7 +20,7 @@ export default async function TestimonialsPage() {
     <>
       <SiteHeader />
       <section className="page-hero">
-        <img className="hero-bg" src="/images/ig-sparkler-celebration.jpg" alt="Celebration" />
+        <img className="hero-bg" src={ci(map, "testimonials", "hero", "image") || "/images/ig-sparkler-celebration.jpg"} alt="Celebration" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">Testimonials</span></Reveal>

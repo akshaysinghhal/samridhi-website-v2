@@ -2,6 +2,7 @@ import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import LeadForm from "../../components/LeadForm";
 import Reveal from "../../components/Reveal";
+import { getContentMap, ci } from "../../lib/content";
 import { getSettings, setting } from "../../lib/db";
 import { getAddresses, mapLink } from "../../lib/addresses";
 
@@ -13,7 +14,7 @@ export const metadata = {
 };
 
 export default async function ContactPage() {
-  const s = await getSettings();
+  const [map, s] = await Promise.all([getContentMap(), getSettings()]);
   const phone1 = setting(s, "phone1", "+91 96022 28846");
   const phone2 = setting(s, "phone2", "+91 77372 89938");
   const email = setting(s, "email", "samridhifilms@yahoo.co.in");
@@ -24,7 +25,7 @@ export default async function ContactPage() {
     <>
       <SiteHeader />
       <section className="page-hero">
-        <img className="hero-bg" src="/images/ig-guests-celebrating.jpg" alt="Guests celebrating" />
+        <img className="hero-bg" src={ci(map, "contact", "hero", "image") || "/images/ig-guests-celebrating.jpg"} alt="Guests celebrating" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">Contact</span></Reveal>

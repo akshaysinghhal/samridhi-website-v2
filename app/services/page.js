@@ -2,6 +2,7 @@ import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import Reveal from "../../components/Reveal";
+import { getContentMap, ci } from "../../lib/content";
 import { getServices } from "../../lib/db";
 
 export const revalidate = 60;
@@ -12,13 +13,13 @@ export const metadata = {
 };
 
 export default async function ServicesPage() {
-  const services = await getServices();
+  const [map, services] = await Promise.all([getContentMap(), getServices()]);
 
   return (
     <>
       <SiteHeader />
       <section className="page-hero">
-        <img className="hero-bg" src="/images/ig-event-stage.jpg" alt="Event stage production" />
+        <img className="hero-bg" src={ci(map, "services", "hero", "image") || "/images/ig-event-stage.jpg"} alt="Event stage production" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">Services</span></Reveal>

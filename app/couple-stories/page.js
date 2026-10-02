@@ -2,6 +2,7 @@ import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import CoupleCard from "../../components/CoupleCard";
 import Reveal from "../../components/Reveal";
+import { getContentMap, ci } from "../../lib/content";
 import { getCoupleStories } from "../../lib/db";
 import { siteUrl, jsonLdScript } from "../../lib/seo";
 
@@ -30,14 +31,14 @@ function videoSchema(s) {
 }
 
 export default async function CoupleStoriesPage() {
-  const raw = await getCoupleStories();
+  const [map, raw] = await Promise.all([getContentMap(), getCoupleStories()]);
   const stories = raw.filter((s) => !s.is_placeholder);
 
   return (
     <>
       <SiteHeader />
       <section className="page-hero">
-        <img className="hero-bg" src="/images/ig-couple-portrait.jpg" alt="Wedding couple" />
+        <img className="hero-bg" src={ci(map, "couple-stories", "hero", "image") || "/images/ig-couple-portrait.jpg"} alt="Wedding couple" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">Client Stories</span></Reveal>

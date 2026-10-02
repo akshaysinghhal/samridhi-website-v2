@@ -2,6 +2,7 @@ import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import PressGallery from "../../components/PressGallery";
 import Reveal from "../../components/Reveal";
+import { getContentMap, ci } from "../../lib/content";
 import { getPressClippings } from "../../lib/db";
 
 export const revalidate = 60;
@@ -12,7 +13,7 @@ export const metadata = {
 };
 
 export default async function PressPage() {
-  const raw = await getPressClippings();
+  const [map, raw] = await Promise.all([getContentMap(), getPressClippings()]);
   const items = raw.map((p) => ({
     ...p,
     year: p.published_on ? new Date(p.published_on).getFullYear() : null,
@@ -24,7 +25,7 @@ export default async function PressPage() {
     <>
       <SiteHeader />
       <section className="page-hero">
-        <img className="hero-bg" src="/images/press-rajasthan-diwas.jpg" alt="Press coverage" />
+        <img className="hero-bg" src={ci(map, "press", "hero", "image") || "/images/press-rajasthan-diwas.jpg"} alt="Press coverage" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-inner">
           <Reveal><span className="eyebrow">Press</span></Reveal>
