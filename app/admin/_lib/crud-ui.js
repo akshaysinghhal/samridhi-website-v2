@@ -289,9 +289,13 @@ export default function AdminCrud({
       case "video":
         return <div className="field" key={f.key}><label>{f.label}{req}</label>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <input value={v || ""} onChange={(e) => set(f.key, e.target.value)} placeholder="Paste a video URL…" style={{ flex: "1 1 200px" }} />
+            <input type="file" accept="video/*" onChange={(e) => onFile(e, f.key, false)} style={{ flex: "1 1 200px" }} />
             <button type="button" className="btn-sm btn-edit" onClick={() => openPicker(f.key, false, "video")}>📚 Choose from library</button>
           </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
+            <input value={v || ""} onChange={(e) => set(f.key, e.target.value)} placeholder="…or paste a video URL" style={{ flex: "1 1 200px" }} />
+          </div>
+          {uploading && <div className="seo-hint">Uploading…</div>}
           {sizeHint}
           {v && <div className="img-preview"><div className="img-thumb">
             <video src={v} preload="metadata" onClick={() => setPreview({ url: v, kind: "video" })} style={{ cursor: "zoom-in", width: 120, height: 90, objectFit: "cover", borderRadius: 10 }} title="Click to preview" />

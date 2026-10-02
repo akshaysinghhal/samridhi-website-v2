@@ -21,6 +21,7 @@ export default function TestimonialsAdmin() {
         { key: "author_name", label: "Author name", required: true },
         { key: "company", label: "Company" },
         { key: "photo_url", label: "Photo", type: "image", sizeHint: SIZE_HINTS.portrait },
+        { key: "video_url", label: "Video testimonial", type: "video", hint: "Upload a video file, paste a URL, or choose from the library. Goes public only with permission + Published status." },
         { key: "permission_granted", label: "Permission granted to publish", type: "check", hint: "Required before this can go public." },
         { key: "sort", label: "Display order", type: "number" },
         { key: "status", label: "Status", type: "select", options: STATUS_OPTIONS },

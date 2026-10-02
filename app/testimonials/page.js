@@ -36,7 +36,10 @@ export default async function TestimonialsPage() {
           ) : (
             <div className="testi-grid">
               {testimonials.map((t, i) => (
-                <Reveal key={t.id} delay={i % 3} className="testi-card">
+                <Reveal key={t.id} delay={i % 3} className={`testi-card${t.video_url ? " has-video" : ""}`}>
+                  {t.video_url && (
+                    <video className="tvideo" src={t.video_url} controls preload="metadata" playsInline aria-label={`Video testimonial by ${t.author_name || "client"}`} />
+                  )}
                   <p className="tquote">&ldquo;{t.quote}&rdquo;</p>
                   <p className="tauthor">
                     {t.author_name}
