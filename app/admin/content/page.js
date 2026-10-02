@@ -25,7 +25,7 @@ const pageLabel = (p) => PAGE_LABELS[p] || (p ? p.charAt(0).toUpperCase() + p.sl
 // The admin lists them in this order so editing follows the page top-to-bottom.
 // Sections not listed here (unused/legacy) fall back to alphabetical at the end.
 const SECTION_ORDER = {
-  home: ["hero", "steps", "cta", "about", "stats"],
+  home: ["hero", "wedding", "steps", "cta", "about", "stats"],
   about: ["hero", "story", "vision", "team", "approach", "why", "brands"],
   artists: ["hero", "list", "cta", "process"],
   contact: ["info", "hero"],
@@ -156,7 +156,7 @@ export default function ContentEditor() {
           <div className="sec">{g.split("·")[0].trim()}</div>
           <h2>{g.split("·")[1]?.trim()}</h2>
           {bs.map((b) => (
-            b.key === "image" ? (
+            (b.key === "image" || b.key.startsWith("image_")) ? (
               <div className="field" key={b.id}>
                 <label>{b.label || b.key}</label>
                 {b.image_url ? (

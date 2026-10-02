@@ -287,18 +287,21 @@ export default async function Home() {
           <div className="wed-feature">
             <Reveal className="wed-media">
               <span className="wed-frame" aria-hidden="true" />
-              <img className="main" src="/images/fb-floral-mandap-stage.jpg" alt="Floral mandap stage at a Samridhi wedding" loading="lazy" />
-              <img className="inset" src="/images/ig-haldi-decor-collage.jpg" alt="Haldi décor details" loading="lazy" />
+              <img className="main" src={ci(map, "home", "wedding", "image") || "/images/fb-floral-mandap-stage.jpg"} alt="Wedding by Samridhi Films & Television" loading="lazy" />
+              <img className="inset" src={ci(map, "home", "wedding", "image_inset") || "/images/ig-haldi-decor-collage.jpg"} alt="Wedding décor details" loading="lazy" />
             </Reveal>
             <Reveal delay={1} className="wed-body">
-              <span className="eyebrow">Weddings</span>
-              <h2>Your Moments.<br /><em>Beautifully Managed.</em></h2>
+              <span className="eyebrow">{c(map, "home", "wedding", "eyebrow") || "Weddings"}</span>
+              <h2>{c(map, "home", "wedding", "title1") || "Your Moments."}<br /><em>{c(map, "home", "wedding", "title2") || "Beautifully Managed."}</em></h2>
               <hr className="gold-rule" />
-              <p className="lead">From intimate family functions to grand destination weddings — décor, entertainment and complete coordination under one roof.</p>
+              <p className="lead">{c(map, "home", "wedding", "lead") || "From intimate family functions to grand destination weddings — décor, entertainment and complete coordination under one roof."}</p>
               <ul className="wed-list">
-                {WEDDING_POINTS.map((w) => <li key={w}>{w}</li>)}
+                {[1, 2, 3, 4, 5, 6].map((n) => {
+                  const pt = c(map, "home", "wedding", `point${n}`) || WEDDING_POINTS[n - 1];
+                  return pt ? <li key={n}>{pt}</li> : null;
+                })}
               </ul>
-              <Link className="btn btn-primary" href="/weddings">Plan Your Dream Wedding <span className="arr">→</span></Link>
+              <Link className="btn btn-primary" href="/weddings">{c(map, "home", "wedding", "cta_text") || "Plan Your Dream Wedding"} <span className="arr">→</span></Link>
             </Reveal>
           </div>
         </div>
