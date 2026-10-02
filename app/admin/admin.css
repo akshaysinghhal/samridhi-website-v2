@@ -478,3 +478,15 @@ tr.row-selected td { background: #f3eefd; }
 .pc-tab:hover { border-color: #c9a15a; }
 .pc-tab.active { border-color: #8F3F2D; background: #FDF6EF; box-shadow: 0 4px 14px rgba(143, 63, 45, 0.12); }
 .pc-tab.active b { color: #8F3F2D; }
+
+/* ---------- Gallery Details panel ---------- */
+.g-details { margin-top: 12px; padding: 14px; background: rgba(201,161,90,0.08); border: 1px solid var(--border-gold); border-radius: 10px; }
+.g-details-head { font-size: 12px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--terracotta); margin-bottom: 10px; }
+.g-details .field { margin-bottom: 10px; }
+.g-details .field label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; display: block; }
+.g-details .field input, .g-details .field select, .g-details .field textarea { width: 100%; font-size: 13.5px; }
+.g-details .field textarea { resize: vertical; min-height: 52px; font-family: inherit; }
+.g-details-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.g-details .check-row { margin: 4px 0 10px; font-size: 13px; }
+.g-details-actions { display: flex; gap: 8px; margin-top: 4px; }
+.g-details .seo-hint { margin-top: 4px; }
