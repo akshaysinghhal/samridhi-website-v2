@@ -388,6 +388,17 @@ function WatermarkTool() {
   const [outline, setOutline] = useState(false);
   // logo watermark
   const [logoUrl, setLogoUrl] = useState(SITE_LOGO);
+  const [siteLogo, setSiteLogo] = useState("");
+  // Prefer the custom website logo (Admin → Settings → Company) when one is set.
+  useEffect(() => {
+    api("/api/admin/site-settings").then((r) => {
+      const u = String(r.settings?.logo_url || "").trim();
+      if (u) {
+        setSiteLogo(u);
+        setLogoUrl((cur) => (cur === SITE_LOGO ? u : cur));
+      }
+    }).catch(() => {});
+  }, []);
   const [logoImg, setLogoImg] = useState(null);
   const [logoSize, setLogoSize] = useState(18); // % of image width
   const [logoOpacity, setLogoOpacity] = useState(90);
@@ -933,7 +944,7 @@ function WatermarkTool() {
                 {logoImg && (
                   <img src={logoUrl} alt="Watermark logo" style={{ height: 44, background: "#fff", borderRadius: 8, padding: 4, border: "1px solid #ddd" }} />
                 )}
-                <button type="button" className="ai-chip" onClick={() => setLogoUrl(SITE_LOGO)} title="Use the website logo">Use site logo</button>
+                <button type="button" className="ai-chip" onClick={() => setLogoUrl(siteLogo || SITE_LOGO)} title="Use the website logo">Use site logo</button>
                 <button type="button" className="ai-chip" onClick={() => setPicker("logo")}>🖼 Choose from library</button>
                 <label className="ai-chip" style={{ cursor: "pointer" }}>
                   ⬆ Upload logo

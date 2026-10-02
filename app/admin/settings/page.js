@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
-import { api } from "../../../lib/adminApi";
+import { useEffect, useRef, useState } from "react";
+import { api, uploadFile } from "../../../lib/adminApi";
 import { revalidateSite, SaveButton, AdminLoader, toast } from "../_lib/ui";
 import MediaPicker from "../_lib/MediaPicker";
 import { TextField, ColorField, AddressListField, THEME_DEFAULTS, isHex } from "../_lib/settingsFields";
@@ -14,6 +14,9 @@ export default function SettingsAdmin() {
   const [msg, setMsg] = useState("");
   const [okMsg, setOkMsg] = useState("");
   const [logoPicker, setLogoPicker] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoProgress, setLogoProgress] = useState(0);
+  const logoFileRef = useRef(null);
 
   const load = async () => {
     setBusy(true);
@@ -27,11 +30,39 @@ export default function SettingsAdmin() {
 
   const set = (k, v) => setS((x) => ({ ...x, [k]: v }));
 
-  const save = async (keys, label) => {
+  // Upload a new logo straight from the phone's files/photos: uploads to
+  // Cloudinary, saves the setting immediately and revalidates the layout so
+  // the new logo goes live everywhere at once (website + admin).
+  const onLogoFile = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    const f = files[0];
+    if (!f) return;
+    if (!String(f.type || "").startsWith("image/")) {
+      setMsg("Please choose an image file for the logo.");
+      return;
+    }
+    setLogoUploading(true); setLogoProgress(0); setMsg(""); setOkMsg("");
+    try {
+      const up = await uploadFile(f, (p) => setLogoProgress(Math.round(p * 100)));
+      set("logo_url", up.url);
+      await api("/api/admin/site-settings", { method: "PUT", body: { key: "logo_url", value: up.url } });
+      await revalidateSite(["/"], "layout");
+      setOkMsg("New logo is live everywhere — website header, footer, share cards, PDFs and admin.");
+      toast("New logo is live everywhere.");
+    } catch (err) {
+      const m = "Logo upload failed: " + (err.message || err);
+      setMsg(m);
+      toast(m, "error");
+    }
+    setLogoUploading(false);
+  };
+
+  const save = async (keys, label, type) => {
     setMsg(""); setOkMsg("");
     try {
       for (const k of keys) await api("/api/admin/site-settings", { method: "PUT", body: { key: k, value: s[k] ?? null } });
-      await revalidateSite(["/"]);
+      await revalidateSite(["/"], type || "page");
       setOkMsg((label || "Settings") + " saved.");
       toast((label || "Settings") + " saved.");
     } catch (e) { setMsg("Failed: " + e.message); toast("Failed: " + e.message, "error"); }
@@ -75,10 +106,14 @@ export default function SettingsAdmin() {
         <TextField s={s} set={set} k="tagline2" label="Tagline 2" />
         <TextField s={s} set={set} k="since" label="Serving since (year)" />
         <div className="field">
-          <label>Website logo <span className="seo-hint" style={{ fontWeight: 400 }}>— header, footer, share cards &amp; PDFs use this (leave empty for the default logo)</span></label>
+          <label>Website logo <span className="seo-hint" style={{ fontWeight: 400 }}>— header, footer, share cards, PDFs &amp; admin use this (leave empty for the default logo)</span></label>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <button type="button" className="btn-sm btn-edit" onClick={() => setLogoPicker(true)}>📚 Choose from library</button>
-            {s.logo_url && <button type="button" className="btn-sm btn-del" onClick={() => set("logo_url", "")}>Remove</button>}
+            <button type="button" className="btn-sm btn-edit" onClick={() => logoFileRef.current?.click()} disabled={logoUploading}>
+              {logoUploading ? `⏳ Uploading ${logoProgress}%` : "📤 Upload new"}
+            </button>
+            <input ref={logoFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onLogoFile} />
+            {s.logo_url && !logoUploading && <button type="button" className="btn-sm btn-del" onClick={() => set("logo_url", "")}>Remove</button>}
           </div>
           {s.logo_url && (
             <div className="img-preview" style={{ marginTop: 8, background: "#fff" }}>
@@ -86,7 +121,7 @@ export default function SettingsAdmin() {
             </div>
           )}
         </div>
-        <SaveButton onClick={() => save(["company_name", "tagline1", "tagline2", "since", "logo_url"], "Company")}>Save</SaveButton>
+        <SaveButton onClick={() => save(["company_name", "tagline1", "tagline2", "since", "logo_url"], "Company", "layout")}>Save</SaveButton>
       </div>
       <MediaPicker
         open={logoPicker}

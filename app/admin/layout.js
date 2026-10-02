@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { supabaseBrowser } from "../../lib/supabaseClient";
+import { api } from "../../lib/adminApi";
 import { ADMIN_NAV } from "../../lib/adminNav";
 import { AiFloatHelper } from "./_lib/AiAssist";
 import { AdminLoader, Toaster } from "./_lib/ui";
@@ -11,6 +12,7 @@ import "./admin.css";
 export default function AdminLayout({ children }) {
   const [ready, setReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [logoUrl, setLogoUrl] = useState("");
   const router = useRouter();
   const path = usePathname();
   const isLogin = path === "/admin/login";
@@ -26,7 +28,14 @@ export default function AdminLayout({ children }) {
     const sb = supabaseBrowser();
     sb.auth.getSession().then(({ data }) => {
       if (!data.session) router.push("/admin/login");
-      else setReady(true);
+      else {
+        setReady(true);
+        // Custom website logo (Admin → Settings → Company), fallback to default.
+        api("/api/admin/site-settings").then((r) => {
+          const u = String(r.settings?.logo_url || "").trim();
+          if (u) setLogoUrl(u);
+        }).catch(() => {});
+      }
     });
     const { data: sub } = sb.auth.onAuthStateChange((_e, session) => {
       if (!session) router.push("/admin/login");
@@ -50,7 +59,7 @@ export default function AdminLayout({ children }) {
   return (
     <div className="admin-shell">
       <div className="admin-mobilebar">
-        <img src="/images/logo.png" alt="Samridhi" />
+        <img src={logoUrl || "/images/logo.png"} alt="Samridhi" />
         <span className="mtitle">{sectionLabel}</span>
         <button onClick={() => setMenuOpen((o) => !o)} aria-label="Toggle menu">{menuOpen ? "✕" : "☰"}</button>
       </div>
@@ -64,7 +73,7 @@ export default function AdminLayout({ children }) {
         </nav>
       )}
       <aside className="admin-side">
-        <img src="/images/logo.png" alt="Samridhi" />
+        <img src={logoUrl || "/images/logo.png"} alt="Samridhi" />
         {ADMIN_NAV.map(([icon, label, href]) => (
           <Link key={href} href={href} className={path === href ? "active" : ""}>{icon} {label}</Link>
         ))}
