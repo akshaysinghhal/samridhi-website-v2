@@ -142,7 +142,11 @@ export default function GalleryAdmin() {
   };
 
   const card = (item) => (
-    <div className="media-item" key={item.id} style={bulk.selected.has(item.id) ? { outline: "3px solid var(--brand)" } : undefined}>
+    <div className="media-item" key={item.id} style={{
+      ...(bulk.selected.has(item.id) ? { outline: "3px solid var(--brand)" } : undefined),
+      // The open details editor needs room — span the full grid width while editing.
+      ...(editing === item.id ? { gridColumn: "1 / -1" } : undefined),
+    }}>
       <div style={{ position: "absolute", top: 8, right: 8, zIndex: 2, background: "rgba(255,255,255,0.92)", borderRadius: 8, padding: 4 }}>
         <CheckCell checked={bulk.selected.has(item.id)} onChange={() => bulk.toggleOne(item.id)} label={`Select ${item.title}`} />
       </div>

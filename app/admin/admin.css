@@ -511,3 +511,9 @@ tr.row-selected td { background: #f3eefd; }
   .ai-actions { flex-wrap: wrap; }
   .ai-actions .btn { flex: 1 1 40%; }
 }
+
+/* ---------- Gallery details editor on phones ---------- */
+@media (max-width: 640px) {
+  .g-details { padding: 16px; }
+  .g-details-actions .btn-sm { flex: 1; padding: 12px 0; font-size: 14px; }
+}
