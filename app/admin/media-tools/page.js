@@ -294,7 +294,7 @@ const GRAVITIES = [
 ];
 const SITE_LOGO = "/images/logo.png";
 
-function clTextOverlayUrl(mediaUrl, { text, size, color, opacity, gravity, dx, dy, bold, italic }) {
+function clTextOverlayUrl(mediaUrl, { text, size, color, opacity, pos, bold, italic }) {
   const m = String(mediaUrl).match(/res\.cloudinary\.com\/([^/]+)\/(image|video)\/upload\/(.+)$/);
   if (!m) return null;
   const [, cloud, kind, rest] = m;
@@ -304,7 +304,11 @@ function clTextOverlayUrl(mediaUrl, { text, size, color, opacity, gravity, dx, d
   const enc = encodeURIComponent(text).replace(/!/g, "%21").replace(/'/g, "%27").replace(/\(/g, "%28").replace(/\)/g, "%29").replace(/\*/g, "%2A");
   const style = [bold ? "bold" : "", italic ? "italic" : ""].filter(Boolean).join("_");
   const fontSpec = style ? `Arial_${Math.round(size)}_${style}` : `Arial_${Math.round(size)}`;
-  const t = `l_text:${fontSpec}:${enc},co_rgb:${color.replace("#", "")},o_${opacity},g_${gravity},x_${Math.round(dx)},y_${Math.round(dy)}`;
+  // fl_relative: x/y are fractions of the base image, anchored at north_west.
+  // Clamped to 0.9 so long text doesn't run far off the edge.
+  const fx = ((pos.cx / 4) * 0.9).toFixed(3);
+  const fy = ((pos.cy / 4) * 0.9).toFixed(3);
+  const t = `l_text:${fontSpec}:${enc},fl_relative,g_north_west,x_${fx},y_${fy},co_rgb:${color.replace("#", "")},o_${opacity}`;
   return `https://res.cloudinary.com/${cloud}/${kind}/upload/${t}/${pub}${ext ? "." + ext : ""}`;
 }
 
@@ -314,9 +318,11 @@ function clPublicId(url) {
   return m[1].replace(/^v\d+\//, "").replace(/\.[a-z0-9]+$/i, "");
 }
 
-// Logo overlay sized relative to the base image: fl_relative makes w_ a
-// fraction of the base image width, gravity pins the corner (no x/y needed).
-function clLogoOverlayUrl(mediaUrl, { logoUrl, widthPct, opacity, gravity }) {
+// Logo overlay sized relative to the base image: fl_relative makes w_/x_/y_
+// fractions of the base image, anchored at north_west. When the base and logo
+// dimensions are known the logo is kept fully on-screen; otherwise it falls
+// back to a simple fractional placement.
+function clLogoOverlayUrl(mediaUrl, { logoUrl, widthPct, opacity, pos, baseW, baseH, logoAr }) {
   const m = String(mediaUrl).match(/res\.cloudinary\.com\/([^/]+)\/(image|video)\/upload\/(.+)$/);
   if (!m) return null;
   const [, cloud, kind, rest] = m;
@@ -325,8 +331,18 @@ function clLogoOverlayUrl(mediaUrl, { logoUrl, widthPct, opacity, gravity }) {
   const pub = noVer.replace(/\.[a-z0-9]+$/i, "");
   const logoPub = clPublicId(logoUrl);
   if (!logoPub) return null;
-  const w = Math.min(0.9, Math.max(0.05, widthPct / 100)).toFixed(2);
-  const t = `l_${logoPub},fl_relative,w_${w},o_${opacity},g_${gravity}`;
+  const w = Math.min(0.9, Math.max(0.05, widthPct / 100));
+  let fx, fy;
+  if (baseW > 0 && baseH > 0 && logoAr > 0) {
+    const hFrac = (w * baseW / logoAr) / baseH;
+    const pad = 0.035;
+    fx = pad + (pos.cx / 4) * Math.max(0, 1 - w - pad * 2);
+    fy = pad + (pos.cy / 4) * Math.max(0, 1 - hFrac - pad * 2);
+  } else {
+    fx = (pos.cx / 4) * (1 - w);
+    fy = (pos.cy / 4) * (1 - w);
+  }
+  const t = `l_${logoPub},fl_relative,w_${w.toFixed(2)},g_north_west,x_${fx.toFixed(3)},y_${fy.toFixed(3)},o_${opacity}`;
   return `https://res.cloudinary.com/${cloud}/${kind}/upload/${t}/${pub}${ext ? "." + ext : ""}`;
 }
 
@@ -354,7 +370,10 @@ function WatermarkTool() {
   const [size, setSize] = useState(48);
   const [color, setColor] = useState("#ffffff");
   const [opacity, setOpacity] = useState(70);
-  const [grav, setGrav] = useState("south_east");
+  const [pos, setPos] = useState({ cx: 4, cy: 4 }); // 5×5 grid cell (0-4)
+  const [layout, setLayout] = useState("single"); // single | tiled (image mode)
+  const [mediaW, setMediaW] = useState(0); // picked cloudinary asset dims
+  const [mediaH, setMediaH] = useState(0);
   const [shortcuts, setShortcuts] = useState(WM_DEFAULT_SHORTCUTS);
   const [busy, setBusy] = useState(false);
   const canvasRef = useRef(null);
@@ -394,35 +413,17 @@ function WatermarkTool() {
 
   // Draw the watermark (text or logo) onto ctx for a W×H image that is
   // already drawn. Shared by the live preview and the full-res export.
+  // Position comes from the 5×5 grid (pos.cx/cy 0-4 → fractions of the
+  // available area); layout "tiled" repeats diagonally across the image.
   const drawWm = (ctx, W, H) => {
     if (!img) return;
     const k = W / img.naturalWidth;
     const pad = Math.max(6, Math.round(W * 0.035));
+    const fx = pos.cx / 4, fy = pos.cy / 4;
     ctx.save();
     ctx.globalAlpha = opacity / 100;
-    if (content === "logo" && logoImg) {
-      const lw = W * (logoSize / 100);
-      const lh = lw * (logoImg.naturalHeight / logoImg.naturalWidth);
-      const pm = {
-        north_west: [pad, pad], north: [(W - lw) / 2, pad], north_east: [W - pad - lw, pad],
-        west: [pad, (H - lh) / 2], center: [(W - lw) / 2, (H - lh) / 2], east: [W - pad - lw, (H - lh) / 2],
-        south_west: [pad, H - pad - lh], south: [(W - lw) / 2, H - pad - lh], south_east: [W - pad - lw, H - pad - lh],
-      };
-      const [x, y] = pm[grav] || pm.south_east;
-      if (shadow) { ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = Math.max(2, 8 * k); }
-      ctx.drawImage(logoImg, x, y, lw, lh);
-    } else if (content === "text" && text.trim()) {
-      const fs = Math.max(8, size * k);
-      ctx.font = `${italic ? "italic " : ""}${bold ? "700" : "400"} ${fs}px Manrope, sans-serif`;
-      ctx.fillStyle = color;
-      if (shadow) { ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = Math.max(2, 6 * k); }
-      const tw = ctx.measureText(text).width;
-      const pm = {
-        north_west: [pad, pad + fs], north: [(W - tw) / 2, pad + fs], north_east: [W - pad - tw, pad + fs],
-        west: [pad, H / 2], center: [(W - tw) / 2, H / 2], east: [W - pad - tw, H / 2],
-        south_west: [pad, H - pad], south: [(W - tw) / 2, H - pad], south_east: [W - pad - tw, H - pad],
-      };
-      const [x, y] = pm[grav] || pm.south_east;
+
+    const paintText = (x, y, fs, tw) => {
       if (outline) {
         ctx.lineWidth = Math.max(1, fs * 0.07);
         ctx.strokeStyle = "rgba(0,0,0,0.75)";
@@ -430,11 +431,53 @@ function WatermarkTool() {
       }
       ctx.fillText(text, x, y);
       if (underline) {
+        ctx.save();
         ctx.shadowBlur = 0; ctx.shadowColor = "transparent";
         ctx.lineWidth = Math.max(1, fs * 0.06);
         ctx.strokeStyle = color;
         const uy = y + fs * 0.14;
         ctx.beginPath(); ctx.moveTo(x, uy); ctx.lineTo(x + tw, uy); ctx.stroke();
+        ctx.restore();
+      }
+    };
+
+    if (content === "logo" && logoImg) {
+      const lw = W * (logoSize / 100);
+      const lh = lw * (logoImg.naturalHeight / logoImg.naturalWidth);
+      if (shadow) { ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = Math.max(2, 8 * k); }
+      if (layout === "tiled") {
+        ctx.save();
+        ctx.translate(W / 2, H / 2); ctx.rotate(-0.35); ctx.translate(-W / 2, -H / 2);
+        for (let yy = -H; yy < H * 2; yy += lh * 2.6) {
+          for (let xx = -W; xx < W * 2; xx += lw * 1.7) {
+            ctx.drawImage(logoImg, xx, yy, lw, lh);
+          }
+        }
+        ctx.restore();
+      } else {
+        const x = pad + fx * (W - lw - 2 * pad);
+        const y = pad + fy * (H - lh - 2 * pad);
+        ctx.drawImage(logoImg, x, y, lw, lh);
+      }
+    } else if (content === "text" && text.trim()) {
+      const fs = Math.max(8, size * k);
+      ctx.font = `${italic ? "italic " : ""}${bold ? "700" : "400"} ${fs}px Manrope, sans-serif`;
+      ctx.fillStyle = color;
+      if (shadow) { ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = Math.max(2, 6 * k); }
+      const tw = ctx.measureText(text).width;
+      if (layout === "tiled") {
+        ctx.save();
+        ctx.translate(W / 2, H / 2); ctx.rotate(-0.35); ctx.translate(-W / 2, -H / 2);
+        for (let yy = -H; yy < H * 2; yy += fs * 3.2) {
+          for (let xx = -W; xx < W * 2; xx += tw * 1.35) {
+            paintText(xx, yy, fs, tw);
+          }
+        }
+        ctx.restore();
+      } else {
+        const x = pad + fx * (W - tw - 2 * pad);
+        const y = pad + fs + fy * (H - fs - 2 * pad);
+        paintText(x, y, fs, tw);
       }
     }
     ctx.restore();
@@ -450,7 +493,7 @@ function WatermarkTool() {
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
     drawWm(ctx, cv.width, cv.height);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [img, mode, content, text, size, color, opacity, grav, bold, italic, underline, shadow, outline, logoImg, logoSize]);
+  }, [img, mode, content, text, size, color, opacity, pos, layout, bold, italic, underline, shadow, outline, logoImg, logoSize]);
 
   const renderFullWm = async () => {
     if (!img) return null;
@@ -519,10 +562,11 @@ function WatermarkTool() {
     setBusy(false);
   };
 
+  const logoAr = logoImg ? logoImg.naturalWidth / logoImg.naturalHeight : 0;
   const clUrl = media ? (
     content === "logo"
-      ? clLogoOverlayUrl(media.url, { logoUrl, widthPct: logoSize, opacity, gravity: grav })
-      : clTextOverlayUrl(media.url, { text, size: Math.min(size * 2, 200), color, opacity, gravity: grav, dx: 20, dy: 20, bold, italic })
+      ? clLogoOverlayUrl(media.url, { logoUrl, widthPct: logoSize, opacity, pos, baseW: mediaW, baseH: mediaH, logoAr })
+      : clTextOverlayUrl(media.url, { text, size: Math.min(size * 2, 200), color, opacity, pos, bold, italic })
   ) : null;
   const logoOnCloudinary = !!clPublicId(logoUrl);
   const isVideo = media && /video|\.mp4|\.mov|\.webm/i.test(media.url || "") && !/\.(jpe?g|png|gif|webp)$/i.test(media.url || "");
@@ -645,15 +689,34 @@ function WatermarkTool() {
             <label>Opacity: {opacity}%</label>
             <input type="range" min={10} max={100} value={opacity} onChange={(e) => setOpacity(+e.target.value)} style={{ width: "100%" }} />
           </div>
-          <div className="field" style={{ margin: 0 }}>
-            <label>Position</label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 30px)", gap: 4 }}>
-              {GRAVITIES.flat().map((g) => (
-                <button key={g} type="button" onClick={() => setGrav(g)} title={g.replace("_", " ")}
-                  style={{ width: 30, height: 30, borderRadius: 6, border: grav === g ? "2px solid #8F3F2D" : "1px solid #ddd", background: grav === g ? "#FDEFE4" : "#fff", cursor: "pointer" }} />
-              ))}
+          {mode === "image" && (
+            <div className="field" style={{ margin: 0 }}>
+              <label>Layout</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                {[["single", "Single"], ["tiled", "Tiled repeat"]].map(([id, label]) => (
+                  <button key={id} type="button" onClick={() => setLayout(id)} className="ai-chip"
+                    style={layout === id ? { borderColor: "#8F3F2D", background: "#8F3F2D", color: "#fff" } : undefined}>{label}</button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+          {!(mode === "image" && layout === "tiled") && (
+            <div className="field" style={{ margin: 0 }}>
+              <label>Position</label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 28px)", gap: 4 }}>
+                {[0, 1, 2, 3, 4].map((cy) => [0, 1, 2, 3, 4].map((cx) => {
+                  const active = pos.cx === cx && pos.cy === cy;
+                  return (
+                    <button key={`${cx}-${cy}`} type="button" onClick={() => setPos({ cx, cy })} title={`Position ${cx + 1} of 5 across, ${cy + 1} of 5 down`}
+                      style={{ width: 28, height: 28, borderRadius: 6, border: active ? "2px solid #8F3F2D" : "1px solid #ddd", background: active ? "#FDEFE4" : "#fff", cursor: "pointer" }} />
+                  );
+                }))}
+              </div>
+            </div>
+          )}
+          {mode === "image" && layout === "tiled" && (
+            <span className="seo-hint">Tiled repeats the watermark diagonally across the photo.</span>
+          )}
         </div>
       </div>
 
@@ -713,7 +776,7 @@ function WatermarkTool() {
           if (a[0]) {
             if (picker === "image") chooseImage(a[0].url, (a[0].public_id || "image").split("/").pop());
             else if (picker === "logo") setLogoUrl(a[0].url);
-            else setMedia(a[0]);
+            else { setMedia(a[0]); setMediaW(a[0].width || 0); setMediaH(a[0].height || 0); }
           }
           setPicker(null);
         }} />
