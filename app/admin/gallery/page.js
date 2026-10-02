@@ -19,6 +19,7 @@ export default function GalleryAdmin() {
   const [editing, setEditing] = useState(null);
   const [preview, setPreview] = useState(null);
   const [statusFilter, setStatusFilter] = useState("");
+  const [catFilter, setCatFilter] = useState("");
   const [q, setQ] = useState("");
 
   const load = async () => {
@@ -30,12 +31,14 @@ export default function GalleryAdmin() {
 
   const matchesFilter = (i) => {
     if (statusFilter && i.status !== statusFilter) return false;
+    if (catFilter && (i.category || "Events") !== catFilter) return false;
     const needle = q.trim().toLowerCase();
-    if (needle && !`${i.title || ""} ${i.category || ""}`.toLowerCase().includes(needle)) return false;
+    if (needle && !`${i.title || ""} ${i.caption || ""} ${i.category || ""}`.toLowerCase().includes(needle)) return false;
     return true;
   };
   const allPhotos = items.filter((i) => i.kind === "photo");
   const allVideos = items.filter((i) => i.kind === "video");
+  const usedCats = [...new Set(items.map((i) => i.category || "Events"))].sort();
   const photos = allPhotos.filter(matchesFilter);
   const videos = allVideos.filter(matchesFilter);
   const tabItems = tab === "photos" ? photos : videos;
@@ -157,32 +160,41 @@ export default function GalleryAdmin() {
         <div style={{ fontSize: 13.5, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={item.title}>
           {item.title || "Untitled"}
         </div>
+        {item.caption ? (
+          <div style={{ fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }} title={item.caption}>
+            {item.caption}
+          </div>
+        ) : null}
         <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
           <StatusBadge status={item.status} />
           <span className="seo-hint" style={{ margin: 0 }}>{item.category || "Events"}</span>
         </div>
         {editing === item.id ? (
-          <div style={{ marginTop: 10 }}>
-            <div className="field" style={{ marginBottom: 8 }}><label>Title</label>
-              <input value={item.title || ""} onChange={(e) => update(item.id, { title: e.target.value })} />
+          <div className="g-details">
+            <div className="g-details-head">Edit details</div>
+            <div className="field"><label>Title</label>
+              <input value={item.title || ""} onChange={(e) => update(item.id, { title: e.target.value })} placeholder="e.g. Sangeet night highlights" />
             </div>
-            <div className="field" style={{ marginBottom: 8 }}><label>Category</label>
-              <select value={item.category || "Events"} onChange={(e) => update(item.id, { category: e.target.value })}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+            <div className="g-details-row">
+              <div className="field"><label>Category</label>
+                <select value={item.category || "Events"} onChange={(e) => update(item.id, { category: e.target.value })}>
+                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="field"><label>Status</label>
+                <select value={item.status || "published"} onChange={(e) => update(item.id, { status: e.target.value })}>
+                  {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
+                </select>
+              </div>
             </div>
-            <div className="field" style={{ marginBottom: 8 }}><label>Caption</label>
-              <input value={item.caption || ""} onChange={(e) => update(item.id, { caption: e.target.value })} placeholder="Shown under the photo on the website" />
+            <div className="field"><label>Caption</label>
+              <textarea value={item.caption || ""} onChange={(e) => update(item.id, { caption: e.target.value })} placeholder="Shown under the photo on the website" rows={2} />
+              <span className="seo-hint">Shows under the title on the website gallery.</span>
             </div>
-            <div className="field" style={{ marginBottom: 8 }}><label>Status</label>
-              <select value={item.status || "published"} onChange={(e) => update(item.id, { status: e.target.value })}>
-                {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
-              </select>
-            </div>
-            <label className="check-row" style={{ marginBottom: 8 }}>
+            <label className="check-row">
               <input type="checkbox" checked={!!item.is_placeholder} onChange={(e) => update(item.id, { is_placeholder: e.target.checked })} /> Placeholder
             </label>
-            <div style={{ display: "flex", gap: 8 }}>
+            <div className="g-details-actions">
               <SaveButton onClick={() => saveItem(item)} className="btn-sm btn-new">Save</SaveButton>
               <button className="btn-sm btn-edit" onClick={() => { setEditing(null); refresh(); }}>Cancel</button>
             </div>
@@ -201,7 +213,7 @@ export default function GalleryAdmin() {
   return (
     <>
       <h1>Gallery</h1>
-      <p className="admin-sub">Photos and videos shown in the homepage Gallery tabs. Use <b>Details</b> to set category, caption, status and placeholder flags.</p>
+      <p className="admin-sub">Photos and videos on the website's <b>Gallery</b> page. Use <b>Details</b> to set the title, category, caption and status.</p>
       {msg && <div className="login-err" style={{ marginBottom: 16 }}>{msg}</div>}
 
       <div className="tabs" style={{ justifyContent: "flex-start", margin: "0 0 20px" }}>
@@ -214,12 +226,22 @@ export default function GalleryAdmin() {
           className="list-filter"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder={`Search ${tab === "photos" ? "photos" : "videos"} by title or category…`}
+          placeholder={`Search ${tab === "photos" ? "photos" : "videos"} by title, caption or category…`}
           aria-label="Search gallery"
           style={{ flex: 1, minWidth: 180 }}
         />
+        <select
+          className="list-filter"
+          value={catFilter}
+          onChange={(e) => setCatFilter(e.target.value)}
+          aria-label="Filter by category"
+          style={{ maxWidth: 190 }}
+        >
+          <option value="">All categories</option>
+          {usedCats.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
         <StatusFilter value={statusFilter} onChange={setStatusFilter} />
-        {(q.trim() || statusFilter) && (
+        {(q.trim() || statusFilter || catFilter) && (
           <span className="seo-hint" style={{ margin: 0, whiteSpace: "nowrap" }}>
             {tabItems.length} of {tab === "photos" ? allPhotos.length : allVideos.length}
           </span>
