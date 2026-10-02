@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import VideoModal from "./VideoModal";
-import { youTubeId, ytThumb } from "../lib/video";
+import { youTubeId, ytThumb, cloudinaryPoster } from "../lib/video";
 
 // Homepage video-testimonial card. Reuses the couple-card look (photo in the
 // brief): portrait card, bottom shade with name, round play button, and a
@@ -19,7 +19,14 @@ export default function TestimonialCard({ t }) {
   } else if (isYt) {
     thumb = <img src={ytThumb(url)} alt={title} loading="lazy" />;
   } else {
-    thumb = <video className="tcard-vid" src={url} preload="metadata" muted playsInline aria-hidden="true" />;
+    // Cloudinary mp4: use a first-frame poster image — mobile browsers do not
+    // preload <video> frames, so the raw <video> tag renders a black card.
+    const poster = cloudinaryPoster(url);
+    thumb = poster ? (
+      <img src={poster} alt={title} loading="lazy" />
+    ) : (
+      <video className="tcard-vid" src={url} preload="metadata" muted playsInline aria-hidden="true" />
+    );
   }
 
   return (

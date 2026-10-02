@@ -1092,12 +1092,14 @@ h1, h2, h3, .h1, .h2, .h3, .couple-card h3 {
   .pf-grid { grid-template-columns: 1fr; }
   .pf-card:nth-child(n) { grid-column: span 1; aspect-ratio: 16/10; }
   .tl { grid-template-columns: 1fr; }
-  .story-grid, .couple-grid, .testi-video-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 14px; scrollbar-width: none; margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; }
-  .story-grid::-webkit-scrollbar, .couple-grid::-webkit-scrollbar, .testi-video-grid::-webkit-scrollbar { display: none; }
+  .story-grid, .couple-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 14px; scrollbar-width: none; margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; }
+  .story-grid::-webkit-scrollbar, .couple-grid::-webkit-scrollbar { display: none; }
   .story-card, .couple-card { flex: 0 0 250px; scroll-snap-align: start; }
   /* The rail's flex items are the Reveal wrappers, not the cards themselves —
      without this the wrapped cards collapse to zero width on mobile. */
-  .story-grid > .reveal, .couple-grid > .reveal, .testi-video-grid > .reveal { flex: 0 0 250px; scroll-snap-align: start; min-width: 0; }
+  .story-grid > .reveal, .couple-grid > .reveal { flex: 0 0 250px; scroll-snap-align: start; min-width: 0; }
+  /* Video testimonials: simple vertical list on phones, no horizontal rail. */
+  .testi-video-grid { grid-template-columns: 1fr; gap: 22px; margin-top: 36px; }
   .testi-grid { grid-template-columns: 1fr; }
   .wed-list { grid-template-columns: 1fr; }
   .form-card { padding: 32px 24px; }
