@@ -151,9 +151,15 @@ export default async function AboutPage() {
               <span className="eyebrow">{c(map, "about", "brands", "eyebrow")}</span>
               <h2 className="h2">{c(map, "about", "brands", "title")}</h2>
               <p className="lead" style={{ margin: "0 auto" }}>{c(map, "about", "brands", "body")}</p>
-              <div style={{ marginTop: 30, display: "inline-flex", alignItems: "center", gap: 16, background: "var(--warm-white)", border: "1px solid var(--border-gold)", borderRadius: 6, padding: "16px 28px" }}>
-                <img src="/images/iso-badge.png" alt="ISO 9001:2015 certified company" style={{ height: 60, width: "auto" }} />
-                <span style={{ fontWeight: 800, color: "var(--brown)", fontSize: 15, letterSpacing: 1 }}>ISO 9001:2015<br />Certified Company</span>
+              <div style={{ marginTop: 30, display: "flex", alignItems: "stretch", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 16, background: "var(--warm-white)", border: "1px solid var(--border-gold)", borderRadius: 6, padding: "16px 28px" }}>
+                  <img src="/images/iso-badge.png" alt="ISO 9001:2015 certified company" style={{ height: 60, width: "auto" }} />
+                  <span style={{ fontWeight: 800, color: "var(--brown)", fontSize: 15, letterSpacing: 1 }}>ISO 9001:2015<br />Certified Company</span>
+                </div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 16, background: "var(--warm-white)", border: "1px solid var(--border-gold)", borderRadius: 6, padding: "16px 28px" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 60, height: 60, borderRadius: 6, background: "var(--brown)", color: "var(--gold-soft)", fontWeight: 800, fontSize: 20 }}>GeM</span>
+                  <span style={{ fontWeight: 800, color: "var(--brown)", fontSize: 15, letterSpacing: 1 }}>GeM Registered<br />Govt. e-Marketplace</span>
+                </div>
               </div>
             </div>
           </Reveal>

@@ -64,8 +64,18 @@ export default function Footer({ nav, settings }) {
             <p>
               {get("tagline2", "Creating Experiences. Delivering Excellence.")} A complete event
               management company since 1999 — weddings, celebrity shows, government &amp; corporate
-              events across India. A Group of Navratan Jain. ISO 9001:2015 certified.
+              events across India. A Group of Navratan Jain.
             </p>
+            <div className="footer-creds">
+              <span className="fcred">
+                <img src="/images/iso-badge.png" alt="ISO 9001:2015 certified" />
+                <span className="fcred-tx">ISO 9001:2015<br />Certified Company</span>
+              </span>
+              <span className="fcred">
+                <span className="fcred-gem">GeM</span>
+                <span className="fcred-tx">GeM Registered<br />Govt. e-Marketplace</span>
+              </span>
+            </div>
             <p className="footer-legal">{get("disclaimer", "")}</p>
           </div>
           <div>

@@ -118,6 +118,18 @@ export default async function Home() {
               ))}
             </div>
           </Reveal>
+          <Reveal delay={3}>
+            <div className="hero-creds">
+              <span className="hcred">
+                <img src="/images/iso-badge.png" alt="ISO 9001:2015 certified" />
+                <span className="hcred-tx">ISO 9001:2015 Certified</span>
+              </span>
+              <span className="hcred">
+                <span className="hcred-gem">GeM</span>
+                <span className="hcred-tx">GeM Registered</span>
+              </span>
+            </div>
+          </Reveal>
         </div>
         <div className="scroll-hint" aria-hidden="true">Scroll<i /></div>
       </section>
